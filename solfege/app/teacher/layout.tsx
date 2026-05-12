@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { BottomNav } from "@/components/teacher/bottom-nav";
 
 export default function TeacherLayout({
@@ -11,9 +12,14 @@ export default function TeacherLayout({
     <div className="min-h-screen bg-[#FAFAF9] flex flex-col">
       {/* Header Mobile-first */}
       <header className="sticky top-0 z-40 w-full h-16 bg-white border-b border-[#E8E4E0] flex items-center justify-center">
-        <h1 className="font-serif text-2xl font-bold tracking-tight text-[#E8621A]">
-          Solfège
-        </h1>
+        <Image 
+          src="/solfege-logo.png" 
+          alt="Solfège Logo" 
+          width={120} 
+          height={32} 
+          className="h-8 w-auto object-contain"
+          priority
+        />
       </header>
 
       {/* Main Content Area */}

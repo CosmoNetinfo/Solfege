@@ -158,3 +158,91 @@ export async function getFinancesSummary(supabase: SupabaseClient<Database>, sch
     overdueTotal: overdue?.reduce((sum, p) => sum + Number(p.amount), 0) || 0,
   };
 }
+
+export async function getRevenueHistory(supabase: SupabaseClient<Database>, schoolId: string, year: number) {
+  const { data, error } = await supabase
+    .from('payments')
+    .select('amount, paid_date')
+    .eq('school_id', schoolId)
+    .eq('status', 'pagato')
+    .gte('paid_date', `${year}-01-01`)
+    .lte('paid_date', `${year}-12-31`);
+
+  if (error) return [];
+
+  const months = ['Gen', 'Feb', 'Mar', 'Apr', 'Mag', 'Giu', 'Lug', 'Ago', 'Set', 'Ott', 'Nov', 'Dic'];
+  const totals = new Array(12).fill(0);
+
+  data?.forEach(p => {
+    const month = new Date(p.paid_date!).getMonth();
+    totals[month] += Number(p.amount);
+  });
+
+  return months.map((name, i) => ({ name, totale: totals[i] }));
+}
+
+export async function getStudentsDistribution(supabase: SupabaseClient<Database>, schoolId: string) {
+  const { data, error } = await supabase
+    .from('enrollments')
+    .select('courses(name, colore_calendario)')
+    .eq('school_id', schoolId)
+    .eq('status', 'active');
+
+  if (error) return [];
+
+  const counts: Record<string, { name: string, value: number, color: string }> = {};
+  data?.forEach(e => {
+    const name = e.courses?.name || 'Altro';
+    if (!counts[name]) {
+      counts[name] = { name, value: 0, color: e.courses?.colore_calendario || '#E8621A' };
+    }
+    counts[name].value += 1;
+  });
+
+  return Object.values(counts);
+}
+
+export async function getTeacherReport(supabase: SupabaseClient<Database>, schoolId: string, month: number, year: number) {
+  const start = new Date(year, month, 1).toISOString();
+  const end = new Date(year, month + 1, 0, 23, 59, 59).toISOString();
+
+  const { data, error } = await supabase
+    .from('attendance')
+    .select(`
+      id,
+      status,
+      lessons!inner (
+        data_ora_inizio,
+        data_ora_fine,
+        teacher_id,
+        teachers (first_name, last_name, hourly_rate)
+      )
+    `)
+    .eq('school_id', schoolId)
+    .eq('status', 'present')
+    .gte('lessons.data_ora_inizio', start)
+    .lte('lessons.data_ora_inizio', end);
+
+  if (error) return [];
+
+  const teacherStats: Record<string, any> = {};
+  data?.forEach(a => {
+    const t = a.lessons.teachers;
+    const tId = a.lessons.teacher_id;
+    if (!teacherStats[tId]) {
+      teacherStats[tId] = {
+        name: `${t.last_name} ${t.first_name}`,
+        hours: 0,
+        earnings: 0
+      };
+    }
+    
+    const start = new Date(a.lessons.data_ora_inizio);
+    const end = new Date(a.lessons.data_ora_fine);
+    const duration = (end.getTime() - start.getTime()) / (1000 * 60 * 60);
+    teacherStats[tId].hours += duration;
+    teacherStats[tId].earnings += duration * Number(t.hourly_rate);
+  });
+
+  return Object.values(teacherStats);
+}

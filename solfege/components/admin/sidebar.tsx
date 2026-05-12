@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 import {
   LayoutDashboard,
@@ -25,6 +26,7 @@ const navItems = [
   { name: "Corsi", href: "/admin/courses", icon: BookOpen },
   { name: "Presenze", href: "/admin/attendance", icon: CheckSquare },
   { name: "Finanze", href: "/admin/finances", icon: Banknote },
+  { name: "Statistiche", href: "/admin/stats", icon: LayoutDashboard }, // Usando LayoutDashboard o BarChart3
   { name: "Aule", href: "/admin/rooms", icon: DoorOpen },
   { name: "Impostazioni", href: "/admin/settings", icon: Settings },
 ];
@@ -42,9 +44,14 @@ export function Sidebar() {
     <div className="flex h-screen w-64 flex-col bg-sidebar border-r border-sidebar-border">
       {/* Header Sidebar: Logo */}
       <div className="flex h-16 items-center px-6">
-        <h1 className="font-serif text-3xl font-bold tracking-tight text-orange">
-          Solfège
-        </h1>
+        <Image 
+          src="/solfege-logo.png" 
+          alt="Solfège Logo" 
+          width={150} 
+          height={40} 
+          className="h-10 w-auto object-contain"
+          priority
+        />
       </div>
 
       {/* Navigazione */}
