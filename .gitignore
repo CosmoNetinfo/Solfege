@@ -1,0 +1,45 @@
+# dependencies
+solfege/node_modules
+solfege/.pnp
+solfege/.pnp.*
+solfege/.yarn/*
+!solfege/.yarn/patches
+!solfege/.yarn/plugins
+!solfege/.yarn/releases
+!solfege/.yarn/versions
+
+# testing
+solfege/coverage
+
+# next.js
+solfege/.next/
+solfege/out/
+
+# production
+solfege/build
+
+# misc
+.DS_Store
+*.pem
+solfege/.DS_Store
+
+# debug
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# env files
+.env*
+solfege/.env*
+
+# vercel
+solfege/.vercel
+
+# typescript
+solfege/*.tsbuildinfo
+solfege/next-env.d.ts
+
+# project specific
+.snapshots
+.vscode

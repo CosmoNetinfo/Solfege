@@ -1,0 +1,136 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-dm-sans);
+  --font-serif: var(--font-cormorant);
+  --font-mono: var(--font-jetbrains);
+  
+  --color-orange: var(--orange);
+  --color-orange-light: var(--orange-light);
+  --color-orange-dark: var(--orange-dark);
+  --color-green: var(--green);
+  --color-green-light: var(--green-light);
+  --color-red: var(--red);
+  --color-red-light: var(--red-light);
+  --color-amber: var(--amber);
+  --color-amber-light: var(--amber-light);
+
+  --color-sidebar-ring: var(--sidebar-ring);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar: var(--sidebar);
+  
+  --color-ring: var(--ring);
+  --color-input: var(--input);
+  --color-border: var(--border);
+  --color-destructive: var(--destructive);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent: var(--accent);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-muted: var(--muted);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary: var(--secondary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary: var(--primary);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-popover: var(--popover);
+  --color-card-foreground: var(--card-foreground);
+  --color-card: var(--card);
+  
+  --radius-sm: 0.375rem;
+  --radius-md: 0.5rem;
+  --radius-lg: 0.75rem;
+}
+
+:root {
+  /* Solfège Design System Tokens */
+  --bg: #FAFAF9;
+  --surface: #FFFFFF;
+  --border-hex: #E8E4E0;
+  --text-hex: #1A1714;
+  --muted-hex: #7A736C;
+
+  --orange: #E8621A;
+  --orange-light: #FDF0E8;
+  --orange-dark: #C94E0E;
+
+  --green: #1A7A4A;
+  --green-light: #E8F5EE;
+  --red: #C0392B;
+  --red-light: #FDECEA;
+  --amber: #D97706;
+  --amber-light: #FEF3C7;
+
+  --sidebar-bg-hex: #1A1714;
+  --sidebar-text-hex: #C8C1BA;
+  --sidebar-active-hex: #E8621A;
+
+  /* Shadcn UI Overrides */
+  --background: var(--bg);
+  --foreground: var(--text-hex);
+  
+  --card: var(--surface);
+  --card-foreground: var(--text-hex);
+  
+  --popover: var(--surface);
+  --popover-foreground: var(--text-hex);
+  
+  --primary: var(--orange);
+  --primary-foreground: #FFFFFF;
+  
+  --secondary: #F4F4F5;
+  --secondary-foreground: var(--text-hex);
+  
+  --muted: #F4F4F5;
+  --muted-foreground: var(--muted-hex);
+  
+  --accent: #F4F4F5;
+  --accent-foreground: var(--text-hex);
+  
+  --destructive: var(--red);
+  --destructive-foreground: #FFFFFF;
+  
+  --border: var(--border-hex);
+  --input: var(--border-hex);
+  --ring: var(--orange);
+  
+  --radius: 0.5rem;
+
+  --sidebar: var(--sidebar-bg-hex);
+  --sidebar-foreground: var(--sidebar-text-hex);
+  --sidebar-primary: var(--sidebar-active-hex);
+  --sidebar-primary-foreground: #FFFFFF;
+  --sidebar-accent: rgba(255, 255, 255, 0.05);
+  --sidebar-accent-foreground: var(--sidebar-active-hex);
+  --sidebar-border: rgba(255, 255, 255, 0.1);
+  --sidebar-ring: var(--orange);
+}
+
+.dark {
+  /* No dark mode specified in brief, sticking to premium light/warm design */
+  --background: var(--bg);
+  --foreground: var(--text-hex);
+}
+
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+  html {
+    @apply font-sans;
+  }
+}
