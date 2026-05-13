@@ -1,4 +1,4 @@
-import { createAdminClient } from "./lib/supabase/admin.js";
+import { createAdminClient } from "./lib/supabase/admin";
 
 async function createTestAdmin() {
   const supabase = createAdminClient();
@@ -24,7 +24,7 @@ async function createTestAdmin() {
     }
   }
 
-  const userId = authUser?.user?.id;
+  let userId = authUser?.user?.id;
   if (!userId) {
     // Try to get user ID by email
     const { data: users } = await supabase.auth.admin.listUsers();
