@@ -63,7 +63,7 @@ export default function StudentsPage() {
         .from("profiles")
         .select("school_id")
         .eq("id", user.id)
-        .single();
+        .maybeSingle();
 
       if (!profile?.school_id) return;
       setSchoolId(profile.school_id);

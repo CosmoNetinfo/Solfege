@@ -26,7 +26,7 @@ export default function TeacherStudentsPage() {
       .from("teachers")
       .select("id")
       .eq("profile_id", user.id)
-      .single();
+      .maybeSingle();
 
     if (!teacher) {
       setLoading(false);

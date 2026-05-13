@@ -26,7 +26,7 @@ export async function getProfile(supabase: SupabaseClient<Database>, userId: str
       .from('profiles')
       .select('*, schools(*)')
       .eq('id', userId)
-      .single();
+      .maybeSingle();
 
     // If RLS blocks it, fallback to the Admin Client to bypass RLS
     if (error && error.message.includes('permission denied')) {
@@ -36,7 +36,7 @@ export async function getProfile(supabase: SupabaseClient<Database>, userId: str
         .from('profiles')
         .select('*, schools(*)')
         .eq('id', userId)
-        .single();
+          .maybeSingle();
       
       if (adminError) return null;
       return adminData;
@@ -53,7 +53,7 @@ export async function getSchoolData(supabase: SupabaseClient<Database>, schoolId
       .from('schools')
       .select('*')
       .eq('id', schoolId)
-      .single();
+      .maybeSingle();
 
     if (error) return null;
     return data;
@@ -493,7 +493,7 @@ export async function markCompensationAsPaid(
         paid_date: paid ? new Date().toISOString() : null,
       }, { onConflict: 'teacher_id, month, year' })
       .select()
-      .single();
+      .maybeSingle();
       
     if (error) throw error;
     return data;

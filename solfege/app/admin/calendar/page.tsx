@@ -87,7 +87,7 @@ export default function CalendarPage() {
         setLoading(false);
         return;
       }
-      const { data: profile } = await supabase.from("profiles").select("school_id").eq("id", user.id).single();
+      const { data: profile } = await supabase.from("profiles").select("school_id").eq("id", user.id).maybeSingle();
       sId = profile?.school_id || undefined;
     }
     if (!sId) return;

@@ -35,7 +35,7 @@ export default function TeacherProfilePage() {
       .from("teachers")
       .select("*")
       .eq("profile_id", user.id)
-      .single();
+      .maybeSingle();
 
     if (teacherData) {
       setTeacher(teacherData);
@@ -48,7 +48,7 @@ export default function TeacherProfilePage() {
         .eq("teacher_id", teacherData.id)
         .eq("month", now.getMonth() + 1)
         .eq("year", now.getFullYear())
-        .single();
+        .maybeSingle();
       
       setCompensation(compData);
     }

@@ -29,7 +29,7 @@ export default function TeacherHomePage() {
       .from("teachers")
       .select("id, first_name, last_name")
       .eq("profile_id", user.id)
-      .single();
+      .maybeSingle();
 
     if (!teacher) {
       setLoading(false);
@@ -70,7 +70,7 @@ export default function TeacherHomePage() {
         .eq("teacher_id", teacher.id)
         .eq("month", currentMonth)
         .eq("year", currentYear)
-        .single(),
+        .maybeSingle(),
       supabase
         .from("enrollments")
         .select("student_id")

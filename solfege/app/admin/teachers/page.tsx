@@ -53,7 +53,7 @@ export default function TeachersPage() {
     async function load() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
-      const { data: profile } = await supabase.from("profiles").select("school_id").eq("id", user.id).single();
+      const { data: profile } = await supabase.from("profiles").select("school_id").eq("id", user.id).maybeSingle();
       if (!profile?.school_id) return;
       setSchoolId(profile.school_id);
       await fetchTeachers(profile.school_id);

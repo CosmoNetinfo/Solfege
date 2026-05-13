@@ -54,7 +54,7 @@ export default function AttendancePage({ params }: { params: Promise<{ lessonId:
         )
       `)
       .eq("id", resolvedParams.lessonId)
-      .single();
+      .maybeSingle();
 
     if (lessonError || !lessonData) {
       toast.error("Lezione non trovata");
@@ -104,7 +104,7 @@ export default function AttendancePage({ params }: { params: Promise<{ lessonId:
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user?.id) throw new Error("Utente non autenticato");
-      const { data: profile } = await supabase.from("profiles").select("school_id").eq("id", user.id).single();
+      const { data: profile } = await supabase.from("profiles").select("school_id").eq("id", user.id).maybeSingle();
 
       if (!profile?.school_id) throw new Error("Scuola non trovata");
       const schoolId = profile.school_id as string;
