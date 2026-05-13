@@ -4,19 +4,17 @@ import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { toast } from 'sonner';
-import { createBrowserClient } from '@/lib/supabase/client';
+import { createClient } from '@/lib/supabase/client';
 import { getSchoolProfiles } from '@/lib/supabase/queries';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Mail, UserPlus, Shield, User } from 'lucide-react';
-import { useAuthStore } from '@/store/useAuthStore';
 
-export function UsersTab({ schoolId }: { schoolId: string }) {
+export function UsersTab({ schoolId, schoolName }: { schoolId: string, schoolName: string }) {
   const [users, setUsers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [inviteEmail, setInviteEmail] = useState('');
   const [isInviting, setIsInviting] = useState(false);
-  const supabase = createBrowserClient();
-  const currentSchool = useAuthStore((state) => state.school);
+  const supabase = createClient();
 
   useEffect(() => {
     loadUsers();
@@ -45,7 +43,7 @@ export function UsersTab({ schoolId }: { schoolId: string }) {
       const res = await fetch('/api/invite', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: inviteEmail, schoolName: currentSchool?.name || 'la tua scuola' }),
+        body: JSON.stringify({ email: inviteEmail, schoolName: schoolName || 'la tua scuola' }),
       });
 
       if (res.ok) {

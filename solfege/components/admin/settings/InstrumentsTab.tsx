@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Trash2, Plus } from 'lucide-react';
 import { toast } from 'sonner';
-import { createBrowserClient } from '@/lib/supabase/client';
+import { createClient } from '@/lib/supabase/client';
 import { getInstruments, addInstrument, deleteInstrument } from '@/lib/supabase/queries';
 import { Skeleton } from '@/components/ui/skeleton';
 

@@ -8,9 +8,9 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { toast } from 'sonner';
-import { createBrowserClient } from '@/lib/supabase/client';
+import { createClient } from '@/lib/supabase/client';
 import { updateSchool } from '@/lib/supabase/queries';
-import { useAuthStore } from '@/store/useAuthStore';
+import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 
 const formSchema = z.object({
@@ -24,8 +24,8 @@ const formSchema = z.object({
 export function SchoolTab({ school }: { school: any }) {
   const [isUploading, setIsUploading] = useState(false);
   const [logoUrl, setLogoUrl] = useState(school?.logo_url || null);
-  const supabase = createBrowserClient();
-  const setSchool = useAuthStore((state) => state.setSchool);
+  const supabase = createClient();
+  const router = useRouter();
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -44,7 +44,7 @@ export function SchoolTab({ school }: { school: any }) {
         ...values,
         logo_url: logoUrl,
       });
-      setSchool(updatedSchool);
+      router.refresh();
       toast.success('Dati scuola aggiornati con successo');
     } catch (error) {
       toast.error('Errore durante il salvataggio');
@@ -71,10 +71,10 @@ export function SchoolTab({ school }: { school: any }) {
       setLogoUrl(data.publicUrl);
       
       // Auto-save the logo
-      const updatedSchool = await updateSchool(supabase, school.id, {
+      await updateSchool(supabase, school.id, {
         logo_url: data.publicUrl,
       });
-      setSchool(updatedSchool);
+      router.refresh();
       toast.success('Logo aggiornato con successo');
     } catch (error) {
       console.error(error);

@@ -7,17 +7,17 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { toast } from 'sonner';
-import { createBrowserClient } from '@/lib/supabase/client';
+import { createClient } from '@/lib/supabase/client';
 import { updateSchool } from '@/lib/supabase/queries';
-import { useAuthStore } from '@/store/useAuthStore';
+import { useRouter } from 'next/navigation';
 
 const formSchema = z.object({
   current_academic_year: z.string().min(4, 'Anno troppo corto'),
 });
 
 export function AcademicYearTab({ school }: { school: any }) {
-  const supabase = createBrowserClient();
-  const setSchool = useAuthStore((state) => state.setSchool);
+  const supabase = createClient();
+  const router = useRouter();
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -28,8 +28,8 @@ export function AcademicYearTab({ school }: { school: any }) {
 
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     try {
-      const updatedSchool = await updateSchool(supabase, school.id, values);
-      setSchool(updatedSchool);
+      await updateSchool(supabase, school.id, values);
+      router.refresh();
       toast.success('Anno accademico aggiornato con successo');
     } catch (error) {
       toast.error('Errore durante il salvataggio');
