@@ -83,7 +83,11 @@ export default function CalendarPage() {
     let sId = schoolId;
     if (!sId) {
       const { data: { user } } = await supabase.auth.getUser();
-      const { data: profile } = await supabase.from("profiles").select("school_id").eq("id", user?.id).single();
+      if (!user) {
+        setLoading(false);
+        return;
+      }
+      const { data: profile } = await supabase.from("profiles").select("school_id").eq("id", user.id).single();
       sId = profile?.school_id;
     }
     if (!sId) return;
