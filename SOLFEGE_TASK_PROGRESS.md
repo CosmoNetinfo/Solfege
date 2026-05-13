@@ -282,14 +282,14 @@
 
 ---
 
-## ⬜ STEP 14 — Compensi Docenti
+## ✅ STEP 14 — Compensi Docenti
 
 ### Pagina Compensi (`/admin/compensi`)
-- [ ] Selettore mese/anno funzionante
-- [ ] Tabella: Docente · Ore · Totale · Stato
-- [ ] Badge "Da pagare" amber / "Pagato" verde
-- [ ] Calcolo ore da `attendance` JOIN `lessons` JOIN `courses`
-- [ ] "Segna come Pagato" → `teacher_compensations.paid = true`
+- [x] Selettore mese/anno funzionante
+- [x] Tabella: Docente · Ore · Totale · Stato
+- [x] Badge "Da pagare" amber / "Pagato" verde
+- [x] Calcolo ore da `attendance` JOIN `lessons` JOIN `courses`
+- [x] "Segna come Pagato" → `teacher_compensations.paid = true`
 
 ---
 

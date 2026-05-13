@@ -107,10 +107,11 @@ export default function AttendancePage({ params }: { params: Promise<{ lessonId:
       const { data: profile } = await supabase.from("profiles").select("school_id").eq("id", user.id).single();
 
       if (!profile?.school_id) throw new Error("Scuola non trovata");
+      const schoolId = profile.school_id as string;
 
       // Prepara i record per la tabella attendance
       const records = Object.entries(attendance).map(([studentId, data]) => ({
-        school_id: profile.school_id,
+        school_id: schoolId,
         lesson_id: resolvedParams.lessonId,
         student_id: studentId,
         status: data.status,
