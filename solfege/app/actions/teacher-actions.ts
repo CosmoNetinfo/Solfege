@@ -21,19 +21,8 @@ export async function inviteTeacher(teacher: { id: string; email: string; school
     if (alreadyExists) {
       console.log('[INVITE] Utente già esistente in auth:', alreadyExists.id)
       
-      // Aggiorna il profile_id nella tabella teachers
-      const { error: updateError } = await supabaseAdmin
-        .from('teachers')
-        .update({ profile_id: alreadyExists.id })
-        .eq('id', teacher.id)
-
-      if (updateError) {
-        console.error('[INVITE] Errore aggiornamento teachers:', updateError)
-        return { success: false, error: `Errore collegamento profilo teachers: ${updateError.message}` }
-      }
-
       console.log('[INVITE] Aggiornamento profilo in corso...')
-      // Assicuriamoci che il profilo esista e abbia il ruolo corretto
+      // 1. Assicuriamoci che il profilo esista PRIMA di collegarlo (evita violazione FK)
       const { error: profileError } = await supabaseAdmin.from('profiles').upsert({
         id: alreadyExists.id,
         school_id: teacher.school_id,
@@ -47,7 +36,18 @@ export async function inviteTeacher(teacher: { id: string; email: string; school
         return { success: false, error: `Errore aggiornamento profilo: ${profileError.message}` }
       }
 
-      return { success: true, message: 'Utente già registrato — profilo collegato' }
+      // 2. Aggiorna il profile_id nella tabella teachers
+      const { error: updateError } = await supabaseAdmin
+        .from('teachers')
+        .update({ profile_id: alreadyExists.id })
+        .eq('id', teacher.id)
+
+      if (updateError) {
+        console.error('[INVITE] Errore aggiornamento teachers:', updateError)
+        return { success: false, error: `Errore collegamento profilo teachers: ${updateError.message}` }
+      }
+
+      return { success: true, message: 'Utente già registrato — profilo collegato correttamente' }
     }
 
     const redirectTo = `${process.env.NEXT_PUBLIC_APP_URL}/api/auth/callback?next=/accept-invite`;
