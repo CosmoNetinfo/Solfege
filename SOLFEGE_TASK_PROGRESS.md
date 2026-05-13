@@ -21,10 +21,10 @@
 | 11 | Interfaccia Docente Mobile | ✅ Completato |
 | 12 | Statistiche | ✅ Completato |
 | 13 | Impostazioni Scuola | ✅ Completato |
-| 14 | Compensi Docenti | ⬜ Da fare |
+| 14 | Compensi Docenti | ✅ Completato |
 | 15 | Debug Panel | ✅ Completato |
 | 16 | Logo & Branding | ✅ Completato |
-| 17 | Polish & Deploy Vercel | ⏳ In corso |
+| 17 | Polish & Deploy Vercel | ✅ Completato |
 
 ---
 
@@ -321,14 +321,14 @@
 
 ---
 
-## ⏳ STEP 17 — Polish & Deploy Vercel
+## ✅ STEP 17 — Polish & Deploy Vercel
 
-- [ ] Loading States (Skeleton loaders)
-- [ ] Error Handling (app/error.tsx)
-- [ ] Empty States riutilizzabili
-- [ ] Responsive check (375px - 1440px)
-- [ ] `vercel --prod`
-- [ ] README.md completo
+- [x] Loading States (Skeleton loaders)
+- [x] Error Handling (app/error.tsx)
+- [x] Empty States riutilizzabili
+- [x] Responsive check (375px - 1440px)
+- [x] `vercel --prod`
+- [x] README.md completo
 
 ---
 
@@ -340,6 +340,8 @@
 | Step 4 | Testo bianco invisibile su sfondo chiaro | Bug globale: `text-white` → `text-foreground` |
 | Step 12 | Errore Recharts in dashboard | Avvolto grafico in `ResponsiveContainer` con dimensioni fisse |
 | Step 16 | Logo testo non rimosso | Rimosso h1 e sostituito con componente Image |
+| Step 14 | Turbopack build failure (@react-pdf) | Isolato componente PDF con `dynamic({ssr: false})` |
+| Step 17 | TypeScript error (AcademicYearTab) | Aggiunta colonna `current_academic_year` a schema e tipi |
 
 ---
 *Solfège v1.0 — Progress Tracker*
