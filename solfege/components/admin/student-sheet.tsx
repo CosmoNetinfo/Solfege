@@ -162,7 +162,7 @@ export function StudentSheet({ studentId, open, onOpenChange }: StudentSheetProp
                         <div className="p-3 rounded-lg border border-border/50 bg-stone-50/50">
                           <p className="text-[10px] text-muted-foreground uppercase font-bold mb-1">Data Iscrizione</p>
                           <p className="text-sm font-medium flex items-center gap-2">
-                            <Calendar Days className="h-3.5 w-3.5 text-muted-foreground" />
+                            <CalendarDays className="h-3.5 w-3.5 text-muted-foreground" />
                             {student.enrolled_at ? format(new Date(student.enrolled_at), "dd/MM/yyyy") : "—"}
                           </p>
                         </div>

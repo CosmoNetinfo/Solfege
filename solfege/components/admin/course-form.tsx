@@ -71,7 +71,43 @@ export function CourseFormDialog({ open, onOpenChange, schoolId, course, instrum
       colore_calendario: course.colore_calendario, anno_scolastico: course.anno_scolastico || "2024-2025",
     } : { type: "individuale", price_model: "mensile", duration_min: "60", max_students: "1", anno_scolastico: "2024-2025" },
   });
-
+  useEffect(() => {
+    if (open) {
+      if (course) {
+        reset({
+          name: course.name,
+          type: course.type,
+          level: course.level,
+          day_of_week: course.day_of_week !== null ? String(course.day_of_week) : "",
+          start_time: course.start_time || "",
+          duration_min: String(course.duration_min || "60"),
+          max_students: String(course.max_students || "1"),
+          price_model: course.price_model,
+          price: String(course.price || ""),
+          anno_scolastico: course.anno_scolastico || "2024-2025",
+        });
+        setSelectedColor(course.colore_calendario || "#E8621A");
+        setInstrumentId(course.instrument_id || "");
+        setRoomId(course.room_id || "");
+      } else {
+        reset({
+          type: "individuale",
+          price_model: "mensile",
+          duration_min: "60",
+          max_students: "1",
+          anno_scolastico: "2024-2025",
+          name: "",
+          level: "principiante",
+          day_of_week: "",
+          start_time: "",
+          price: "",
+        });
+        setSelectedColor("#E8621A");
+        setInstrumentId("");
+        setRoomId("");
+      }
+    }
+  }, [course, open, reset]);
   async function onSubmit(data: CourseFormValues) {
     setIsLoading(true);
     try {
