@@ -1,8 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { useState, useEffect, Suspense } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -21,8 +21,45 @@ const loginSchema = z.object({
 
 type LoginFormValues = z.infer<typeof loginSchema>;
 
+// Debug panel — reads session info from the API route after login
+function DebugPanel() {
+  const searchParams = useSearchParams();
+  const [debugInfo, setDebugInfo] = useState<any>(null);
+  const showDebug = searchParams.get("debug") === "1";
+
+  useEffect(() => {
+    if (!showDebug) return;
+    fetch("/api/debug/session")
+      .then((r) => r.json())
+      .then(setDebugInfo)
+      .catch((e) => setDebugInfo({ error: e.message }));
+  }, [showDebug]);
+
+  if (!showDebug) return null;
+
+  return (
+    <div style={{
+      background: "#1a1a2e",
+      border: "1px solid #ff4444",
+      borderRadius: 8,
+      padding: 16,
+      marginTop: 16,
+      fontSize: 12,
+      fontFamily: "monospace",
+      color: "#fff",
+      whiteSpace: "pre-wrap",
+      wordBreak: "break-all",
+    }}>
+      <strong style={{ color: "#ff8800" }}>🐛 DEBUG SESSION</strong>
+      <br />
+      {debugInfo ? JSON.stringify(debugInfo, null, 2) : "Caricamento..."}
+    </div>
+  );
+}
+
 export default function LoginPage() {
   const [isLoading, setIsLoading] = useState(false);
+  const [debugLog, setDebugLog] = useState<string[]>([]);
   const router = useRouter();
   const supabase = createClient();
 
@@ -34,25 +71,35 @@ export default function LoginPage() {
     resolver: zodResolver(loginSchema),
   });
 
+  function log(msg: string) {
+    console.log("[AUTH DEBUG]", msg);
+    setDebugLog((prev) => [...prev, `${new Date().toISOString().slice(11,19)} ${msg}`]);
+  }
+
   async function onSubmit(data: LoginFormValues) {
     setIsLoading(true);
+    setDebugLog([]);
     try {
+      log("Chiamata signInWithPassword...");
       const { data: authData, error } = await supabase.auth.signInWithPassword({
         email: data.email,
         password: data.password,
       });
 
       if (error) {
+        log(`ERRORE auth: ${error.message}`);
         toast.error("Credenziali non valide. Riprova.");
         return;
       }
 
-      toast.success("Accesso effettuato!");
-      // router.refresh() forces Next.js to re-fetch the server session
-      // so the auth cookie is written before navigating.
+      log(`Login OK — user: ${authData.user?.id}`);
+      log(`Session expires: ${authData.session?.expires_at}`);
+      log("Chiamata router.refresh()...");
       router.refresh();
+      log("Chiamata router.push('/admin/dashboard')...");
       router.push("/admin/dashboard");
-    } catch (err) {
+    } catch (err: any) {
+      log(`ECCEZIONE: ${err.message}`);
       toast.error("Si è verificato un errore inaspettato.");
     } finally {
       setIsLoading(false);
@@ -107,6 +154,29 @@ export default function LoginPage() {
         </Button>
 
       </form>
+
+      {/* Debug log visibile dopo il login */}
+      {debugLog.length > 0 && (
+        <div style={{
+          background: "#0f0f1a",
+          border: "1px solid #333",
+          borderRadius: 8,
+          padding: 12,
+          fontSize: 11,
+          fontFamily: "monospace",
+          color: "#aaffaa",
+          whiteSpace: "pre-wrap",
+        }}>
+          <strong style={{ color: "#ffaa00" }}>🐛 Auth Log</strong>
+          <br />
+          {debugLog.join("\n")}
+        </div>
+      )}
+
+      {/* Pannello debug sessione — visitare /login?debug=1 dopo il login */}
+      <Suspense fallback={null}>
+        <DebugPanel />
+      </Suspense>
 
       <div className="text-center text-sm">
         <span className="text-muted-foreground">Non hai una scuola? </span>
