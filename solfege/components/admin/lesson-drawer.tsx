@@ -39,6 +39,7 @@ export function LessonDrawer({ lessonId, isOpen, onClose, onRefresh }: LessonDra
   }, [lessonId, isOpen]);
 
   async function loadLessonDetails() {
+    if (!lessonId) return;
     setLoading(true);
     const { data, error } = await supabase
       .from("lessons")
@@ -72,6 +73,7 @@ export function LessonDrawer({ lessonId, isOpen, onClose, onRefresh }: LessonDra
   }
 
   async function updateStatus(newStatus: string) {
+    if (!lessonId) return;
     setUpdating(true);
     const { error } = await supabase
       .from("lessons")
@@ -89,6 +91,7 @@ export function LessonDrawer({ lessonId, isOpen, onClose, onRefresh }: LessonDra
   }
 
   async function toggleAttendance(studentId: string, currentStatus: string) {
+    if (!lessonId) return;
     const nextStatusMap: Record<string, string> = {
       'presente': 'assente',
       'assente': 'recupero',
