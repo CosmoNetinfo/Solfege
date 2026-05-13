@@ -42,13 +42,12 @@ export async function enrollStudent(supabase: SupabaseClient, data: EnrollmentDa
   if (course.day_of_week !== null && course.day_of_week !== undefined && course.start_time) {
     const lessonsToInsert = [];
     const [hours, minutes] = course.start_time.split(":").map(Number);
-    const duration = course.duration_minutes || 60;
+    const duration = course.duration_min || 60;
 
     let currentDate = startOfDay(parseISO(data.start_date));
     
     // Find the first occurrence of the day_of_week
     while (currentDate.getDay() !== course.day_of_week) {
-      currentDate = addWeeks(currentDate, 0); // Logic to move to next day
       currentDate.setDate(currentDate.getDate() + 1);
     }
 
@@ -74,7 +73,7 @@ export async function enrollStudent(supabase: SupabaseClient, data: EnrollmentDa
   }
 
   // 4. Generate First Payment
-  const amount = course.price_monthly ? (course.price_monthly * (1 - data.discount_pct / 100)) : 0;
+  const amount = course.price ? (course.price * (1 - data.discount_pct / 100)) : 0;
   if (amount > 0) {
     const { error: payError } = await supabase.from("payments").insert({
       school_id: data.school_id,

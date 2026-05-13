@@ -26,8 +26,34 @@ export async function GET(request: NextRequest) {
       }
     )
 
-    const { error } = await supabase.auth.exchangeCodeForSession(code)
-    if (!error) {
+    const { data: { user }, error } = await supabase.auth.exchangeCodeForSession(code)
+    
+    if (!error && user) {
+      // Logic for teacher invitation
+      const { teacher_id, school_id, role } = user.user_metadata || {};
+      
+      if (role === 'insegnante' && teacher_id) {
+        const { createAdminClient } = await import('@/lib/supabase/admin');
+        const admin = createAdminClient();
+        
+        // 1. Update teachers table
+        await admin
+          .from('teachers')
+          .update({ profile_id: user.id })
+          .eq('id', teacher_id);
+          
+        // 2. Update profiles table (role and school_id)
+        await admin
+          .from('profiles')
+          .update({ 
+            role: 'insegnante', 
+            school_id: school_id,
+            first_name: user.user_metadata.first_name || null,
+            last_name: user.user_metadata.last_name || null
+          })
+          .eq('id', user.id);
+      }
+
       return NextResponse.redirect(`${origin}${next}`)
     }
   }

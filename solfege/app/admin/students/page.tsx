@@ -292,6 +292,10 @@ export default function StudentsPage() {
         studentId={selectedStudentId}
         open={sheetOpen}
         onOpenChange={setSheetOpen}
+        onEdit={(s) => {
+          setEditStudent(s);
+          setDialogOpen(true);
+        }}
       />
 
       {/* Delete Confirmation */}

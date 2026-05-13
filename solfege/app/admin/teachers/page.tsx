@@ -94,7 +94,11 @@ export default function TeachersPage() {
       ...t,
       disponibilita: (dispData || [])
         .filter((d) => d.teacher_id === t.id)
-        .map((d) => ({ giorno: d.giorno, ora_inizio: d.ora_inizio, ora_fine: d.ora_fine })),
+        .map((d) => ({ 
+          giorno: d.giorno, 
+          ora_inizio: d.ora_inizio.substring(0, 5), 
+          ora_fine: d.ora_fine.substring(0, 5) 
+        })),
       active_students: new Set(
         (enrollData || []).filter((e) => e.teacher_id === t.id).map((e) => e.student_id)
       ).size,
@@ -257,6 +261,7 @@ export default function TeachersPage() {
         teacherId={selectedTeacherId}
         open={sheetOpen}
         onOpenChange={setSheetOpen}
+        onEdit={openEdit}
       />
 
       {/* Delete Confirmation */}

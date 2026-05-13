@@ -14,11 +14,16 @@ import {
   CheckCircle2,
   XCircle,
   AlertCircle,
-  GraduationCap
+  GraduationCap,
+  Smartphone,
+  Send,
+  Loader2
 } from "lucide-react";
 import { format } from "date-fns";
 import { it } from "date-fns/locale";
+import { toast } from "sonner";
 import { createClient } from "@/lib/supabase/client";
+import { inviteTeacher } from "@/app/actions/teacher-actions";
 import { 
   Sheet, 
   SheetContent, 
@@ -29,16 +34,19 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
+import { Button } from "@/components/ui/button";
 
 interface TeacherSheetProps {
   teacherId: string | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  onEdit?: (teacher: any) => void;
 }
 
-export function TeacherSheet({ teacherId, open, onOpenChange }: TeacherSheetProps) {
+export function TeacherSheet({ teacherId, open, onOpenChange, onEdit }: TeacherSheetProps) {
   const supabase = createClient();
   const [loading, setLoading] = useState(true);
+  const [inviting, setInviting] = useState(false);
   const [teacher, setTeacher] = useState<any>(null);
   const [courses, setCourses] = useState<any[]>([]);
   const [lessons, setLessons] = useState<any[]>([]);
@@ -82,6 +90,30 @@ export function TeacherSheet({ teacherId, open, onOpenChange }: TeacherSheetProp
     }
   }
 
+  async function handleInvite() {
+    if (!teacher) return;
+    if (!teacher.email) {
+      toast.error("L'insegnante non ha un indirizzo email.");
+      return;
+    }
+
+    setInviting(true);
+    try {
+      await inviteTeacher({
+        id: teacher.id,
+        email: teacher.email,
+        school_id: teacher.school_id,
+        first_name: teacher.first_name,
+        last_name: teacher.last_name
+      });
+      toast.success("Invito inviato con successo!");
+    } catch (err: any) {
+      toast.error(err.message || "Errore durante l'invio dell'invito");
+    } finally {
+      setInviting(false);
+    }
+  }
+
   if (!teacherId) return null;
 
   return (
@@ -94,21 +126,44 @@ export function TeacherSheet({ teacherId, open, onOpenChange }: TeacherSheetProp
         ) : teacher ? (
           <>
             <SheetHeader className="p-6 pb-4 bg-stone-50/50 border-b border-border/50">
-              <div className="flex items-center gap-4">
-                <div className="h-14 w-14 rounded-full bg-orange/10 flex items-center justify-center text-orange shrink-0">
-                  <GraduationCap className="h-7 w-7" />
-                </div>
-                <div className="space-y-1">
-                  <SheetTitle className="text-2xl font-serif font-bold text-foreground leading-tight">
-                    {teacher.last_name} {teacher.first_name}
-                  </SheetTitle>
-                  <div className="flex items-center gap-2">
-                    <Badge variant={teacher.active ? "outline" : "secondary"} className={teacher.active ? "text-green border-green/20 bg-green/5" : "text-muted-foreground"}>
-                      {teacher.active ? "Attivo" : "Inattivo"}
-                    </Badge>
-                    <span className="text-xs text-muted-foreground">ID: {teacher.id.slice(0, 8)}</span>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-4">
+                  <div className="h-14 w-14 rounded-full bg-orange/10 flex items-center justify-center text-orange shrink-0">
+                    <GraduationCap className="h-7 w-7" />
+                  </div>
+                  <div className="space-y-1">
+                    <SheetTitle className="text-2xl font-serif font-bold text-foreground leading-tight">
+                      {teacher.last_name} {teacher.first_name}
+                    </SheetTitle>
+                    <div className="flex items-center gap-2">
+                      <Badge variant={teacher.active ? "outline" : "secondary"} className={teacher.active ? "text-green border-green/20 bg-green/5" : "text-muted-foreground"}>
+                        {teacher.active ? "Attivo" : "Inattivo"}
+                      </Badge>
+                      <span className="text-xs text-muted-foreground">ID: {teacher.id.slice(0, 8)}</span>
+                    </div>
                   </div>
                 </div>
+
+                {teacher.profile_id ? (
+                  <Badge className="bg-green/10 text-green border-green/20 flex items-center gap-1 px-3 py-1">
+                    <Smartphone className="h-3.5 w-3.5" />
+                    Accesso attivo
+                  </Badge>
+                ) : (
+                  <Button 
+                    size="sm" 
+                    className="bg-orange hover:bg-orange-dark text-white gap-2"
+                    onClick={handleInvite}
+                    disabled={inviting}
+                  >
+                    {inviting ? (
+                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                    ) : (
+                      <Send className="h-3.5 w-3.5" />
+                    )}
+                    Invita al portale
+                  </Button>
+                )}
               </div>
             </SheetHeader>
 
@@ -272,7 +327,15 @@ export function TeacherSheet({ teacherId, open, onOpenChange }: TeacherSheetProp
               <Separator />
               <div className="p-6 bg-stone-50/30">
                 <div className="flex gap-3">
-                  <button className="flex-1 h-10 px-4 rounded-md bg-white border border-border text-sm font-medium hover:bg-stone-50 transition-colors">
+                  <button 
+                    onClick={() => {
+                      if (onEdit && teacher) {
+                        onEdit(teacher);
+                      }
+                      onOpenChange(false);
+                    }}
+                    className="flex-1 h-10 px-4 rounded-md bg-white border border-border text-sm font-medium hover:bg-stone-50 transition-colors"
+                  >
                     Modifica Profilo
                   </button>
                   <button className="flex-1 h-10 px-4 rounded-md bg-orange text-white text-sm font-medium hover:bg-orange-dark transition-colors">

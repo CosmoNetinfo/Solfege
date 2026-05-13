@@ -34,15 +34,17 @@ interface StudentSheetProps {
   studentId: string | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  onEdit?: (student: any) => void;
 }
 
-export function StudentSheet({ studentId, open, onOpenChange }: StudentSheetProps) {
+export function StudentSheet({ studentId, open, onOpenChange, onEdit }: StudentSheetProps) {
   const supabase = createClient();
   const [loading, setLoading] = useState(true);
   const [student, setStudent] = useState<any>(null);
   const [enrollments, setEnrollments] = useState<any[]>([]);
   const [attendance, setAttendance] = useState<any[]>([]);
   const [payments, setPayments] = useState<any[]>([]);
+  const [availability, setAvailability] = useState<any[]>([]);
 
   useEffect(() => {
     if (open && studentId) {
@@ -58,18 +60,21 @@ export function StudentSheet({ studentId, open, onOpenChange }: StudentSheetProp
         { data: studentData },
         { data: enrollData },
         { data: payData },
-        { data: attendData }
+        { data: attendData },
+        { data: availabilityData }
       ] = await Promise.all([
         supabase.from("students").select("*").eq("id", studentId).single(),
         supabase.from("enrollments").select("*, courses(*)").eq("student_id", studentId).order("created_at", { ascending: false }),
         supabase.from("payments").select("*, enrollments(courses(name))").eq("student_id", studentId).order("due_date", { ascending: false }),
-        supabase.from("attendance").select("*, lessons(*, courses(name))").eq("student_id", studentId).order("created_at", { ascending: false }).limit(20)
+        supabase.from("attendance").select("*, lessons(*, courses(name))").eq("student_id", studentId).order("created_at", { ascending: false }).limit(20),
+        supabase.from("disponibilita_allievi").select("*").eq("student_id", studentId).order("giorno")
       ]);
 
       setStudent(studentData);
       setEnrollments(enrollData || []);
       setPayments(payData || []);
       setAttendance(attendData || []);
+      setAvailability(availabilityData || []);
     } catch (error) {
       console.error("Errore caricamento dettagli studente:", error);
     } finally {
@@ -193,6 +198,26 @@ export function StudentSheet({ studentId, open, onOpenChange }: StudentSheetProp
 
                     <section className="space-y-4 pt-2">
                       <h4 className="text-xs font-bold uppercase text-muted-foreground tracking-widest flex items-center gap-2">
+                        <Clock className="h-3 w-3" /> Disponibilità Settimanale
+                      </h4>
+                      {availability.length === 0 ? (
+                        <p className="text-sm text-muted-foreground italic">Nessuna disponibilità registrata.</p>
+                      ) : (
+                        <div className="grid grid-cols-1 gap-2">
+                          {availability.map((slot) => (
+                            <div key={slot.id} className="flex items-center justify-between p-3 rounded-lg border border-border/50 bg-stone-50/50">
+                              <span className="text-sm font-bold capitalize">{slot.giorno}</span>
+                              <Badge variant="outline" className="text-xs border-orange/20 text-orange bg-orange/5">
+                                {slot.ora_inizio.substring(0, 5)} - {slot.ora_fine.substring(0, 5)}
+                              </Badge>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </section>
+
+                    <section className="space-y-4 pt-2">
+                      <h4 className="text-xs font-bold uppercase text-muted-foreground tracking-widest flex items-center gap-2">
                         <MapPin className="h-3 w-3" /> Indirizzo
                       </h4>
                       <p className="text-sm text-foreground bg-stone-50 p-3 rounded-md border border-border/50">
@@ -299,7 +324,15 @@ export function StudentSheet({ studentId, open, onOpenChange }: StudentSheetProp
               <Separator />
               <div className="p-6 bg-stone-50/30">
                 <div className="flex gap-3">
-                  <button className="flex-1 h-10 px-4 rounded-md bg-white border border-border text-sm font-medium hover:bg-stone-50 transition-colors">
+                  <button 
+                    onClick={() => {
+                      if (onEdit && student) {
+                        onEdit(student);
+                      }
+                      onOpenChange(false);
+                    }}
+                    className="flex-1 h-10 px-4 rounded-md bg-white border border-border text-sm font-medium hover:bg-stone-50 transition-colors"
+                  >
                     Modifica Allievo
                   </button>
                   <button className="flex-1 h-10 px-4 rounded-md bg-orange text-white text-sm font-medium hover:bg-orange-dark transition-colors">

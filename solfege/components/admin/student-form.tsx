@@ -20,6 +20,8 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 
+import { DisponibilitaGrid, type SlotDisponibilita } from "./disponibilita-grid";
+
 const studentSchema = z.object({
   first_name: z.string().min(2, "Minimo 2 caratteri"),
   last_name: z.string().min(2, "Minimo 2 caratteri"),
@@ -50,6 +52,7 @@ interface StudentFormDialogProps {
 
 export function StudentFormDialog({ open, onOpenChange, schoolId, student, onSuccess }: StudentFormDialogProps) {
   const [isLoading, setIsLoading] = useState(false);
+  const [slots, setSlots] = useState<SlotDisponibilita[]>([]);
   const supabase = createClient();
   const isEdit = !!student;
 
@@ -61,8 +64,28 @@ export function StudentFormDialog({ open, onOpenChange, schoolId, student, onSuc
   useEffect(() => {
     if (open) {
       reset(getStudentDefaultValues(student));
+      if (student) {
+        fetchAvailability(student.id);
+      } else {
+        setSlots([]);
+      }
     }
   }, [open, student, reset]);
+
+  async function fetchAvailability(studentId: string) {
+    const { data, error } = await supabase
+      .from("disponibilita_allievi")
+      .select("*")
+      .eq("student_id", studentId);
+    
+    if (!error && data) {
+      setSlots(data.map(s => ({
+        giorno: s.giorno,
+        ora_inizio: s.ora_inizio.substring(0, 5),
+        ora_fine: s.ora_fine.substring(0, 5)
+      })));
+    }
+  }
 
   function getStudentDefaultValues(s: any) {
     if (!s) return {};
@@ -102,21 +125,39 @@ export function StudentFormDialog({ open, onOpenChange, schoolId, student, onSuc
         email: data.email || null,
       };
 
+      let studentId = student?.id;
+
       if (isEdit) {
         const { error } = await supabase
           .from("students")
           .update(payload)
           .eq("id", student.id);
         if (error) throw error;
-        toast.success("Allievo aggiornato con successo");
       } else {
-        const { error } = await supabase
+        const { data: newStudent, error } = await supabase
           .from("students")
-          .insert(payload);
+          .insert(payload)
+          .select()
+          .single();
         if (error) throw error;
-        toast.success("Allievo creato con successo");
+        studentId = newStudent.id;
       }
 
+      // Sync availability slots
+      await supabase.from("disponibilita_allievi").delete().eq("student_id", studentId);
+      if (slots.length > 0) {
+        const slotsToInsert = slots.map(slot => ({
+          school_id: schoolId,
+          student_id: studentId,
+          giorno: slot.giorno,
+          ora_inizio: slot.ora_inizio,
+          ora_fine: slot.ora_fine
+        }));
+        const { error: slotsError } = await supabase.from("disponibilita_allievi").insert(slotsToInsert);
+        if (slotsError) throw slotsError;
+      }
+
+      toast.success(isEdit ? "Allievo aggiornato con successo" : "Allievo creato con successo");
       reset();
       onOpenChange(false);
       onSuccess();
@@ -225,6 +266,12 @@ export function StudentFormDialog({ open, onOpenChange, schoolId, student, onSuc
               </div>
             </div>
           )}
+
+          {/* Disponibilità Settimanale */}
+          <div className="space-y-4">
+            <h4 className="text-xs font-bold uppercase text-muted-foreground tracking-widest">Disponibilità Settimanale</h4>
+            <DisponibilitaGrid slots={slots} mode="edit" onChange={setSlots} />
+          </div>
 
           {/* Note */}
           <div className="space-y-4">
