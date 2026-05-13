@@ -26,6 +26,21 @@
 - **Componenti UI**: Radix UI / Shadcn UI
 - **Grafica**: Recharts (Statistiche) e Lucide React (Icone)
 - **PDF**: @react-pdf/renderer
+- **State Management**: Zustand
+
+## 💎 Caratteristiche Premium
+
+### 🛠️ Solfège Debug Console
+Integrata per gli sviluppatori e gli amministratori, accessibile con `Ctrl+Shift+D`. Permette il monitoraggio in tempo reale di:
+- **Sessione**: Dettagli utente, ruolo e metadati della scuola.
+- **Query Log**: Tracciamento di ogni chiamata al database con tempi di esecuzione.
+- **Performance**: Monitoraggio della memoria e dei tempi di caricamento delle rotte.
+
+### 📊 Calcolo Compensi Intelligente
+Il sistema automatizza il calcolo dei compensi per i docenti basandosi sulle presenze effettive. Distingue tra lezioni individuali e collettive, applicando le tariffe orarie configurate e generando un riepilogo mensile pronto per il pagamento.
+
+### 🛡️ Sicurezza e Isolamento
+Sfrutta appieno le **Row Level Security (RLS)** di Supabase per garantire che ogni scuola sia un'isola sicura. I dati di una scuola non sono mai accessibili da un'altra, e i docenti possono vedere solo i propri allievi e le proprie lezioni.
 
 ## 🎨 Design System
 

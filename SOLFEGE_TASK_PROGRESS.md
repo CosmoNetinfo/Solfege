@@ -342,6 +342,8 @@
 | Step 16 | Logo testo non rimosso | Rimosso h1 e sostituito con componente Image |
 | Step 14 | Turbopack build failure (@react-pdf) | Isolato componente PDF con `dynamic({ssr: false})` |
 | Step 17 | TypeScript error (AcademicYearTab) | Aggiunta colonna `current_academic_year` a schema e tipi |
+| Step 17 | TypeScript error (logger.ts) | Sostituito `set` con `useDebugStore.setState` |
+| Step 17 | TypeScript error (getPayments) | Cast `filters.status` a `any` per match enum |
 
 ---
 *Solfège v1.0 — Progress Tracker*
