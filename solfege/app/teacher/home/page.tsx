@@ -14,6 +14,7 @@ export default function TeacherHomePage() {
   const [loading, setLoading] = useState(true);
   const [lessons, setLessons] = useState<any[]>([]);
   const [teacherName, setTeacherName] = useState("");
+  const [stats, setStats] = useState({ hours: 0, studentsCount: 0 });
 
   useEffect(() => {
     loadData();
@@ -39,21 +40,54 @@ export default function TeacherHomePage() {
 
     // Recupera lezioni di oggi per questo insegnante
     const today = new Date().toISOString().split("T")[0];
-    const { data: lessonsData } = await supabase
-      .from("lessons")
-      .select(`
-        id,
-        data_ora_inizio,
-        data_ora_fine,
-        status,
-        courses (name, color:colore_calendario),
-        rooms (name)
-      `)
-      .eq("teacher_id", teacher.id)
-      .gte("data_ora_inizio", today + "T00:00:00")
-      .lte("data_ora_inizio", today + "T23:59:59")
-      .order("data_ora_inizio");
+    
+    // Recupera le compensations per il mese corrente per le ore lavorate
+    const currentMonth = new Date().getMonth() + 1;
+    const currentYear = new Date().getFullYear();
 
+    const [
+      { data: lessonsData },
+      { data: compensationsData },
+      { data: enrollmentsData }
+    ] = await Promise.all([
+      supabase
+        .from("lessons")
+        .select(`
+          id,
+          data_ora_inizio,
+          data_ora_fine,
+          status,
+          courses (name, color:colore_calendario),
+          rooms (name)
+        `)
+        .eq("teacher_id", teacher.id)
+        .gte("data_ora_inizio", today + "T00:00:00")
+        .lte("data_ora_inizio", today + "T23:59:59")
+        .order("data_ora_inizio"),
+      supabase
+        .from("teacher_compensations")
+        .select("hours_individual, hours_group")
+        .eq("teacher_id", teacher.id)
+        .eq("month", currentMonth)
+        .eq("year", currentYear)
+        .single(),
+      supabase
+        .from("enrollments")
+        .select("student_id")
+        .eq("teacher_id", teacher.id)
+        .eq("status", "active")
+    ]);
+
+    const totalHours = compensationsData 
+      ? Number(compensationsData.hours_individual) + Number(compensationsData.hours_group) 
+      : 0;
+
+    const uniqueStudents = new Set((enrollmentsData || []).map(e => e.student_id)).size;
+
+    setStats({
+      hours: totalHours,
+      studentsCount: uniqueStudents
+    });
     setLessons(lessonsData || []);
     setLoading(false);
   }
@@ -136,11 +170,11 @@ export default function TeacherHomePage() {
         <div className="grid grid-cols-2 gap-4">
           <div className="space-y-1">
             <p className="text-xs text-[#7A736C] uppercase font-bold tracking-wider">Ore Lavorate</p>
-            <p className="text-2xl font-bold text-[#1A1714]">24.5 h</p>
+            <p className="text-2xl font-bold text-[#1A1714]">{stats.hours.toFixed(1)} h</p>
           </div>
           <div className="space-y-1">
             <p className="text-xs text-[#7A736C] uppercase font-bold tracking-wider">Allievi Attivi</p>
-            <p className="text-2xl font-bold text-[#1A1714]">12</p>
+            <p className="text-2xl font-bold text-[#1A1714]">{stats.studentsCount}</p>
           </div>
         </div>
       </section>
