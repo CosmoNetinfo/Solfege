@@ -3,11 +3,7 @@ import { NextResponse, type NextRequest } from 'next/server'
 import { Database } from '@/types/database.types'
 
 export default async function proxy(request: NextRequest) {
-  let response = NextResponse.next({
-    request: {
-      headers: request.headers,
-    },
-  })
+  let supabaseResponse = NextResponse.next({ request })
 
   const supabase = createServerClient<Database>(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -18,31 +14,35 @@ export default async function proxy(request: NextRequest) {
           return request.cookies.getAll()
         },
         setAll(cookiesToSet) {
-          cookiesToSet.forEach(({ name, value, options }) => request.cookies.set(name, value))
-          response = NextResponse.next({
-            request: {
-              headers: request.headers,
-            },
-          })
+          cookiesToSet.forEach(({ name, value }) =>
+            request.cookies.set(name, value)
+          )
+          supabaseResponse = NextResponse.next({ request })
           cookiesToSet.forEach(({ name, value, options }) =>
-            response.cookies.set(name, value, options)
+            supabaseResponse.cookies.set(name, value, options)
           )
         },
       },
     }
   )
 
+  // IMPORTANT: use getUser() not getSession() — getSession() reads only
+  // the local token without server-side validation, causing the redirect loop.
   const {
-    data: { session },
-  } = await supabase.auth.getSession()
+    data: { user },
+  } = await supabase.auth.getUser()
 
-  if (!session && (request.nextUrl.pathname.startsWith('/admin') || request.nextUrl.pathname.startsWith('/teacher'))) {
+  if (
+    !user &&
+    (request.nextUrl.pathname.startsWith('/admin') ||
+      request.nextUrl.pathname.startsWith('/teacher'))
+  ) {
     return NextResponse.redirect(new URL('/login', request.url))
   }
 
-  return response
+  return supabaseResponse
 }
 
 export const config = {
-  matcher: ['/admin/:path*', '/teacher/:path*']
+  matcher: ['/admin/:path*', '/teacher/:path*'],
 }
