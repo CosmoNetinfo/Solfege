@@ -48,8 +48,10 @@ export default function LoginPage() {
       }
 
       toast.success("Accesso effettuato!");
-      // Redirect esplicito lato client per bypassare problemi middleware
-      window.location.href = "/admin/dashboard";
+      // router.refresh() forces Next.js to re-fetch the server session
+      // so the auth cookie is written before navigating.
+      router.refresh();
+      router.push("/admin/dashboard");
     } catch (err) {
       toast.error("Si è verificato un errore inaspettato.");
     } finally {
