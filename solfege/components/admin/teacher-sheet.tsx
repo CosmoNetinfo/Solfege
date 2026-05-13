@@ -51,6 +51,7 @@ export function TeacherSheet({ teacherId, open, onOpenChange }: TeacherSheetProp
   }, [open, teacherId]);
 
   async function loadData() {
+    if (!teacherId) return;
     setLoading(true);
     try {
       const [

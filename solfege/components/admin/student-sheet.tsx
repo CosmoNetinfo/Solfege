@@ -51,6 +51,7 @@ export function StudentSheet({ studentId, open, onOpenChange }: StudentSheetProp
   }, [open, studentId]);
 
   async function loadData() {
+    if (!studentId) return;
     setLoading(true);
     try {
       const [
