@@ -67,7 +67,7 @@ export function StudentSheet({ studentId, open, onOpenChange, onEdit }: StudentS
         supabase.from("enrollments").select("*, courses(*)").eq("student_id", studentId).order("created_at", { ascending: false }),
         supabase.from("payments").select("*, enrollments(courses(name))").eq("student_id", studentId).order("due_date", { ascending: false }),
         supabase.from("attendance").select("*, lessons(*, courses(name))").eq("student_id", studentId).order("created_at", { ascending: false }).limit(20),
-        supabase.from("disponibilita_allievi").select("*").eq("student_id", studentId).order("giorno")
+        (supabase.from("disponibilita_allievi" as any)).select("*").eq("student_id", studentId).order("giorno")
       ]);
 
       setStudent(studentData);

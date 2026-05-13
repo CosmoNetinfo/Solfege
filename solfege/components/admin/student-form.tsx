@@ -73,8 +73,7 @@ export function StudentFormDialog({ open, onOpenChange, schoolId, student, onSuc
   }, [open, student, reset]);
 
   async function fetchAvailability(studentId: string) {
-    const { data, error } = await supabase
-      .from("disponibilita_allievi")
+    const { data, error } = await (supabase.from("disponibilita_allievi" as any))
       .select("*")
       .eq("student_id", studentId);
     
@@ -144,7 +143,7 @@ export function StudentFormDialog({ open, onOpenChange, schoolId, student, onSuc
       }
 
       // Sync availability slots
-      await supabase.from("disponibilita_allievi").delete().eq("student_id", studentId);
+      await (supabase.from("disponibilita_allievi" as any)).delete().eq("student_id", studentId);
       if (slots.length > 0) {
         const slotsToInsert = slots.map(slot => ({
           school_id: schoolId,
@@ -153,7 +152,7 @@ export function StudentFormDialog({ open, onOpenChange, schoolId, student, onSuc
           ora_inizio: slot.ora_inizio,
           ora_fine: slot.ora_fine
         }));
-        const { error: slotsError } = await supabase.from("disponibilita_allievi").insert(slotsToInsert);
+        const { error: slotsError } = await (supabase.from("disponibilita_allievi" as any)).insert(slotsToInsert);
         if (slotsError) throw slotsError;
       }
 
