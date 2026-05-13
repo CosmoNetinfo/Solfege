@@ -103,18 +103,37 @@ export default function RegisterPage() {
 
       if (schoolError) throw schoolError;
 
-      // 3. Aggiorna Profilo (Il trigger SQL ha creato il profilo, noi aggiorniamo school_id e ruolo)
-      const { error: profileError } = await supabase
-        .from("profiles")
-        .update({
-          first_name: data.firstName,
-          last_name: data.lastName,
-          school_id: schoolData.id,
-          role: "admin",
-        })
-        .eq("id", authData.user.id);
+      // 3. Aggiorna Profilo
+      // Il trigger SQL handle_new_user crea il profilo, ma potrebbe esserci una minima latenza.
+      // Proviamo ad aggiornare il profilo con un piccolo sistema di retry se necessario.
+      let profileUpdated = false;
+      let lastProfileError = null;
 
-      if (profileError) throw profileError;
+      for (let i = 0; i < 3; i++) {
+        const { data: pData, error: pErr } = await supabase
+          .from("profiles")
+          .update({
+            first_name: data.firstName,
+            last_name: data.lastName,
+            school_id: schoolData.id,
+            role: "admin",
+          })
+          .eq("id", authData.user.id)
+          .select();
+
+        if (!pErr && pData && pData.length > 0) {
+          profileUpdated = true;
+          break;
+        }
+        
+        lastProfileError = pErr;
+        // Aspetta 500ms prima di riprovare
+        await new Promise(resolve => setTimeout(resolve, 500));
+      }
+
+      if (!profileUpdated) {
+        throw new Error(lastProfileError?.message || "Impossibile aggiornare il profilo amministratore. Verifica la connessione.");
+      }
 
       toast.success("Scuola creata con successo!");
       window.location.href = "/admin/dashboard";
