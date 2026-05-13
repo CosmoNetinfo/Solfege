@@ -32,12 +32,23 @@ export default async function proxy(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser()
 
-  if (
-    !user &&
-    (request.nextUrl.pathname.startsWith('/admin') ||
-      request.nextUrl.pathname.startsWith('/teacher'))
-  ) {
-    return NextResponse.redirect(new URL('/login', request.url))
+  const role = user?.user_metadata?.role
+
+  // 1. Unauthenticated users
+  if (!user) {
+    if (request.nextUrl.pathname.startsWith('/admin') || request.nextUrl.pathname.startsWith('/teacher')) {
+      return NextResponse.redirect(new URL('/login', request.url))
+    }
+    return supabaseResponse
+  }
+
+  // 2. Role-based Access Control
+  if (role === 'insegnante' && request.nextUrl.pathname.startsWith('/admin')) {
+    return NextResponse.redirect(new URL('/teacher/home', request.url))
+  }
+
+  if (role === 'admin' && request.nextUrl.pathname.startsWith('/teacher')) {
+    return NextResponse.redirect(new URL('/admin/dashboard', request.url))
   }
 
   return supabaseResponse
