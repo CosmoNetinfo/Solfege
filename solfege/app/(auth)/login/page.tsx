@@ -93,11 +93,18 @@ export default function LoginPage() {
       }
 
       log(`Login OK — user: ${authData.user?.id}`);
-      log(`Session expires: ${authData.session?.expires_at}`);
-      log("Chiamata router.refresh()...");
+      log(`Role detected: ${authData.user?.user_metadata?.role}`);
+      
       router.refresh();
-      log("Chiamata router.push('/admin/dashboard')...");
-      router.push("/admin/dashboard");
+      
+      const role = authData.user?.user_metadata?.role;
+      if (role === 'insegnante') {
+        log("Redirecting to /teacher/home...");
+        router.push("/teacher/home");
+      } else {
+        log("Redirecting to /admin/dashboard...");
+        router.push("/admin/dashboard");
+      }
     } catch (err: any) {
       log(`ECCEZIONE: ${err.message}`);
       toast.error("Si è verificato un errore inaspettato.");

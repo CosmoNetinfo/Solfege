@@ -11,15 +11,16 @@ export default function TeacherLayout({
   return (
     <div className="min-h-screen bg-[#FAFAF9] flex flex-col">
       {/* Header Mobile-first */}
-      <header className="sticky top-0 z-40 w-full h-16 bg-white border-b border-[#E8E4E0] flex items-center justify-center">
-        <Image 
-          src="/solfege-logo.png" 
-          alt="Solfège Logo" 
-          width={150} 
-          height={40} 
-          priority
-          className="object-contain"
-        />
+      <header className="sticky top-0 z-40 w-full h-20 bg-white border-b border-[#E8E4E0] flex items-center justify-center px-4">
+        <div className="relative h-12 w-48">
+          <Image 
+            src="/solfege-logo.png" 
+            alt="Solfège Logo" 
+            fill
+            priority
+            className="object-contain"
+          />
+        </div>
       </header>
 
       {/* Main Content Area */}

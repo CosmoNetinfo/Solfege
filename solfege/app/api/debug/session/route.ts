@@ -46,7 +46,7 @@ export async function GET() {
       user: {
         id: user.id,
         email: user.email,
-        role: user.role,
+        role: user.user_metadata?.role,
       },
       profile: profile ?? null,
       profileError: profileError?.message ?? null,
