@@ -51,6 +51,17 @@ export function TeacherSheet({ teacherId, open, onOpenChange, onEdit }: TeacherS
   const [courses, setCourses] = useState<any[]>([]);
   const [lessons, setLessons] = useState<any[]>([]);
   const [compensations, setCompensations] = useState<any[]>([]);
+  const [cooldown, setCooldown] = useState(0);
+
+  useEffect(() => {
+    let timer: any;
+    if (cooldown > 0) {
+      timer = setInterval(() => {
+        setCooldown((prev) => prev - 1);
+      }, 1000);
+    }
+    return () => clearInterval(timer);
+  }, [cooldown]);
 
   useEffect(() => {
     if (open && teacherId) {
@@ -97,18 +108,43 @@ export function TeacherSheet({ teacherId, open, onOpenChange, onEdit }: TeacherS
       return;
     }
 
+    if (cooldown > 0) {
+      toast.warning(`Attendi ${cooldown} secondi prima di reinviare l'invito.`);
+      return;
+    }
+
     setInviting(true);
     try {
-      await inviteTeacher({
+      const result = await inviteTeacher({
         id: teacher.id,
         email: teacher.email,
         school_id: teacher.school_id,
         first_name: teacher.first_name,
         last_name: teacher.last_name
       });
-      toast.success("Invito inviato con successo!");
+      
+      if (result.success) {
+        toast.success(result.message || "Invito inviato con successo!");
+        setCooldown(60);
+        
+        // Log the link in dev mode for testing
+        if ((result as any).action_link) {
+          console.log("[INVITE] Link invito:", (result as any).action_link);
+        }
+
+        // Se l'utente era già esistente, ricarichiamo i dati per mostrare "Accesso attivo"
+        if (result.message?.includes("già registrato")) {
+          loadData();
+        }
+      } else {
+        if (result.error?.includes("Limite di invio")) {
+          toast.warning(result.error);
+        } else {
+          toast.error(result.error || "Errore durante l'invio dell'invito");
+        }
+      }
     } catch (err: any) {
-      toast.error(err.message || "Errore durante l'invio dell'invito");
+      toast.error("Errore durante l'invio dell'invito");
     } finally {
       setInviting(false);
     }
@@ -154,14 +190,16 @@ export function TeacherSheet({ teacherId, open, onOpenChange, onEdit }: TeacherS
                     size="sm" 
                     className="bg-orange hover:bg-orange-dark text-white gap-2"
                     onClick={handleInvite}
-                    disabled={inviting}
+                    disabled={inviting || cooldown > 0}
                   >
                     {inviting ? (
                       <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                    ) : cooldown > 0 ? (
+                      <span className="text-xs font-mono">{cooldown}s</span>
                     ) : (
                       <Send className="h-3.5 w-3.5" />
                     )}
-                    Invita al portale
+                    {cooldown > 0 ? `Reinvia tra ${cooldown}s` : "Invita al portale"}
                   </Button>
                 )}
               </div>
@@ -198,11 +236,11 @@ export function TeacherSheet({ teacherId, open, onOpenChange, onEdit }: TeacherS
                         <User className="h-3 w-3" /> Contatti & Info
                       </h4>
                       <div className="grid grid-cols-2 gap-4">
-                        <div className="p-3 rounded-lg border border-border/50 bg-stone-50/50">
+                        <div className="p-3 rounded-lg border border-border/50 bg-stone-50/50 overflow-hidden">
                           <p className="text-[10px] text-muted-foreground uppercase font-bold mb-1">Email</p>
-                          <p className="text-sm font-medium flex items-center gap-2">
-                            <Mail className="h-3.5 w-3.5 text-muted-foreground" />
-                            {teacher.email || "—"}
+                          <p className="text-sm font-medium flex items-center gap-2 truncate" title={teacher.email || ""}>
+                            <Mail className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+                            <span className="truncate">{teacher.email || "—"}</span>
                           </p>
                         </div>
                         <div className="p-3 rounded-lg border border-border/50 bg-stone-50/50">
