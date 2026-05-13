@@ -56,18 +56,23 @@ export function TeacherSheet({ teacherId, open, onOpenChange }: TeacherSheetProp
     try {
       const [
         { data: teacherData },
-        { data: courseData },
+        { data: enrollmentsForCourses },
         { data: lessonData },
         { data: compData }
       ] = await Promise.all([
         supabase.from("teachers").select("*").eq("id", teacherId).single(),
-        supabase.from("courses").select("*").eq("teacher_id", teacherId).order("name"),
+        supabase.from("enrollments").select("*, courses(*)").eq("teacher_id", teacherId),
         supabase.from("lessons").select("*, courses(name)").eq("teacher_id", teacherId).order("data_ora_inizio", { ascending: false }).limit(20),
         supabase.from("teacher_compensations").select("*").eq("teacher_id", teacherId).order("year", { ascending: false }).order("month", { ascending: false })
       ]);
 
+      // Extract unique courses from enrollments
+      const uniqueCourses = Array.from(new Set((enrollmentsForCourses || []).map(e => e.courses?.id)))
+        .map(id => enrollmentsForCourses?.find(e => e.courses?.id === id)?.courses)
+        .filter(Boolean);
+
       setTeacher(teacherData);
-      setCourses(courseData || []);
+      setCourses(uniqueCourses);
       setLessons(lessonData || []);
       setCompensations(compData || []);
     } catch (error) {
