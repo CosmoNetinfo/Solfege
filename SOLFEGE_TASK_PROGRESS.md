@@ -134,12 +134,15 @@
 ---
 
 ## ✅ STEP 7 — Modulo Insegnanti
-
 ### Lista Insegnanti (`/admin/insegnanti`)
 - [x] Card layout (non tabella)
 - [x] Avatar con iniziali colorato
 - [x] Badge specializzazioni (arancio outlined)
 - [x] Disponibilità settimanale visibile in card
+- [x] Flusso invito completo funzionante ✅
+- [x] Badge "Accesso attivo" se profile_id presente ✅
+- [x] Cooldown 60s sul pulsante invito ✅
+- [x] Fix FK constraint (profiles prima di teachers) ✅
 
 ---
 
@@ -229,22 +232,24 @@
 ---
 
 ## ✅ STEP 11 — Interfaccia Docente Mobile
-
-### Layout Docente (`app/(teacher)/layout.tsx`)
-- [x] Bottom Navigation Bar con 4 voci
-- [x] Header con logo Solfège centrato
-- [x] Layout corretto su 375px (iPhone SE)
+### Layout Docente (`app/teacher/layout.tsx`)
+- [x] Bottom Navigation Bar con 4 voci funzionante ✅
+- [x] Header con logo Solfège centrato (fix clipping) ✅
+- [x] Layout corretto su 375px (iPhone SE) ✅
+- [x] Middleware RBAC implementato (docente non accede a /admin/*) ✅
 
 ### Home Docente
+- [x] Login docente → redirect automatico a /teacher/home ✅
 - [x] "Oggi — [data]" con lezioni del giorno
 - [x] Link "Segna presenze →" per ogni lezione
-- [x] Mostra SOLO lezioni del docente loggato (RLS)
+- [x] Mostra SOLO lezioni del docente loggato (RLS) ✅
 
 ### Registro Presenze Docente
 - [x] Header: nome corso + data
 - [x] Lista allievi con toggle a 3 stati
 - [x] Pulsante "Salva presenze" arancio in fondo
 - [x] Salvataggio in blocco in `attendance`
+- [x] Salvataggio in blocco in `attendance` ✅
 
 ---
 
@@ -348,6 +353,16 @@
 | Step 17 | Root page issue | Aggiunto redirect immediato in `app/page.tsx` |
 | Step 17 | Signup Database Error | Aggiunto retry logic per update profilo in `register/page.tsx` |
 | Step 17 | Login Redirect | Uso `window.location.href` e rinominato `middleware.ts` → `proxy.ts` |
+| Step 18 | Recharts Dimension Warning | Wrappato ResponsiveContainer in div con altezza esplicita |
+| Step 18 | Logo Preload Warning | Aggiunta prop `priority` ai componenti Image del logo |
+| Step 18 | Modali Modifica Vuoti | Aggiunto `useEffect` + `reset` nei form Allievi/Insegnanti per binding dati |
+| Step 19 | Middleware RBAC mancante | Implementato redirect per ruolo (teacher -> home, admin -> dashboard) |
+| Step 20 | ScrollArea mancante | Installato da Radix UI (creato componente `scroll-area.tsx`) |
+| Step 20 | Null safety Calendar/Drawer | Corretti TS2322/TS2345 in CalendarPage e LessonDrawer |
+| Step 20 | Enum casting Status | Aggiunto cast esplicito StatoLezione/StatoPresenza |
+| Step 20 | Routing 404 teacher | Creata pagina `attendance/page.tsx` mancante |
+| Step 20 | Errore 406 sessione | Sostituito `.single()` con `.maybeSingle()` ovunque |
+
 
 ---
 *Solfège v1.0 — Progress Tracker*
