@@ -347,6 +347,7 @@
 | Step 17 | TypeScript error (queries.ts) | Fix null checks e nomi colonne in `getTeacherCompensationsStats` |
 | Step 17 | Root page issue | Aggiunto redirect immediato in `app/page.tsx` |
 | Step 17 | Signup Database Error | Aggiunto retry logic per update profilo in `register/page.tsx` |
+| Step 17 | Login Redirect | Uso `window.location.href` e rinominato `middleware.ts` → `proxy.ts` |
 
 ---
 *Solfège v1.0 — Progress Tracker*
