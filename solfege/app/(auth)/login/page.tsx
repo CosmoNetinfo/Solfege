@@ -96,12 +96,12 @@ export default function LoginPage() {
       let role = authData.user?.user_metadata?.role;
       log(`Role from metadata: ${role}`);
       
-      if (!role) {
+      if (!role && authData.user) {
         log("Role missing in metadata, fetching from profiles...");
         const { data: profile } = await supabase
           .from('profiles')
           .select('role')
-          .eq('id', authData.user?.id)
+          .eq('id', authData.user.id)
           .single();
         role = profile?.role;
         log(`Role from profile: ${role}`);
