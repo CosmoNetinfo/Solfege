@@ -101,95 +101,88 @@
 ---
 
 ## 8. PAGAMENTI
-
-- [ ] Lista pagamenti carica con `@tanstack/react-table`
-- [ ] Tab: Tutti / In Attesa / In Ritardo / Pagati funzionano
-- [ ] KPI card (Incassato mese, In attesa, In ritardo) mostrano valori corretti
-- [ ] Badge colorati: amber (in attesa), verde (pagato), rosso (in ritardo)
-- [ ] "Segna come Pagato" → dialog → aggiorna status + paid_date in DB
-- [ ] Numero ricevuta progressivo generato correttamente
-- [ ] Generazione PDF ricevuta funziona
-- [ ] Download PDF funziona nel browser
-- [ ] Web Share API funziona su mobile (testa su telefono)
+- [x] Lista pagamenti carica con `@tanstack/react-table`
+- [x] Tab: Tutti / In Attesa / In Ritardo / Pagati funzionano
+- [x] KPI card (Incassato mese, In attesa, In ritardo) mostrano valori corretti
+- [x] Badge colorati: amber (in attesa), verde (pagato), rosso (in ritardo)
+- [x] "Segna come Pagato" → dialog → aggiorna status + paid_date in DB
+- [x] Numero ricevuta progressivo generato correttamente
+- [x] Generazione PDF ricevuta funziona
+- [x] Download PDF funziona nel browser
+- [x] Web Share API funziona su mobile (testa su telefono)
 
 ---
 
 ## 9. IMPOSTAZIONI
-
-- [ ] Tab Scuola → form carica dati esistenti
-- [ ] Modifica nome scuola → salva → si aggiorna in sidebar in real-time
-- [ ] Upload logo → carica su Supabase Storage bucket `logos` → URL salvato in `schools.logo_url`
-- [ ] Tab Anno Accademico → modifica anno → salva
-- [ ] Tab Strumenti → add strumento → appare in lista
-- [ ] Tab Strumenti → remove strumento → rimosso da lista
-- [ ] Tab Aule → add aula (nome + capienza + insonorizzata) → salva
-- [ ] Tab Aule → remove aula → rimossa da lista
-- [ ] Tab Utenti → lista profili visibile con ruoli
-- [ ] Tab Abbonamento → piano e scadenza visibili
+- [x] Tab Scuola → form carica dati esistenti
+- [x] Modifica nome scuola → salva → si aggiorna in sidebar in real-time
+- [x] Upload logo → carica su Supabase Storage bucket `logos` → URL salvato in `schools.logo_url`
+- [x] Tab Anno Accademico → modifica anno → salva
+- [x] Tab Strumenti → add strumento → appare in lista
+- [x] Tab Strumenti → remove strumento → rimosso da lista
+- [x] Tab Aule → add aula (nome + capienza + insonorizzata) → salva
+- [x] Tab Aule → remove aula → rimossa da lista
+- [x] Tab Utenti → lista profili visibile con ruoli
+- [x] Tab Abbonamento → piano e scadenza visibili
 
 ---
 
 ## 10. COMPENSI DOCENTI
-
-- [ ] Tabella compensi carica con dati
-- [ ] Selettore mese/anno funziona e ricarica dati
-- [ ] Calcolo ore da `attendance` JOIN `lessons` JOIN `courses` corretto
-- [ ] Badge "Da pagare" amber / "Pagato" verde corretti
-- [ ] "Segna come Pagato" → aggiorna `teacher_compensations.paid = true` + `paid_date`
+- [x] Tabella compensi carica con dati
+- [x] Selettore mese/anno funziona e ricarica dati
+- [x] Calcolo ore da `attendance` JOIN `lessons` JOIN `courses` corretto
+- [x] Badge "Da pagare" amber / "Pagato" verde corretti
+- [x] "Segna come Pagato" → aggiorna `teacher_compensations.paid = true` + `paid_date`
 
 ---
 
 ## 11. STATISTICHE
-
-- [ ] Sezione Finanziaria: BarChart incassi mensili si renderizza
-- [ ] Sezione Finanziaria: PieChart metodi pagamento si renderizza
-- [ ] Sezione Finanziaria: KPI (Totale anno, Media mensile, Tasso morosità) visibili
-- [ ] Sezione Allievi: LineChart iscrizioni per mese si renderizza
-- [ ] Sezione Allievi: BarChart allievi per strumento si renderizza
-- [ ] Sezione Lezioni: BarChart lezioni settimanali si renderizza
-- [ ] Sezione Insegnanti: tabella compensi visibile
-- [ ] Filtro anno scolastico aggiorna tutti i grafici
-- [ ] Pulsante "Esporta CSV" scarica file valido
-- [ ] Nessun errore Recharts in console
+- [x] Sezione Finanziaria: BarChart incassi mensili si renderizza
+- [x] Sezione Finanziaria: PieChart metodi pagamento si renderizza
+- [x] Sezione Finanziaria: KPI (Totale anno, Media mensile, Tasso morosità) visibili
+- [x] Sezione Allievi: LineChart iscrizioni per mese si renderizza
+- [x] Sezione Allievi: BarChart allievi per strumento si renderizza
+- [x] Sezione Lezioni: BarChart lezioni settimanali si renderizza
+- [x] Sezione Insegnanti: tabella compensi visibile
+- [x] Filtro anno scolastico aggiorna tutti i grafici
+- [x] Pulsante "Esporta CSV" scarica file valido
+- [x] Nessun errore Recharts in console
 
 ---
 
 ## 12. DEBUG PANEL
-
-- [ ] Shortcut `Ctrl+Shift+D` apre il pannello
-- [ ] Pulsante `Bug` fisso bottom-right visibile
-- [ ] Tab Sessione: User ID, Email, Ruolo, School ID visibili con dati reali
-- [ ] Tab Log: eventi in real-time con badge colorati
-- [ ] Tab Log: filtro per tipo funziona
-- [ ] Tab Log: "Pulisci log" e "Esporta JSON" funzionano
-- [ ] Tab Database: stato connessione Supabase (verde/rosso)
-- [ ] Tab Database: ultima query + ms visibili
-- [ ] Tab Performance: memoria JS, route corrente, NODE_ENV visibili
+- [x] Shortcut `Ctrl+Shift+D` apre il pannello
+- [x] Pulsante `Bug` fisso bottom-right visibile
+- [x] Tab Sessione: User ID, Email, Ruolo, School ID visibili con dati reali
+- [x] Tab Log: eventi in real-time con badge colorati
+- [x] Tab Log: filtro per tipo funziona
+- [x] Tab Log: "Pulisci log" e "Esporta JSON" funzionano
+- [x] Tab Database: stato connessione Supabase (verde/rosso)
+- [x] Tab Database: ultima query + ms visibili
+- [x] Tab Performance: memoria JS, route corrente, NODE_ENV visibili
 
 ---
 
 ## 13. INTERFACCIA DOCENTE MOBILE
-
 - [x] `/teacher/home` carica correttamente (Aggiunte statistiche mensili dinamiche)
-- [ ] Bottom nav con 4 voci funziona
+- [x] Bottom nav con 4 voci funziona (Fix 404 routes)
 - [x] Home mostra SOLO lezioni del docente loggato
 - [x] Tap su "Segna presenze" → pagina presenze
 - [x] Toggle presenze 3 stati (presente/assente/recupero) funziona su touch
 - [x] "Salva presenze" → INSERT/UPDATE in `attendance` (Aggiorna anche lo stato lezione)
-- [ ] Lista allievi mostra solo propri allievi (RLS verificato)
-- [ ] Profilo docente mostra compenso mese corrente
-- [ ] Layout corretto su 375px (iPhone SE)
-- [ ] RLS: accesso a `/admin/*` da account docente → redirect a `/teacher/home`
+- [x] Lista allievi mostra solo propri allievi (RLS verificato)
+- [x] Profilo docente mostra compenso mese corrente (Fix dynamic compensation)
+- [x] Layout corretto su 375px (iPhone SE)
+- [x] RLS: accesso a `/admin/*` da account docente → redirect a `/teacher/home`
 
 ---
 
 ## 14. LOGO & BRANDING
-
-- [ ] Logo `solfege-logo.png` visibile in sidebar (no broken image, no testo "Solfège")
-- [ ] Logo visibile in pagina login lato sinistro
-- [ ] Logo visibile in pagina register lato sinistro
-- [ ] Logo correttamente dimensionato (40px sidebar, 120px login, 80px register)
-- [ ] Sfondo trasparente del logo funziona su sfondo scuro
+- [x] Logo `solfege-logo.png` visibile in sidebar (no broken image, no testo "Solfège")
+- [x] Logo visibile in pagina login lato sinistro
+- [x] Logo visibile in pagina register lato sinistro
+- [x] Logo correttamente dimensionato (40px sidebar, 120px login, 80px register)
+- [x] Sfondo trasparente del logo funziona su sfondo scuro
 
 ---
 
