@@ -268,6 +268,7 @@ export default function StudentsPage() {
           schoolId={schoolId}
           student={editStudent}
           onSuccess={() => fetchStudents()}
+        />
       )}
 
       {/* Delete Confirmation */}
