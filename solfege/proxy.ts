@@ -32,9 +32,6 @@ export default async function proxy(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser()
 
-  const role = user?.user_metadata?.role
-
-  // 1. Unauthenticated users
   if (!user) {
     if (request.nextUrl.pathname.startsWith('/admin') || request.nextUrl.pathname.startsWith('/teacher')) {
       return NextResponse.redirect(new URL('/login', request.url))
@@ -42,13 +39,38 @@ export default async function proxy(request: NextRequest) {
     return supabaseResponse
   }
 
-  // 2. Role-based Access Control
-  if (role === 'insegnante' && request.nextUrl.pathname.startsWith('/admin')) {
-    return NextResponse.redirect(new URL('/teacher/home', request.url))
+  // 2. Resolve Role
+  let role = user.user_metadata?.role
+
+  // If role is missing in metadata, try to fetch from profile
+  if (!role) {
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('role')
+      .eq('id', user.id)
+      .single()
+    role = profile?.role
+    
+    // Note: We don't update metadata here because middleware should be read-only ideally,
+    // but we use the resolved role for the rest of the checks.
   }
 
-  if (role === 'admin' && request.nextUrl.pathname.startsWith('/teacher')) {
-    return NextResponse.redirect(new URL('/admin/dashboard', request.url))
+  const path = request.nextUrl.pathname
+
+  // 3. RBAC Enforcement
+  if (path.startsWith('/admin')) {
+    if (role !== 'admin') {
+      // If not admin, and is teacher, send to teacher home. Otherwise to login.
+      return NextResponse.redirect(new URL(role === 'insegnante' ? '/teacher/home' : '/login', request.url))
+    }
+  }
+
+  if (path.startsWith('/teacher')) {
+    if (role !== 'insegnante' && role !== 'admin') {
+      // Admins are allowed in teacher view for testing/debug usually, 
+      // but if we want strict separation:
+      // return NextResponse.redirect(new URL('/admin/dashboard', request.url))
+    }
   }
 
   return supabaseResponse

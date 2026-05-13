@@ -93,11 +93,22 @@ export default function LoginPage() {
       }
 
       log(`Login OK — user: ${authData.user?.id}`);
-      log(`Role detected: ${authData.user?.user_metadata?.role}`);
+      let role = authData.user?.user_metadata?.role;
+      log(`Role from metadata: ${role}`);
+      
+      if (!role) {
+        log("Role missing in metadata, fetching from profiles...");
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('role')
+          .eq('id', authData.user?.id)
+          .single();
+        role = profile?.role;
+        log(`Role from profile: ${role}`);
+      }
       
       router.refresh();
       
-      const role = authData.user?.user_metadata?.role;
       if (role === 'insegnante') {
         log("Redirecting to /teacher/home...");
         router.push("/teacher/home");
