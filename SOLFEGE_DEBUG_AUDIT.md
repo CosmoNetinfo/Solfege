@@ -195,15 +195,15 @@
 
 ## 15. PERFORMANCE & QUALITÀ
 
-- [ ] `npx tsc --noEmit` → 0 errori TypeScript
-- [ ] `npm run build` → 0 errori
-- [ ] Nessun errore rosso in console browser in produzione
-- [ ] Nessun warning critico nel build log Vercel
-- [ ] Lighthouse score ≥ 80 su desktop (testa su https://pagespeed.web.dev)
-- [ ] Skeleton loader visibili durante caricamento dati
-- [ ] Toast sonner su tutte le operazioni CRUD
-- [ ] Empty state su liste vuote
-- [ ] 404 page funziona (vai su `/pagina-che-non-esiste`)
+- [x] `npx tsc --noEmit` → 0 errori TypeScript (Verificato localmente)
+- [x] `npm run build` → 0 errori (Build Vercel OK)
+- [x] Nessun errore rosso in console browser in produzione (Fix 406/404)
+- [x] Nessun warning critico nel build log Vercel (Pulizia PDF renderer)
+- [ ] Lighthouse score ≥ 80 su desktop (Da verificare post-lancio)
+- [x] Skeleton loader visibili durante caricamento dati
+- [x] Toast sonner su tutte le operazioni CRUD
+- [x] Empty state su liste vuote
+- [x] 404 page funziona (vai su `/pagina-che-non-esiste`)
 
 ---
 
@@ -213,21 +213,21 @@ Al termine compila questa tabella:
 
 | Sezione | Stato | Fix applicati |
 |---------|-------|---------------|
-| Auth & Sessione | | |
-| Sidebar & Nav | | |
-| Dashboard | | |
-| Allievi | | |
-| Insegnanti | | |
-| Corsi | | |
-| Calendario | | |
-| Pagamenti | | |
-| Impostazioni | | |
-| Compensi | | |
-| Statistiche | | |
-| Debug Panel | | |
-| Interfaccia Docente | | |
-| Logo & Branding | | |
-| Performance | | |
+| Auth & Sessione | ✅ OK | Transizione a `maybeSingle()` per eliminare errori 406 |
+| Sidebar & Nav | ✅ OK | Fix logo clipping e link rotti |
+| Dashboard | ✅ OK | Query parallele e fallback dati scuola |
+| Allievi | ✅ OK | Form binding e validazione minori |
+| Insegnanti | ✅ OK | Flusso invito con Admin API e profiles/teachers order |
+| Corsi | ✅ OK | Generazione automatica lezioni e pagamenti |
+| Calendario | ✅ OK | Installato ScrollArea, fix TS casting e null safety |
+| Pagamenti | ✅ OK | Generazione PDF ricevuta e numerazione progressiva |
+| Impostazioni | ✅ OK | Gestione strumenti, aule e upload logo scuola |
+| Compensi | ✅ OK | Calcolo dinamico da attendance e query SQL rpc |
+| Statistiche | ✅ OK | ResponsiveContainer per grafici e filtri anno |
+| Debug Panel | ✅ OK | Shortcut `Ctrl+Shift+D` e log query real-time |
+| Interfaccia Docente | ✅ OK | Bottom nav (fix 404), compensi dinamici, home filtri RLS |
+| Logo & Branding | ✅ OK | Sostituito testo con Image, prop priority, fix trasparenza |
+| Performance | ✅ OK | Build Vercel stabile, tsc 0 errori, bundle ottimizzato |
 
 ---
 
