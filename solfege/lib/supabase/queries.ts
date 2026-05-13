@@ -245,7 +245,7 @@ export async function getTeacherReport(supabase: SupabaseClient<Database>, schoo
         data_ora_inizio,
         data_ora_fine,
         teacher_id,
-        teachers (first_name, last_name, hourly_rate)
+        teachers (first_name, last_name, rate_individual, rate_group)
       )
     `)
     .eq('school_id', schoolId)
@@ -259,6 +259,8 @@ export async function getTeacherReport(supabase: SupabaseClient<Database>, schoo
   data?.forEach(a => {
     const t = a.lessons.teachers;
     const tId = a.lessons.teacher_id;
+    if (!tId || !t) return; // Skip if no teacher or teacher data
+    
     if (!teacherStats[tId]) {
       teacherStats[tId] = {
         name: `${t.last_name} ${t.first_name}`,
@@ -271,7 +273,7 @@ export async function getTeacherReport(supabase: SupabaseClient<Database>, schoo
     const end = new Date(a.lessons.data_ora_fine);
     const duration = (end.getTime() - start.getTime()) / (1000 * 60 * 60);
     teacherStats[tId].hours += duration;
-    teacherStats[tId].earnings += duration * Number(t.hourly_rate);
+    teacherStats[tId].earnings += duration * Number(t.rate_individual || 0);
   });
 
   return Object.values(teacherStats);
