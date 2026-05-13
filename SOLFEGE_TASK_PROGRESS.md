@@ -346,6 +346,7 @@
 | Step 17 | TypeScript error (getPayments) | Cast `filters.status` a `any` per match enum |
 | Step 17 | TypeScript error (queries.ts) | Fix null checks e nomi colonne in `getTeacherCompensationsStats` |
 | Step 17 | Root page issue | Aggiunto redirect immediato in `app/page.tsx` |
+| Step 17 | Signup Database Error | Aggiunto retry logic per update profilo in `register/page.tsx` |
 
 ---
 *Solfège v1.0 — Progress Tracker*
