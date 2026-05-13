@@ -15,10 +15,10 @@ export default function TeacherLayout({
         <Image 
           src="/solfege-logo.png" 
           alt="Solfège Logo" 
-          width={120} 
-          height={32} 
-          className="h-8 w-auto object-contain"
+          width={150} 
+          height={40} 
           priority
+          className="object-contain"
         />
       </header>
 
