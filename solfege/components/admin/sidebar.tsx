@@ -24,11 +24,10 @@ const navItems = [
   { name: "Studenti", href: "/admin/students", icon: Users },
   { name: "Insegnanti", href: "/admin/teachers", icon: GraduationCap },
   { name: "Corsi", href: "/admin/courses", icon: BookOpen },
-  { name: "Presenze", href: "/admin/attendance", icon: CheckSquare },
   { name: "Finanze", href: "/admin/finances", icon: Banknote },
-  { name: "Statistiche", href: "/admin/stats", icon: LayoutDashboard }, // Usando LayoutDashboard o BarChart3
-  { name: "Aule", href: "/admin/rooms", icon: DoorOpen },
-  { name: "Impostazioni", href: "/admin/settings", icon: Settings },
+  { name: "Compensi", href: "/admin/compensi", icon: CheckSquare },
+  { name: "Statistiche", href: "/admin/stats", icon: LayoutDashboard },
+  { name: "Impostazioni", href: "/admin/impostazioni", icon: Settings },
 ];
 
 export function Sidebar() {
