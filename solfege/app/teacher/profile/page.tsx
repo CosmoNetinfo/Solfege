@@ -21,6 +21,7 @@ export default function TeacherProfilePage() {
   const supabase = createClient();
   const [loading, setLoading] = useState(true);
   const [teacher, setTeacher] = useState<any>(null);
+  const [compensation, setCompensation] = useState<any>(null);
 
   useEffect(() => {
     loadData();
@@ -36,7 +37,22 @@ export default function TeacherProfilePage() {
       .eq("profile_id", user.id)
       .single();
 
-    setTeacher(teacherData);
+    if (teacherData) {
+      setTeacher(teacherData);
+      
+      // Fetch current month's compensation
+      const now = new Date();
+      const { data: compData } = await supabase
+        .from("teacher_compensations")
+        .select("*")
+        .eq("teacher_id", teacherData.id)
+        .eq("month", now.getMonth() + 1)
+        .eq("year", now.getFullYear())
+        .single();
+      
+      setCompensation(compData);
+    }
+    
     setLoading(false);
   }
 
@@ -71,7 +87,7 @@ export default function TeacherProfilePage() {
               </div>
               <div>
                 <p className="text-xs text-[#7A736C] font-medium">Mese Corrente</p>
-                <p className="text-xl font-bold text-[#1A1714]">€ 490.00</p>
+                <p className="text-xl font-bold text-[#1A1714]">€ {Number(compensation?.total_amount || 0).toFixed(2)}</p>
               </div>
             </div>
             <Button variant="ghost" size="icon" className="text-[#7A736C]">
@@ -86,7 +102,7 @@ export default function TeacherProfilePage() {
               </div>
               <div>
                 <p className="text-xs text-[#7A736C] font-medium">Ore Totali</p>
-                <p className="text-xl font-bold text-[#1A1714]">24.5 h</p>
+                <p className="text-xl font-bold text-[#1A1714]">{Number((compensation?.hours_individual || 0) + (compensation?.hours_group || 0)).toFixed(1)} h</p>
               </div>
             </div>
           </div>
