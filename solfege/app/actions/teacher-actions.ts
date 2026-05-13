@@ -29,17 +29,23 @@ export async function inviteTeacher(teacher: { id: string; email: string; school
 
       if (updateError) {
         console.error('[INVITE] Errore aggiornamento teachers:', updateError)
-        return { success: false, error: 'Errore collegamento profilo' }
+        return { success: false, error: `Errore collegamento profilo teachers: ${updateError.message}` }
       }
 
+      console.log('[INVITE] Aggiornamento profilo in corso...')
       // Assicuriamoci che il profilo esista e abbia il ruolo corretto
-      await supabaseAdmin.from('profiles').upsert({
+      const { error: profileError } = await supabaseAdmin.from('profiles').upsert({
         id: alreadyExists.id,
         school_id: teacher.school_id,
         role: 'insegnante',
         first_name: teacher.first_name,
         last_name: teacher.last_name
       })
+
+      if (profileError) {
+        console.error('[INVITE] Errore upsert profiles:', profileError)
+        return { success: false, error: `Errore aggiornamento profilo: ${profileError.message}` }
+      }
 
       return { success: true, message: 'Utente già registrato — profilo collegato' }
     }
