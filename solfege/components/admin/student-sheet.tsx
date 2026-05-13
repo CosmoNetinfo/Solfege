@@ -74,7 +74,7 @@ export function StudentSheet({ studentId, open, onOpenChange, onEdit }: StudentS
       setEnrollments(enrollData || []);
       setPayments(payData || []);
       setAttendance(attendData || []);
-      setAvailability(availabilityData || []);
+      setAvailability((availabilityData as any) || []);
     } catch (error) {
       console.error("Errore caricamento dettagli studente:", error);
     } finally {

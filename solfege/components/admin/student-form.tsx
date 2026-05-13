@@ -78,7 +78,7 @@ export function StudentFormDialog({ open, onOpenChange, schoolId, student, onSuc
       .eq("student_id", studentId);
     
     if (!error && data) {
-      setSlots(data.map(s => ({
+      setSlots((data as any[]).map(s => ({
         giorno: s.giorno,
         ora_inizio: s.ora_inizio.substring(0, 5),
         ora_fine: s.ora_fine.substring(0, 5)
