@@ -1,4 +1,5 @@
 import { Sidebar } from "@/components/admin/sidebar";
+import { DebugPanel } from "@/components/debug/DebugPanel";
 
 export default function AdminLayout({
   children,
@@ -11,6 +12,7 @@ export default function AdminLayout({
       <main className="flex-1 overflow-y-auto">
         {children}
       </main>
+      <DebugPanel />
     </div>
   );
 }
