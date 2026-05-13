@@ -149,7 +149,7 @@ export async function getPayments(supabase: SupabaseClient<Database>, schoolId: 
       .order('due_date', { ascending: false });
 
     if (filters?.status && filters.status !== 'tutti') {
-      query = query.eq('status', filters.status);
+      query = query.eq('status', filters.status as any);
     }
 
     if (filters?.studentId) {
