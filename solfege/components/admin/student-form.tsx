@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -55,24 +55,35 @@ export function StudentFormDialog({ open, onOpenChange, schoolId, student, onSuc
 
   const { register, handleSubmit, watch, formState: { errors }, reset } = useForm<StudentFormValues>({
     resolver: zodResolver(studentSchema),
-    defaultValues: student ? {
-      first_name: student.first_name || "",
-      last_name: student.last_name || "",
-      dob: student.dob || "",
-      email: student.email || "",
-      phone: student.phone || "",
-      address: student.address || "",
-      city: student.city || "",
-      cap: student.cap || "",
-      fiscal_code: student.fiscal_code || "",
-      parent_name: student.parent_name || "",
-      parent_surname: student.parent_surname || "",
-      parent_phone: student.parent_phone || "",
-      parent_email: student.parent_email || "",
-      note_mediche: student.note_mediche || "",
-      notes: student.notes || "",
-    } : {},
+    defaultValues: getStudentDefaultValues(student)
   });
+
+  useEffect(() => {
+    if (open) {
+      reset(getStudentDefaultValues(student));
+    }
+  }, [open, student, reset]);
+
+  function getStudentDefaultValues(s: any) {
+    if (!s) return {};
+    return {
+      first_name: s.first_name || "",
+      last_name: s.last_name || "",
+      dob: s.dob || "",
+      email: s.email || "",
+      phone: s.phone || "",
+      address: s.address || "",
+      city: s.city || "",
+      cap: s.cap || "",
+      fiscal_code: s.fiscal_code || "",
+      parent_name: s.parent_name || "",
+      parent_surname: s.parent_surname || "",
+      parent_phone: s.parent_phone || "",
+      parent_email: s.parent_email || "",
+      note_mediche: s.note_mediche || "",
+      notes: s.notes || "",
+    };
+  }
 
   const dobValue = watch("dob");
   const isMinor = dobValue ? (() => {

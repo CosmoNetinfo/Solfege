@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -51,20 +51,32 @@ export function TeacherFormDialog({
 
   const { register, handleSubmit, formState: { errors }, reset } = useForm<TeacherFormValues>({
     resolver: zodResolver(teacherSchema),
-    defaultValues: teacher ? {
-      first_name: teacher.first_name || "",
-      last_name: teacher.last_name || "",
-      email: teacher.email || "",
-      phone: teacher.phone || "",
-      fiscal_code: teacher.fiscal_code || "",
-      specializzazioni: (teacher.specializzazioni || []).join(", "),
-      rate_individual: String(teacher.rate_individual || ""),
-      rate_group: String(teacher.rate_group || ""),
-      iban: teacher.iban || "",
-      note_contratto: teacher.note_contratto || "",
-      data_assunzione: teacher.data_assunzione || "",
-    } : {},
+    defaultValues: getTeacherDefaultValues(teacher)
   });
+
+  useEffect(() => {
+    if (open) {
+      reset(getTeacherDefaultValues(teacher));
+      setSlots(initialSlots);
+    }
+  }, [open, teacher, initialSlots, reset]);
+
+  function getTeacherDefaultValues(t: any) {
+    if (!t) return {};
+    return {
+      first_name: t.first_name || "",
+      last_name: t.last_name || "",
+      email: t.email || "",
+      phone: t.phone || "",
+      fiscal_code: t.fiscal_code || "",
+      specializzazioni: (t.specializzazioni || []).join(", "),
+      rate_individual: String(t.rate_individual || ""),
+      rate_group: String(t.rate_group || ""),
+      iban: t.iban || "",
+      note_contratto: t.note_contratto || "",
+      data_assunzione: t.data_assunzione || "",
+    };
+  }
 
   async function onSubmit(data: TeacherFormValues) {
     setIsLoading(true);
