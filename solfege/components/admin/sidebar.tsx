@@ -31,8 +31,25 @@ const navItems = [
 ];
 
 export function Sidebar() {
+  const [schoolName, setSchoolName] = useState<string | null>(null);
   const pathname = usePathname();
   const supabase = createClient();
+
+  useEffect(() => {
+    async function loadSchoolName() {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("school_id, schools(name)")
+        .eq("id", user.id)
+        .single();
+      if (profile?.schools?.name) {
+        setSchoolName(profile.schools.name);
+      }
+    }
+    loadSchoolName();
+  }, []);
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
@@ -41,16 +58,21 @@ export function Sidebar() {
 
   return (
     <div className="flex h-screen w-64 flex-col bg-sidebar border-r border-sidebar-border">
-      {/* Header Sidebar: Logo */}
-      <div className="flex h-16 items-center px-6">
+      {/* Header Sidebar: Logo & School Name */}
+      <div className="flex flex-col h-24 justify-center px-6 border-b border-sidebar-border/50">
         <Image 
           src="/solfege-logo.png" 
           alt="Solfège Logo" 
           width={150} 
           height={40} 
-          className="h-10 w-auto object-contain"
+          className="h-8 w-auto object-contain self-start"
           priority
         />
+        {schoolName && (
+          <p className="mt-2 text-xs font-semibold text-orange uppercase tracking-wider truncate">
+            {schoolName}
+          </p>
+        )}
       </div>
 
       {/* Navigazione */}

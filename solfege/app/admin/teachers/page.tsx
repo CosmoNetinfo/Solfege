@@ -13,6 +13,7 @@ import {
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { TeacherFormDialog } from "@/components/admin/teacher-form";
+import { TeacherSheet } from "@/components/admin/teacher-sheet";
 import { DisponibilitaGrid, type SlotDisponibilita } from "@/components/admin/disponibilita-grid";
 
 type Teacher = {
@@ -45,6 +46,8 @@ export default function TeachersPage() {
   const [editTeacher, setEditTeacher] = useState<Teacher | undefined>(undefined);
   const [editSlots, setEditSlots] = useState<SlotDisponibilita[]>([]);
   const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [selectedTeacherId, setSelectedTeacherId] = useState<string | null>(null);
+  const [sheetOpen, setSheetOpen] = useState(false);
 
   useEffect(() => {
     async function load() {
@@ -158,7 +161,14 @@ export default function TeachersPage() {
       ) : (
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
           {filtered.map((t) => (
-            <Card key={t.id} className="border-border shadow-sm hover:shadow-md transition-shadow duration-200">
+            <Card 
+              key={t.id} 
+              className="border-border shadow-sm hover:shadow-md transition-shadow duration-200 cursor-pointer"
+              onClick={() => {
+                setSelectedTeacherId(t.id);
+                setSheetOpen(true);
+              }}
+            >
               <CardContent className="p-5">
                 {/* Header: Avatar + Nome + Azioni */}
                 <div className="flex items-start justify-between mb-4">
@@ -174,10 +184,10 @@ export default function TeachersPage() {
                     </div>
                   </div>
                   <div className="flex items-center gap-1">
-                    <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-foreground" onClick={() => openEdit(t)}>
+                    <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-foreground" onClick={(e) => { e.stopPropagation(); openEdit(t); }}>
                       <Pencil className="h-4 w-4" />
                     </Button>
-                    <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-red" onClick={() => setDeleteId(t.id)}>
+                    <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-red" onClick={(e) => { e.stopPropagation(); setDeleteId(t.id); }}>
                       <Trash2 className="h-4 w-4" />
                     </Button>
                   </div>
@@ -242,6 +252,12 @@ export default function TeachersPage() {
           onSuccess={() => fetchTeachers()}
         />
       )}
+
+      <TeacherSheet 
+        teacherId={selectedTeacherId}
+        open={sheetOpen}
+        onOpenChange={setSheetOpen}
+      />
 
       {/* Delete Confirmation */}
       <AlertDialog open={!!deleteId} onOpenChange={(open) => !open && setDeleteId(null)}>

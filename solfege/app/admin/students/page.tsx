@@ -25,6 +25,7 @@ import {
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { StudentFormDialog } from "@/components/admin/student-form";
+import { StudentSheet } from "@/components/admin/student-sheet";
 
 type Student = {
   id: string;
@@ -49,6 +50,8 @@ export default function StudentsPage() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editStudent, setEditStudent] = useState<Student | undefined>(undefined);
   const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [selectedStudentId, setSelectedStudentId] = useState<string | null>(null);
+  const [sheetOpen, setSheetOpen] = useState(false);
 
   // Fetch school_id e studenti
   useEffect(() => {
@@ -159,14 +162,21 @@ export default function StudentsPage() {
           <Button
             variant="ghost" size="icon"
             className="h-8 w-8 text-muted-foreground hover:text-foreground"
-            onClick={() => { setEditStudent(row.original); setDialogOpen(true); }}
+            onClick={(e) => { 
+              e.stopPropagation();
+              setEditStudent(row.original); 
+              setDialogOpen(true); 
+            }}
           >
             <Pencil className="h-4 w-4" />
           </Button>
           <Button
             variant="ghost" size="icon"
             className="h-8 w-8 text-muted-foreground hover:text-red"
-            onClick={() => setDeleteId(row.original.id)}
+            onClick={(e) => { 
+              e.stopPropagation();
+              setDeleteId(row.original.id);
+            }}
           >
             <Trash2 className="h-4 w-4" />
           </Button>
@@ -232,7 +242,14 @@ export default function StudentsPage() {
               <TableRow><TableCell colSpan={columns.length} className="text-center text-muted-foreground py-8">Nessun allievo trovato.</TableCell></TableRow>
             ) : (
               table.getRowModel().rows.map((row) => (
-                <TableRow key={row.id} className="hover:bg-muted/30 border-border">
+                <TableRow 
+                  key={row.id} 
+                  className="hover:bg-muted/30 border-border cursor-pointer"
+                  onClick={() => {
+                    setSelectedStudentId(row.original.id);
+                    setSheetOpen(true);
+                  }}
+                >
                   {row.getVisibleCells().map((cell) => (
                     <TableCell key={cell.id}>{flexRender(cell.column.columnDef.cell, cell.getContext())}</TableCell>
                   ))}
@@ -270,6 +287,12 @@ export default function StudentsPage() {
           onSuccess={() => fetchStudents()}
         />
       )}
+
+      <StudentSheet 
+        studentId={selectedStudentId}
+        open={sheetOpen}
+        onOpenChange={setSheetOpen}
+      />
 
       {/* Delete Confirmation */}
       <AlertDialog open={!!deleteId} onOpenChange={(open) => !open && setDeleteId(null)}>

@@ -13,7 +13,8 @@ import {
   Clock,
   AlertCircle,
   TrendingUp,
-  CheckCircle2
+  CheckCircle2,
+  Plus
 } from "lucide-react";
 import { format } from "date-fns";
 import { it } from "date-fns/locale";
@@ -166,6 +167,9 @@ export default function FinancesPage() {
       <div className="flex items-center justify-between">
         <h2 className="font-serif text-4xl font-bold tracking-tight text-foreground">Finanze</h2>
         <div className="flex gap-2">
+          <Button className="bg-orange hover:bg-orange-dark text-white">
+            <Plus className="mr-2 h-4 w-4" /> Nuova Entrata/Uscita
+          </Button>
           <Button variant="outline" className="border-border text-muted-foreground">
             <Download className="mr-2 h-4 w-4" /> Esporta CSV
           </Button>

@@ -6,6 +6,8 @@ import { format, parse, startOfWeek, getDay } from "date-fns";
 import { it } from "date-fns/locale";
 import "react-big-calendar/lib/css/react-big-calendar.css";
 import { createClient } from "@/lib/supabase/client";
+import { Button } from "@/components/ui/button";
+import { Plus } from "lucide-react";
 
 const locales = { "it": it };
 const localizer = dateFnsLocalizer({ format, parse, startOfWeek, getDay, locales });
@@ -109,6 +111,9 @@ export default function CalendarPage() {
     <div className="flex-1 p-8 pt-6">
       <div className="flex items-center justify-between mb-6">
         <h2 className="font-serif text-4xl font-bold tracking-tight text-foreground">Calendario</h2>
+        <Button className="bg-orange hover:bg-orange-dark text-white">
+          <Plus className="mr-2 h-4 w-4" /> Nuova Lezione
+        </Button>
       </div>
 
       <style jsx global>{`

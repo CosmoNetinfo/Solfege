@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { createClient } from "@/lib/supabase/client";
+import { enrollStudent } from "@/lib/services/enrollment-service";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -84,17 +85,15 @@ export function EnrollmentFormDialog({ open, onOpenChange, schoolId, course, onS
     if (!selectedStudent) { toast.error("Seleziona uno studente"); return; }
     setIsLoading(true);
     try {
-      const { error } = await supabase.from("enrollments").insert({
+      await enrollStudent(supabase, {
         school_id: schoolId,
         student_id: selectedStudent,
         course_id: course.id,
         teacher_id: selectedTeacher || null,
         start_date: startDate,
         discount_pct: parseFloat(discountPct) || 0,
-        status: "active",
       });
-      if (error) throw error;
-      toast.success("Iscrizione completata");
+      toast.success("Iscrizione completata con generazione lezioni");
       onOpenChange(false);
       onSuccess();
     } catch (err: any) { toast.error(err.message || "Errore"); }
