@@ -14,7 +14,7 @@ export function InstrumentsTab({ schoolId }: { schoolId: string }) {
   const [loading, setLoading] = useState(true);
   const [newName, setNewName] = useState('');
   const [isAdding, setIsAdding] = useState(false);
-  const supabase = createBrowserClient();
+  const supabase = createClient();
 
   useEffect(() => {
     loadInstruments();

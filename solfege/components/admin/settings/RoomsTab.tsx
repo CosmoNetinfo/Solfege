@@ -23,7 +23,7 @@ const formSchema = z.object({
 export function RoomsTab({ schoolId }: { schoolId: string }) {
   const [rooms, setRooms] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const supabase = createBrowserClient();
+  const supabase = createClient();
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
