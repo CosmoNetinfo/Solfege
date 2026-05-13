@@ -369,3 +369,114 @@ export async function getSchoolProfiles(supabase: SupabaseClient<Database>, scho
   });
 }
 
+// ============================================================================
+// COMPENSI DOCENTI
+// ============================================================================
+
+export async function getTeacherCompensations(supabase: SupabaseClient<Database>, schoolId: string, month: number, year: number) {
+  return trackQuery('getTeacherCompensations', async () => {
+    const { data: teachers, error: tError } = await supabase
+      .from('teachers')
+      .select('*')
+      .eq('school_id', schoolId)
+      .eq('active', true)
+      .order('last_name');
+      
+    if (tError) throw tError;
+    if (!teachers || teachers.length === 0) return [];
+
+    const startDate = new Date(year, month - 1, 1).toISOString();
+    const endDate = new Date(year, month, 1).toISOString();
+
+    const { data: lessons, error: lError } = await supabase
+      .from('lessons')
+      .select(`
+        id, teacher_id, data_ora_inizio, data_ora_fine, status,
+        courses!inner(type)
+      `)
+      .eq('school_id', schoolId)
+      .eq('status', 'completata')
+      .gte('data_ora_inizio', startDate)
+      .lt('data_ora_inizio', endDate);
+
+    if (lError) throw lError;
+
+    const { data: compensations, error: cError } = await supabase
+      .from('teacher_compensations')
+      .select('*')
+      .eq('school_id', schoolId)
+      .eq('month', month)
+      .eq('year', year);
+
+    if (cError) throw cError;
+
+    return teachers.map(teacher => {
+      let hoursIndividual = 0;
+      let hoursGroup = 0;
+
+      const teacherLessons = lessons?.filter(l => l.teacher_id === teacher.id) || [];
+      
+      teacherLessons.forEach(l => {
+        const start = new Date(l.data_ora_inizio);
+        const end = new Date(l.data_ora_fine);
+        const durationHours = (end.getTime() - start.getTime()) / (1000 * 60 * 60);
+        
+        const course = Array.isArray(l.courses) ? l.courses[0] : l.courses;
+        if (course?.type === 'individuale') {
+          hoursIndividual += durationHours;
+        } else {
+          hoursGroup += durationHours;
+        }
+      });
+
+      const totalAmount = (hoursIndividual * Number(teacher.rate_individual || 0)) + 
+                          (hoursGroup * Number(teacher.rate_group || 0));
+
+      const existingComp = compensations?.find(c => c.teacher_id === teacher.id);
+
+      return {
+        teacher,
+        month,
+        year,
+        hours_individual: hoursIndividual,
+        hours_group: hoursGroup,
+        total_amount: totalAmount,
+        paid: existingComp?.paid || false,
+        paid_date: existingComp?.paid_date || null
+      };
+    });
+  });
+}
+
+export async function markCompensationAsPaid(
+  supabase: SupabaseClient<Database>, 
+  schoolId: string, 
+  teacherId: string, 
+  month: number, 
+  year: number,
+  hoursIndividual: number,
+  hoursGroup: number,
+  totalAmount: number,
+  paid: boolean
+) {
+  return trackQuery('markCompensationAsPaid', async () => {
+    const { data, error } = await supabase
+      .from('teacher_compensations')
+      .upsert({
+        school_id: schoolId,
+        teacher_id: teacherId,
+        month,
+        year,
+        hours_individual: hoursIndividual,
+        hours_group: hoursGroup,
+        total_amount: totalAmount,
+        paid,
+        paid_date: paid ? new Date().toISOString() : null,
+      }, { onConflict: 'teacher_id, month, year' })
+      .select()
+      .single();
+      
+    if (error) throw error;
+    return data;
+  });
+}

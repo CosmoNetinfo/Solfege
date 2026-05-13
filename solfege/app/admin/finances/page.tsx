@@ -58,15 +58,8 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import dynamic from "next/dynamic";
 
-// Importazione dinamica per evitare problemi di SSR con @react-pdf/renderer
-const PDFDownloadLink = dynamic(
-  () => import("@react-pdf/renderer").then((mod) => mod.PDFDownloadLink),
-  { ssr: false }
-);
-const ReceiptPDF = dynamic(
-  () => import("@/lib/pdf/receipt").then((mod) => mod.ReceiptPDF),
-  { ssr: false }
-);
+// Componente isolato per scaricare il PDF (evita errori SSR Turbopack)
+const PDFButton = dynamic(() => import("@/components/admin/PDFButton"), { ssr: false });
 
 export default function FinancesPage() {
   const supabase = createClient();
@@ -304,38 +297,7 @@ export default function FinancesPage() {
                             </DropdownMenuItem>
                           )}
                           {p.status === "pagato" && school && (
-                            <DropdownMenuItem className="cursor-pointer">
-                              <PDFDownloadLink
-                                document={
-                                  <ReceiptPDF 
-                                    data={{
-                                      school: {
-                                        name: school.name,
-                                        address: school.address,
-                                        phone: school.phone,
-                                        email: school.email
-                                      },
-                                      receiptNumber: p.numero_ricevuta,
-                                      date: new Date(),
-                                      studentName: `${p.students.first_name} ${p.students.last_name}`,
-                                      description: p.description || p.enrollments?.courses?.name || "Corso di musica",
-                                      amount: Number(p.amount),
-                                      paymentMethod: p.method || "Bonifico",
-                                      paidDate: new Date(p.paid_date)
-                                    }} 
-                                  />
-                                }
-                                fileName={`Ricevuta_${p.numero_ricevuta}.pdf`}
-                                className="flex items-center"
-                              >
-                                {({ loading }) => (
-                                  <>
-                                    <Download className="mr-2 h-4 w-4" />
-                                    {loading ? "Generazione..." : "Scarica Ricevuta"}
-                                  </>
-                                )}
-                              </PDFDownloadLink>
-                            </DropdownMenuItem>
+                            <PDFButton school={school} payment={p} />
                           )}
                           <DropdownMenuItem className="cursor-pointer">
                             <Mail className="mr-2 h-4 w-4" /> Invia Sollecito

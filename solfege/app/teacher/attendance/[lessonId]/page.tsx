@@ -103,7 +103,8 @@ export default function AttendancePage({ params }: { params: Promise<{ lessonId:
     setSaving(true);
     try {
       const { data: { user } } = await supabase.auth.getUser();
-      const { data: profile } = await supabase.from("profiles").select("school_id").eq("id", user?.id).single();
+      if (!user?.id) throw new Error("Utente non autenticato");
+      const { data: profile } = await supabase.from("profiles").select("school_id").eq("id", user.id).single();
 
       // Prepara i record per la tabella attendance
       const records = Object.entries(attendance).map(([studentId, data]) => ({
