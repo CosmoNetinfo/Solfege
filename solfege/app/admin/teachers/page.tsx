@@ -233,6 +233,7 @@ export default function TeachersPage() {
       {/* Form Dialog */}
       {schoolId && (
         <TeacherFormDialog
+          key={editTeacher?.id || "new"}
           open={dialogOpen}
           onOpenChange={setDialogOpen}
           schoolId={schoolId}

@@ -117,7 +117,7 @@ export default function StatsPage() {
                 <CardDescription>Totale mensile delle ricevute saldate</CardDescription>
               </CardHeader>
               <CardContent className="h-[350px]">
-                <ResponsiveContainer width="100%" height="100%">
+                <ResponsiveContainer width="100%" height="100%" minWidth={0}>
                   <AreaChart data={revenueData}>
                     <defs>
                       <linearGradient id="colorTotale" x1="0" y1="0" x2="0" y2="1">
@@ -165,7 +165,7 @@ export default function StatsPage() {
                 <CardDescription>Iscritti attivi per corso</CardDescription>
               </CardHeader>
               <CardContent className="h-[350px] flex flex-col items-center">
-                <ResponsiveContainer width="100%" height={250}>
+                <ResponsiveContainer width="100%" height={250} minWidth={0}>
                   <PieChart>
                     <Pie
                       data={distributionData}

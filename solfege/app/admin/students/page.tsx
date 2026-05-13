@@ -262,12 +262,12 @@ export default function StudentsPage() {
       {/* Form Dialog */}
       {schoolId && (
         <StudentFormDialog
+          key={editStudent?.id || "new"}
           open={dialogOpen}
           onOpenChange={setDialogOpen}
           schoolId={schoolId}
           student={editStudent}
           onSuccess={() => fetchStudents()}
-        />
       )}
 
       {/* Delete Confirmation */}

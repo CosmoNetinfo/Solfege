@@ -16,7 +16,7 @@ export function IncomeChart({ data }: IncomeChartProps) {
       </CardHeader>
       <CardContent className="px-2 sm:px-6">
         <div style={{ width: '100%', height: 350, position: 'relative' }}>
-          <ResponsiveContainer width="100%" height="100%">
+          <ResponsiveContainer width="100%" height="100%" minWidth={0}>
             <BarChart data={data} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
               <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E8E4E0" />
               <XAxis 

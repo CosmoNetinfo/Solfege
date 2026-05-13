@@ -161,8 +161,16 @@ export default function CoursesPage() {
 
       {/* Course Form */}
       {schoolId && (
-        <CourseFormDialog open={formOpen} onOpenChange={setFormOpen} schoolId={schoolId}
-          course={editCourse} instruments={instruments} rooms={rooms} onSuccess={() => fetchAll()} />
+        <CourseFormDialog
+          key={editCourse?.id || "new"}
+          open={formOpen}
+          onOpenChange={setFormOpen}
+          schoolId={schoolId}
+          course={editCourse}
+          instruments={instruments}
+          rooms={rooms}
+          onSuccess={() => fetchAll()}
+        />
       )}
 
       {/* Enrollment Form */}
