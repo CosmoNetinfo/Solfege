@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -22,6 +23,7 @@ type LoginFormValues = z.infer<typeof loginSchema>;
 
 export default function LoginPage() {
   const [isLoading, setIsLoading] = useState(false);
+  const router = useRouter();
   const supabase = createClient();
 
   const {
@@ -35,7 +37,7 @@ export default function LoginPage() {
   async function onSubmit(data: LoginFormValues) {
     setIsLoading(true);
     try {
-      const { error } = await supabase.auth.signInWithPassword({
+      const { data: authData, error } = await supabase.auth.signInWithPassword({
         email: data.email,
         password: data.password,
       });
@@ -46,8 +48,8 @@ export default function LoginPage() {
       }
 
       toast.success("Accesso effettuato!");
-      // Il middleware gestirà il redirect al ruolo corretto
-      window.location.href = "/";
+      // Redirect esplicito lato client per bypassare problemi middleware
+      window.location.href = "/admin/dashboard";
     } catch (err) {
       toast.error("Si è verificato un errore inaspettato.");
     } finally {
