@@ -76,9 +76,9 @@ export function DebugPanel() {
     a.click();
   };
 
-  if (process.env.NODE_ENV !== 'development' && profile?.role !== 'admin') {
-    return null;
-  }
+  // if (process.env.NODE_ENV !== 'development' && profile?.role !== 'admin') {
+  //   return null;
+  // }
 
   return (
     <>
