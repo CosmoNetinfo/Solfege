@@ -602,6 +602,7 @@ export type Database = {
           trial_ends_at: string | null
           updated_at: string
           website: string | null
+          current_academic_year: string | null
         }
         Insert: {
           address?: string | null
@@ -618,6 +619,7 @@ export type Database = {
           trial_ends_at?: string | null
           updated_at?: string
           website?: string | null
+          current_academic_year?: string | null
         }
         Update: {
           address?: string | null
@@ -634,6 +636,7 @@ export type Database = {
           trial_ends_at?: string | null
           updated_at?: string
           website?: string | null
+          current_academic_year?: string | null
         }
         Relationships: []
       }

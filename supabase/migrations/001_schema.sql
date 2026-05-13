@@ -30,6 +30,7 @@ CREATE TABLE schools (
   website         TEXT,
   timezone        TEXT DEFAULT 'Europe/Rome',
   currency        TEXT DEFAULT 'EUR',
+  current_academic_year TEXT DEFAULT '2024-2025',
   plan            TEXT DEFAULT 'trial',
   trial_ends_at   TIMESTAMPTZ DEFAULT NOW() + INTERVAL '30 days',
   created_at      TIMESTAMPTZ DEFAULT NOW(),
