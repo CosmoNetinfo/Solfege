@@ -73,7 +73,7 @@ export const logger = {
   success: (msg: string, details?: any) => useDebugStore.getState().addLog('SUCCESS', msg, details),
   error: (msg: string, details?: any) => {
     useDebugStore.getState().addLog('ERROR', msg, details);
-    set((state: any) => ({ queryStats: { ...state.queryStats, errors: state.queryStats.errors + 1 } }));
+    useDebugStore.setState((state: any) => ({ queryStats: { ...state.queryStats, errors: state.queryStats.errors + 1 } }));
   },
   warn: (msg: string, details?: any) => useDebugStore.getState().addLog('WARN', msg, details),
 };
