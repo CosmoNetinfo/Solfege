@@ -344,6 +344,8 @@
 | Step 17 | TypeScript error (AcademicYearTab) | Aggiunta colonna `current_academic_year` a schema e tipi |
 | Step 17 | TypeScript error (logger.ts) | Sostituito `set` con `useDebugStore.setState` |
 | Step 17 | TypeScript error (getPayments) | Cast `filters.status` a `any` per match enum |
+| Step 17 | TypeScript error (queries.ts) | Fix null checks e nomi colonne in `getTeacherCompensationsStats` |
+| Step 17 | Root page issue | Aggiunto redirect immediato in `app/page.tsx` |
 
 ---
 *Solfège v1.0 — Progress Tracker*
