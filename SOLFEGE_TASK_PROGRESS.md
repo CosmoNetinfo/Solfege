@@ -20,7 +20,7 @@
 | 10 | Pagamenti & PDF Ricevuta | ✅ Completato |
 | 11 | Interfaccia Docente Mobile | ✅ Completato |
 | 12 | Statistiche | ✅ Completato |
-| 13 | Impostazioni Scuola | ⬜ Da fare |
+| 13 | Impostazioni Scuola | ✅ Completato |
 | 14 | Compensi Docenti | ⬜ Da fare |
 | 15 | Debug Panel | ✅ Completato |
 | 16 | Logo & Branding | ✅ Completato |
@@ -270,15 +270,15 @@
 
 ---
 
-## ⬜ STEP 13 — Impostazioni Scuola
+## ✅ STEP 13 — Impostazioni Scuola
 
 ### Pagina Impostazioni (`/admin/impostazioni`)
-- [ ] Tab **Scuola**: nome, logo upload, indirizzo, telefono, email, sito
-- [ ] Upload logo → Supabase Storage bucket `logos`
-- [ ] Tab **Anno Accademico**: anno corrente, date inizio/fine
-- [ ] Tab **Strumenti**: add/remove/rename funzionante
-- [ ] Tab **Aule**: add/remove, nome + capienza + insonorizzata
-- [ ] Tab **Utenti**: lista profili con ruolo + invita segreteria
+- [x] Tab **Scuola**: nome, logo upload, indirizzo, telefono, email, sito
+- [x] Upload logo → Supabase Storage bucket `logos`
+- [x] Tab **Anno Accademico**: anno corrente, date inizio/fine
+- [x] Tab **Strumenti**: add/remove/rename funzionante
+- [x] Tab **Aule**: add/remove, nome + capienza + insonorizzata
+- [x] Tab **Utenti**: lista profili con ruolo + invita segreteria
 
 ---
 

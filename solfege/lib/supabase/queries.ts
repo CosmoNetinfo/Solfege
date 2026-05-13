@@ -276,3 +276,96 @@ export async function getTeacherReport(supabase: SupabaseClient<Database>, schoo
 
   return Object.values(teacherStats);
 }
+
+// --- IMPOSTAZIONI SCUOLA (STEP 13) ---
+
+export async function updateSchool(supabase: SupabaseClient<Database>, schoolId: string, data: Partial<Database['public']['Tables']['schools']['Update']>) {
+  return trackQuery('updateSchool', async () => {
+    const { data: updatedData, error } = await supabase
+      .from('schools')
+      .update(data)
+      .eq('id', schoolId)
+      .select()
+      .single();
+
+    if (error) throw error;
+    return updatedData;
+  });
+}
+
+export async function getInstruments(supabase: SupabaseClient<Database>, schoolId: string) {
+  return trackQuery('getInstruments', async () => {
+    const { data, error } = await supabase
+      .from('instruments')
+      .select('*')
+      .eq('school_id', schoolId)
+      .order('name');
+    if (error) throw error;
+    return data || [];
+  });
+}
+
+export async function addInstrument(supabase: SupabaseClient<Database>, schoolId: string, name: string) {
+  return trackQuery('addInstrument', async () => {
+    const { data, error } = await supabase
+      .from('instruments')
+      .insert({ school_id: schoolId, name })
+      .select()
+      .single();
+    if (error) throw error;
+    return data;
+  });
+}
+
+export async function deleteInstrument(supabase: SupabaseClient<Database>, id: string) {
+  return trackQuery('deleteInstrument', async () => {
+    const { error } = await supabase.from('instruments').delete().eq('id', id);
+    if (error) throw error;
+    return true;
+  });
+}
+
+export async function getRooms(supabase: SupabaseClient<Database>, schoolId: string) {
+  return trackQuery('getRooms', async () => {
+    const { data, error } = await supabase
+      .from('rooms')
+      .select('*')
+      .eq('school_id', schoolId)
+      .order('name');
+    if (error) throw error;
+    return data || [];
+  });
+}
+
+export async function addRoom(supabase: SupabaseClient<Database>, schoolId: string, name: string, capacity: number, insonorizzata: boolean) {
+  return trackQuery('addRoom', async () => {
+    const { data, error } = await supabase
+      .from('rooms')
+      .insert({ school_id: schoolId, name, capacity, insonorizzata })
+      .select()
+      .single();
+    if (error) throw error;
+    return data;
+  });
+}
+
+export async function deleteRoom(supabase: SupabaseClient<Database>, id: string) {
+  return trackQuery('deleteRoom', async () => {
+    const { error } = await supabase.from('rooms').delete().eq('id', id);
+    if (error) throw error;
+    return true;
+  });
+}
+
+export async function getSchoolProfiles(supabase: SupabaseClient<Database>, schoolId: string) {
+  return trackQuery('getSchoolProfiles', async () => {
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('*')
+      .eq('school_id', schoolId)
+      .order('created_at', { ascending: false });
+    if (error) throw error;
+    return data || [];
+  });
+}
+
