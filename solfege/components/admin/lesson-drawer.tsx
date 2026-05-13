@@ -25,6 +25,9 @@ type LessonDrawerProps = {
   onRefresh: () => void;
 };
 
+type StatoLezione = 'programmata' | 'completata' | 'cancellata' | 'recupero';
+type StatoPresenza = 'presente' | 'assente' | 'recupero';
+
 export function LessonDrawer({ lessonId, isOpen, onClose, onRefresh }: LessonDrawerProps) {
   const supabase = createClient();
   const [loading, setLoading] = useState(false);
@@ -77,7 +80,7 @@ export function LessonDrawer({ lessonId, isOpen, onClose, onRefresh }: LessonDra
     setUpdating(true);
     const { error } = await supabase
       .from("lessons")
-      .update({ status: newStatus })
+      .update({ status: newStatus as StatoLezione })
       .eq("id", lessonId);
 
     if (error) {
@@ -101,7 +104,7 @@ export function LessonDrawer({ lessonId, isOpen, onClose, onRefresh }: LessonDra
 
     const { error } = await supabase
       .from("attendance")
-      .update({ status: nextStatus })
+      .update({ status: nextStatus as StatoPresenza })
       .eq("lesson_id", lessonId)
       .eq("student_id", studentId);
 
