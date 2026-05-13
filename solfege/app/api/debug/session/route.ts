@@ -1,5 +1,8 @@
 import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/admin'
 import { NextResponse } from 'next/server'
+
+export const dynamic = 'force-dynamic';
 
 export async function GET() {
   try {
@@ -22,6 +25,22 @@ export async function GET() {
       .eq('id', user.id)
       .single()
 
+    // Test with admin client too
+    let adminProfile = null;
+    let adminErrorMsg = null;
+    try {
+      const adminClient = createAdminClient();
+      const { data: aProfile, error: aError } = await adminClient
+        .from('profiles')
+        .select('*')
+        .eq('id', user.id)
+        .single()
+      adminProfile = aProfile;
+      adminErrorMsg = aError?.message;
+    } catch (err: any) {
+      adminErrorMsg = err.message;
+    }
+
     return NextResponse.json({
       status: 'OK',
       user: {
@@ -31,6 +50,8 @@ export async function GET() {
       },
       profile: profile ?? null,
       profileError: profileError?.message ?? null,
+      adminProfile: adminProfile ?? null,
+      adminProfileError: adminErrorMsg ?? null,
     })
   } catch (e: any) {
     return NextResponse.json({ status: 'EXCEPTION', error: e.message }, { status: 500 })
