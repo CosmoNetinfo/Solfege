@@ -2,6 +2,7 @@
 
 import { createAdminClient } from "@/lib/supabase/admin";
 import { revalidatePath } from "next/cache";
+import { headers } from "next/headers";
 import nodemailer from 'nodemailer';
 
 export async function inviteTeacher(teacher: { id: string; email: string; school_id: string; first_name: string; last_name: string }) {
@@ -44,12 +45,16 @@ export async function inviteTeacher(teacher: { id: string; email: string; school
         .update({ profile_id: alreadyExists.id })
         .eq('id', teacher.id)
 
-      // Genera link di accesso (non invito) e mandalo via Resend
+      const host = (await headers()).get("host");
+      const protocol = host?.includes("localhost") ? "http" : "https";
+      const origin = `${protocol}://${host}`;
+
+      // Genera link di accesso (non invito) e mandalo via Gmail
       const { data: linkData, error: linkError } = await supabaseAdmin.auth.admin.generateLink({
         type: 'magiclink',
         email: teacher.email,
         options: {
-          redirectTo: `${process.env.NEXT_PUBLIC_APP_URL}/teacher/home`
+          redirectTo: `${origin}/teacher/home`
         }
       })
 
@@ -86,8 +91,11 @@ export async function inviteTeacher(teacher: { id: string; email: string; school
       return { success: true, message: 'Link di accesso inviato a ' + teacher.email }
     }
 
-    const redirectTo = `${process.env.NEXT_PUBLIC_APP_URL}/api/auth/callback?next=/accept-invite`;
-    console.log('[INVITE] Redirect URL:', redirectTo);
+    const host = (await headers()).get("host");
+    const protocol = host?.includes("localhost") ? "http" : "https";
+    const origin = `${protocol}://${host}`;
+    const redirectTo = `${origin}/api/auth/callback?next=/accept-invite`;
+    console.log('[INVITE] Redirect URL dinamico:', redirectTo);
 
     // 2. Generazione Link e Invio Email via Resend (Bypassa SMTP interno di Supabase)
     console.log('[INVITE] Generazione link di invito per nuovo utente...')
