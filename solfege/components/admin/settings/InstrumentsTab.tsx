@@ -45,7 +45,7 @@ export function InstrumentsTab({ schoolId }: { schoolId: string }) {
     try {
       setIsAdding(true);
       const newInst = await addInstrument(supabase, schoolId, newName.trim());
-      setInstruments(prev => [...prev, newInst as Instrument].sort((a, b) => a.name.localeCompare(b.name)));
+      setInstruments(prev => [...prev, newInst as unknown as Instrument].sort((a, b) => a.name.localeCompare(b.name)));
       setNewName('');
       toast.success('Strumento aggiunto');
     } catch (e) {
