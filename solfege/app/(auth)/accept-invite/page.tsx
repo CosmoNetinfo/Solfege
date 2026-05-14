@@ -19,14 +19,21 @@ export default function AcceptInvitePage() {
   const [userEmail, setUserEmail] = useState<string | null>(null);
 
   useEffect(() => {
+    // 1. Ascolta i cambiamenti di stato auth in tempo reale
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (session?.user) {
+        setUserEmail(session.user.email ?? null);
+      }
+    });
+
+    // 2. Controllo immediato
     supabase.auth.getUser().then(({ data: { user } }) => {
       if (user) {
         setUserEmail(user.email ?? null);
-      } else {
-        // Se non c'è sessione, il link potrebbe essere scaduto o il callback fallito
-        toast.error("Sessione non trovata. Riprova a cliccare il link nell'email.");
       }
     });
+
+    return () => subscription.unsubscribe();
   }, [supabase]);
 
   async function handleSubmit(e: React.FormEvent) {
