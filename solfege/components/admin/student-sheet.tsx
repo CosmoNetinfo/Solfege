@@ -123,7 +123,7 @@ export function StudentSheet({ studentId, open, onOpenChange, onEdit }: StudentS
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent className="sm:max-w-[600px] p-0 flex flex-col gap-0 border-l border-border bg-surface">
+      <SheetContent className="sm:max-w-[900px] p-0 flex flex-col gap-0 border-l border-border bg-surface">
         {loading ? (
           <div className="flex-1 flex items-center justify-center text-muted-foreground">
             Caricamento...

@@ -180,7 +180,7 @@ export function StudentFormDialog({ open, onOpenChange, schoolId, student, onSuc
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
+      <DialogContent className="sm:max-w-[900px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="text-foreground font-serif text-xl">
             {isEdit ? "Modifica Allievo" : "Nuovo Allievo"}

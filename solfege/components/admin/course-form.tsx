@@ -143,7 +143,7 @@ export function CourseFormDialog({ open, onOpenChange, schoolId, course, instrum
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
+      <DialogContent className="sm:max-w-[900px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="text-foreground font-serif text-xl">{isEdit ? "Modifica Corso" : "Nuovo Corso"}</DialogTitle>
           <DialogDescription className="text-muted-foreground">{isEdit ? "Modifica i dettagli del corso." : "Configura il nuovo corso."}</DialogDescription>

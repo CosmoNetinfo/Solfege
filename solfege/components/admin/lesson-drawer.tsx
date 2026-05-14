@@ -123,7 +123,7 @@ export function LessonDrawer({ lessonId, isOpen, onClose, onRefresh }: LessonDra
 
   return (
     <Sheet open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <SheetContent className="sm:max-w-md overflow-y-auto">
+      <SheetContent className="sm:max-w-[800px] overflow-y-auto">
         {loading ? (
           <div className="flex items-center justify-center h-full">Caricamento...</div>
         ) : lesson ? (

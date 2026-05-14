@@ -104,7 +104,7 @@ export function EnrollmentFormDialog({ open, onOpenChange, schoolId, course, onS
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[480px]">
+      <DialogContent className="sm:max-w-[600px]">
         <DialogHeader>
           <DialogTitle className="text-foreground font-serif text-xl">Nuova Iscrizione</DialogTitle>
           <DialogDescription className="text-muted-foreground">
