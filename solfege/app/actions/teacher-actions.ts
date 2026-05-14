@@ -93,9 +93,9 @@ export async function inviteTeacher(teacher: { id: string; email: string; school
 
     const host = (await headers()).get("host");
     const protocol = host?.includes("localhost") ? "http" : "https";
-    const origin = `${protocol}://${host}`;
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL || `${protocol}://${host}`;
     // Passa sempre dal callback per scambiare il codice, poi redirect a /accept-invite
-    const redirectTo = `${origin}/api/auth/callback?type=invite&next=/accept-invite`;
+    const redirectTo = `${appUrl}/api/auth/callback?type=invite&next=/accept-invite`;
     console.log('[INVITE] Redirect URL:', redirectTo);
 
     // 2. Generazione Link e Invio Email via Resend (Bypassa SMTP interno di Supabase)

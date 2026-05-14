@@ -366,8 +366,9 @@ export async function getInstruments(supabase: SupabaseClient<Database>, schoolI
     const { data, error } = await supabase
       .from('instruments')
       .select('*')
-      .eq('school_id', schoolId)
-      .order('name');
+      .or(`is_global.eq.true,school_id.eq.${schoolId}`)
+      .order('is_global', { ascending: false })
+      .order('name', { ascending: true });
     if (error) throw error;
     return data || [];
   });
