@@ -57,7 +57,7 @@ function DebugPanel() {
   );
 }
 
-export default function LoginPage() {
+function LoginFormContent() {
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [debugLog, setDebugLog] = useState<string[]>([]);
@@ -227,5 +227,13 @@ export default function LoginPage() {
         </Link>
       </div>
     </div>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={<div className="flex items-center justify-center py-12"><Loader2 className="h-8 w-8 animate-spin text-orange" /></div>}>
+      <LoginFormContent />
+    </Suspense>
   );
 }

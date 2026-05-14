@@ -1,5 +1,5 @@
 import { getSchoolBySlug } from "@/lib/supabase/queries";
-import { createServerClient } from "@/lib/supabase/server";
+import { createClient as createServerClient } from "@/lib/supabase/server";
 import { notFound } from "next/navigation";
 import { RegistrationForm } from "../../portal/iscriviti/RegistrationForm";
 import Image from "next/image";

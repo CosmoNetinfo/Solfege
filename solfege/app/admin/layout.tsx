@@ -1,6 +1,6 @@
 import { Sidebar } from "@/components/admin/sidebar";
 import { DebugPanel } from "@/components/debug/DebugPanel";
-import { createServerClient } from "@/lib/supabase/server";
+import { createClient as createServerClient } from "@/lib/supabase/server";
 import { getProfile } from "@/lib/supabase/queries";
 import { TrialBanner } from "@/components/admin/TrialBanner";
 

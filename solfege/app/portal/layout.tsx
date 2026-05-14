@@ -1,6 +1,6 @@
 import { PortalSidebar } from "@/components/portal/PortalSidebar";
 import { DebugPanel } from "@/components/debug/DebugPanel";
-import { createServerClient } from "@/lib/supabase/server";
+import { createClient as createServerClient } from "@/lib/supabase/server";
 import { getProfile } from "@/lib/supabase/queries";
 import { redirect } from "next/navigation";
 
