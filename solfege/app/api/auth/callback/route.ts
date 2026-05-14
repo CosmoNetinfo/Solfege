@@ -56,9 +56,11 @@ export async function GET(request: NextRequest) {
 
       return NextResponse.redirect(`${origin}${next}`)
     }
+    // Se c'è un errore nel cambio codice, mandiamo al login con l'errore specifico
+    const error_msg = error?.message || 'auth_exchange_failed';
+    return NextResponse.redirect(`${origin}/login?error=${encodeURIComponent(error_msg)}`)
   }
 
-  // Se arriviamo qui senza codice o con errore, mandiamo al login con l'errore specifico
-  const error_description = error?.message || 'codice_mancante';
-  return NextResponse.redirect(`${origin}/login?error=${encodeURIComponent(error_description)}`)
+  // Se arriviamo qui senza codice
+  return NextResponse.redirect(`${origin}/login?error=codice_mancante`)
 }
