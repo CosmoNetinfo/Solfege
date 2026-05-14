@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import './landing.css';
 
 export default function LandingPage() {
@@ -69,59 +70,21 @@ export default function LandingPage() {
 
       {/* MOCKUP */}
       <section className="mockup-section">
-        <div className="mockup-browser">
+        <div className="mockup-browser animate-in zoom-in-95 duration-1000">
           <div className="mockup-bar">
             <div className="mockup-dot red"></div>
             <div className="mockup-dot yellow"></div>
             <div className="mockup-dot green"></div>
-            <div className="mockup-url">solfege-five.vercel.app/admin/dashboard</div>
+            <div className="mockup-url">solfege-five.vercel.app/admin/students</div>
           </div>
-          <div className="mockup-dashboard">
-            <div className="mockup-sidebar">
-              <div className="mockup-sidebar-logo">Solfège</div>
-              <div className="mockup-nav-item active"><div className="mockup-nav-dot"></div> Dashboard</div>
-              <div className="mockup-nav-item"><div className="mockup-nav-dot"></div> Allievi</div>
-              <div className="mockup-nav-item"><div className="mockup-nav-dot"></div> Insegnanti</div>
-              <div className="mockup-nav-item"><div className="mockup-nav-dot"></div> Corsi</div>
-              <div className="mockup-nav-item"><div className="mockup-nav-dot"></div> Calendario</div>
-              <div className="mockup-nav-item"><div className="mockup-nav-dot"></div> Pagamenti</div>
-              <div className="mockup-nav-item"><div className="mockup-nav-dot"></div> Statistiche</div>
-            </div>
-            <div className="mockup-main">
-              <div className="mockup-title">Dashboard</div>
-              <div className="mockup-kpi-grid">
-                <div className="mockup-kpi">
-                  <div className="mockup-kpi-label">Allievi Attivi</div>
-                  <div className="mockup-kpi-value">47</div>
-                  <div className="mockup-kpi-sub">Iscritti regolarmente</div>
-                </div>
-                <div className="mockup-kpi">
-                  <div className="mockup-kpi-label">Lezioni Oggi</div>
-                  <div className="mockup-kpi-value">12</div>
-                  <div className="mockup-kpi-sub">Programmate</div>
-                </div>
-                <div className="mockup-kpi">
-                  <div className="mockup-kpi-label">Incasso Mese</div>
-                  <div className="mockup-kpi-value">€3.840</div>
-                  <div className="mockup-kpi-sub">Totale pagato</div>
-                </div>
-                <div className="mockup-kpi">
-                  <div className="mockup-kpi-label">Da Riscuotere</div>
-                  <div className="mockup-kpi-value" style={{ color: 'var(--red)' }}>€480</div>
-                  <div className="mockup-kpi-sub">Pagamenti scaduti</div>
-                </div>
-              </div>
-              <div className="mockup-chart-placeholder">
-                <div className="mockup-bar-chart" style={{ height: '40%' }}></div>
-                <div className="mockup-bar-chart" style={{ height: '55%' }}></div>
-                <div className="mockup-bar-chart" style={{ height: '45%' }}></div>
-                <div className="mockup-bar-chart" style={{ height: '70%' }}></div>
-                <div className="mockup-bar-chart" style={{ height: '80%' }}></div>
-                <div className="mockup-bar-chart" style={{ height: '65%' }}></div>
-                <div className="mockup-bar-chart" style={{ height: '90%' }}></div>
-                <div className="mockup-bar-chart" style={{ height: '100%' }}></div>
-              </div>
-            </div>
+          <div className="relative aspect-[16/10] overflow-hidden bg-stone-100">
+            <Image 
+              src="/screenshots/04_Studenti_CRUD.png" 
+              alt="Dashboard Solfège" 
+              fill 
+              className="object-cover object-top hover:scale-[1.02] transition-transform duration-700 cursor-pointer"
+              priority
+            />
           </div>
         </div>
       </section>
@@ -136,6 +99,43 @@ export default function LandingPage() {
           <div className="proof-badge"><div className="proof-icon">✓</div> Aggiornamenti continui</div>
         </div>
       </div>
+
+      {/* GALLERIA REALE */}
+      <section className="section bg-stone-50/50">
+        <div className="section-label">Galleria Interfacce</div>
+        <h2 className="section-title">Esperienza Reale.<br />Zero Sorprese.</h2>
+        <p className="section-sub">Guarda come Solfège semplifica ogni aspetto della tua giornata. Interfacce pulite, veloci e pensate per chi lavora.</p>
+        
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-12">
+          <div className="group border rounded-xl overflow-hidden bg-white shadow-sm hover:shadow-md transition-all">
+            <div className="relative aspect-video">
+              <Image src="/screenshots/09_Finanze.png" alt="Gestione Finanze" fill className="object-cover object-top" />
+            </div>
+            <div className="p-4">
+              <h4 className="font-bold text-stone-900">Gestione Finanze</h4>
+              <p className="text-xs text-stone-500 mt-1">Monitora incassi, ritardi e genera ricevute PDF in un click.</p>
+            </div>
+          </div>
+          <div className="group border rounded-xl overflow-hidden bg-white shadow-sm hover:shadow-md transition-all">
+            <div className="relative aspect-video">
+              <Image src="/screenshots/07_Corsi_Lista.png" alt="Gestione Corsi" fill className="object-cover object-top" />
+            </div>
+            <div className="p-4">
+              <h4 className="font-bold text-stone-900">Catalogo Corsi</h4>
+              <p className="text-xs text-stone-500 mt-1">Organizza materie, livelli e tariffe in modo flessibile.</p>
+            </div>
+          </div>
+          <div className="group border rounded-xl overflow-hidden bg-white shadow-sm hover:shadow-md transition-all">
+            <div className="relative aspect-video">
+              <Image src="/screenshots/Calendario.png" alt="Calendario" fill className="object-cover object-top" />
+            </div>
+            <div className="p-4">
+              <h4 className="font-bold text-stone-900">Calendario Dinamico</h4>
+              <p className="text-xs text-stone-500 mt-1">Gestisci aule e docenti con una vista drag-and-drop intuitiva.</p>
+            </div>
+          </div>
+        </div>
+      </section>
 
       {/* FEATURES */}
       <section className="section" id="features">
