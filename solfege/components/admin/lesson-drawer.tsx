@@ -237,7 +237,7 @@ export function LessonDrawer({ lessonId, isOpen, onClose, onRefresh }: LessonDra
             <Separator />
 
             <LessonTopicEditor 
-              lessonId={lessonId}
+              lessonId={lessonId as string}
               initialTopic={lesson.topic}
               initialHomework={lesson.homework}
               initialInternalNotes={lesson.internal_notes}
