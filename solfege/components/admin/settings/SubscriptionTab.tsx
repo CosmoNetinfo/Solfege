@@ -95,19 +95,19 @@ export function SubscriptionTab({ school }: { school: any }) {
             return (
               <div 
                 key={plan.name} 
-                className={\`relative bg-card rounded-xl p-6 flex flex-col justify-between
-                  \${isPro ? 'border-2 border-orange shadow-md' : 
+                className={`relative bg-card rounded-xl p-6 flex flex-col justify-between
+                  ${isPro ? 'border-2 border-orange shadow-md' : 
                     isWhiteLabel ? 'border-2 border-slate-800 shadow-sm' : 
                     isTrialCard ? 'border-2 border-orange/50' : 'border border-border'
-                  }\`}
+                  }`}
               >
                 {/* Badges */}
                 {plan.badge && (
-                  <div className={\`absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-1 text-xs font-bold uppercase rounded-full flex items-center gap-1 whitespace-nowrap
-                    \${isPro ? 'bg-orange text-white' : 
+                  <div className={`absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-1 text-xs font-bold uppercase rounded-full flex items-center gap-1 whitespace-nowrap
+                    ${isPro ? 'bg-orange text-white' : 
                       isWhiteLabel ? 'bg-slate-800 text-white' : 
                       'bg-orange/10 text-orange border border-orange/20'
-                    }\`}
+                    }`}
                   >
                     {plan.badgeIcon && <plan.badgeIcon className="w-3 h-3 fill-current" />}
                     {plan.badge}
@@ -131,7 +131,7 @@ export function SubscriptionTab({ school }: { school: any }) {
 
                 <Button 
                   variant={isPro ? 'default' : 'outline'}
-                  className={\`w-full \${isPro ? 'bg-orange text-white hover:bg-orange-dark' : ''} \${isTrialCard ? 'opacity-50 pointer-events-none' : ''}\`}
+                  className={`w-full ${isPro ? 'bg-orange text-white hover:bg-orange-dark' : ''} ${isTrialCard ? 'opacity-50 pointer-events-none' : ''}`}
                   disabled={plan.disabled}
                   onClick={() => !plan.disabled && setContactDialog({ open: true, planName: plan.name, planPrice: plan.price })}
                 >
@@ -171,7 +171,7 @@ export function SubscriptionTab({ school }: { school: any }) {
               <Button 
                 variant="outline"
                 className="flex-1 flex items-center gap-2 border-border"
-                onClick={() => window.location.href = \`mailto:admindany@gmail.com?subject=Attivazione piano Solfège \${contactDialog.planName}\`}
+                onClick={() => window.location.href = `mailto:admindany@gmail.com?subject=Attivazione piano Solfège ${contactDialog.planName}`}
               >
                 <Mail className="w-4 h-4" />
                 Email →
