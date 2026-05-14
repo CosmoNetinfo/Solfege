@@ -7,7 +7,8 @@ import { toast } from 'sonner';
 import { createClient } from '@/lib/supabase/client';
 import { getSchoolProfiles } from '@/lib/supabase/queries';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Mail, UserPlus, Shield, User } from 'lucide-react';
+import { Mail, UserPlus, Shield, User, Trash2 } from 'lucide-react';
+import { deleteStaffUser } from '@/app/actions/user-actions';
 
 export function UsersTab({ schoolId, schoolName }: { schoolId: string, schoolName: string }) {
   const [users, setUsers] = useState<any[]>([]);
@@ -59,6 +60,22 @@ export function UsersTab({ schoolId, schoolName }: { schoolId: string, schoolNam
     }
   };
 
+  const handleDeleteUser = async (userId: string) => {
+    if (!confirm('Sei sicuro di voler eliminare questo utente? L\\'azione è irreversibile.')) return;
+    
+    try {
+      const res = await deleteStaffUser(userId);
+      if (res.success) {
+        toast.success('Utente eliminato con successo');
+        setUsers(users.filter(u => u.id !== userId));
+      } else {
+        toast.error(res.error || 'Errore durante l\\'eliminazione');
+      }
+    } catch (e) {
+      toast.error('Errore durante l\\'eliminazione');
+    }
+  };
+
   if (loading) return <div className="space-y-4"><Skeleton className="h-10 w-full"/><Skeleton className="h-10 w-full"/></div>;
 
   return (
@@ -96,6 +113,7 @@ export function UsersTab({ schoolId, schoolName }: { schoolId: string, schoolNam
               <th className="px-4 py-3 font-medium">Utente</th>
               <th className="px-4 py-3 font-medium">Ruolo</th>
               <th className="px-4 py-3 font-medium">Iscritto il</th>
+              <th className="px-4 py-3 font-medium text-right">Azioni</th>
             </tr>
           </thead>
           <tbody className="divide-y">
@@ -129,6 +147,17 @@ export function UsersTab({ schoolId, schoolName }: { schoolId: string, schoolNam
                   </td>
                   <td className="px-4 py-3 text-muted-foreground">
                     {new Date(user.created_at).toLocaleDateString('it-IT')}
+                  </td>
+                  <td className="px-4 py-3 text-right">
+                    <Button 
+                      variant="ghost" 
+                      size="icon" 
+                      onClick={() => handleDeleteUser(user.id)}
+                      className="text-red-500 hover:bg-red-50 hover:text-red-600 h-8 w-8"
+                      title="Elimina utente"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
                   </td>
                 </tr>
               ))
