@@ -335,6 +335,48 @@
 - [x] `vercel --prod`
 - [x] README.md completo
 
+| 18 | Portale Allievi & Genitori | ✅ Completato |
+| 19 | Registro Argomenti & Didattica | ✅ Completato |
+| 20 | Lead Generation (Iscrizioni) | ✅ Completato |
+| 21 | Solleciti & Automazioni | ✅ Completato |
+
+---
+
+## ✅ STEP 18 — Portale Allievi & Genitori (v1.5)
+
+- [x] Dashboard dinamica con dati reali (prossime lezioni, pagamenti, materie)
+- [x] Sidebar con branding dinamico della scuola (Logo/Nome)
+- [x] Layout protetto (studente/genitore)
+- [x] Visualizzazione compiti e argomenti trattati
+- [x] Visualizzazione situazione contabile (Badge ritardo/attesa)
+
+---
+
+## ✅ STEP 19 — Registro Argomenti & Didattica (v1.5)
+
+- [x] `LessonTopicEditor` integrato nel `LessonDrawer` admin
+- [x] Campi: Argomenti, Compiti (pubblici) e Note Interne (private)
+- [x] Integrazione nel workflow "Segna come Svolta" del docente
+- [x] Persistenza dati in tabella `lessons` (colonne topic, homework, internal_notes)
+
+---
+
+## ✅ STEP 20 — Lead Generation & Iscrizioni Online (v1.5)
+
+- [x] Rotta pubblica `/[school-slug]/iscriviti` funzionante
+- [x] Form di registrazione con validazione Zod
+- [x] Inserimento automatico come allievo "Inattivo"
+- [x] Notifica email automatica alla segreteria della scuola
+
+---
+
+## ✅ STEP 21 — Solleciti & Automazioni (v1.5)
+
+- [x] One-Click Reminder in Finanze (WhatsApp & Email)
+- [x] Template Email professionale per solleciti (HTML)
+- [x] Email di benvenuto automatica alla creazione studente
+- [x] Fix Build: Suspense boundaries e correzione import SSR
+
 ---
 
 ## 📝 NOTE & BUG RISOLTI
@@ -362,7 +404,10 @@
 | Step 20 | Enum casting Status | Aggiunto cast esplicito StatoLezione/StatoPresenza |
 | Step 20 | Routing 404 teacher | Creata pagina `attendance/page.tsx` mancante |
 | Step 20 | Errore 406 sessione | Sostituito `.single()` con `.maybeSingle()` ovunque |
+| Step 21 | Vercel Build Error (useSearchParams) | Aggiunto `Suspense` boundary in `login/page.tsx` |
+| Step 21 | Vercel Build Error (createServerClient) | Corretti import aliasing in layouts e pages |
+| Step 21 | Vercel Build Error (TS2322 lessonId) | Aggiunto casting esplicito `as string` in `lesson-drawer.tsx` |
 
 
 ---
-*Solfège v1.0 — Progress Tracker*
+*Solfège v1.5 — Completamento Brief*
