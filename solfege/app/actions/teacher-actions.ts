@@ -21,40 +21,69 @@ export async function inviteTeacher(teacher: { id: string; email: string; school
     if (alreadyExists) {
       console.log('[INVITE] Utente già esistente in auth:', alreadyExists.id)
       
-      console.log('[INVITE] Aggiornamento profilo in corso...')
-      // 1. Assicuriamoci che il profilo esista PRIMA di collegarlo (evita violazione FK)
-      const { error: profileError } = await supabaseAdmin.from('profiles').upsert({
+      // Caso 1: esiste già → collega profilo e genera magic link di accesso
+      await supabaseAdmin.from('profiles').upsert({
         id: alreadyExists.id,
-        school_id: teacher.school_id,
         role: 'insegnante',
+        school_id: teacher.school_id,
         first_name: teacher.first_name,
         last_name: teacher.last_name
       })
-
-      if (profileError) {
-        console.error('[INVITE] Errore upsert profiles:', profileError)
-        return { success: false, error: `Errore aggiornamento profilo: ${profileError.message}` }
-      }
-
-      // 2. Aggiorna il profile_id nella tabella teachers
-      const { error: updateError } = await supabaseAdmin
-        .from('teachers')
+      await supabaseAdmin.from('teachers')
         .update({ profile_id: alreadyExists.id })
         .eq('id', teacher.id)
 
-      if (updateError) {
-        console.error('[INVITE] Errore aggiornamento teachers:', updateError)
-        return { success: false, error: `Errore collegamento profilo teachers: ${updateError.message}` }
+      // Genera link di accesso (non invito) e mandalo via Resend
+      const { data: linkData, error: linkError } = await supabaseAdmin.auth.admin.generateLink({
+        type: 'magiclink',
+        email: teacher.email,
+        options: {
+          redirectTo: `${process.env.NEXT_PUBLIC_APP_URL}/teacher/home`
+        }
+      })
+
+      if (linkError) {
+        console.error('[INVITE] Errore magiclink:', linkError)
+        return { success: false, error: linkError.message }
       }
 
-      return { success: true, message: 'Utente già registrato — profilo collegato correttamente' }
+      if (process.env.RESEND_API_KEY && !process.env.RESEND_API_KEY.startsWith('re_12345678')) {
+        await fetch('https://api.resend.com/emails', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${process.env.RESEND_API_KEY}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            from: 'Solfège <onboarding@resend.dev>',
+            to: [teacher.email],
+            subject: 'Accedi al portale Solfège',
+            html: `
+              <h2>Ciao ${teacher.first_name}!</h2>
+              <p>Clicca il link per accedere al tuo portale docente:</p>
+              <a href="${linkData?.properties?.action_link}" 
+                 style="background:#E8621A;color:white;padding:12px 24px;
+                        border-radius:6px;text-decoration:none;display:inline-block;margin-top:10px;">
+                Accedi al portale
+              </a>
+              <p>Il link scade tra 24 ore.</p>
+            `
+          })
+        })
+      } else {
+        console.log('[INVITE DEV] Link di accesso generato (Resend saltato):', linkData.properties?.action_link)
+        return { success: true, message: 'Link di accesso generato in console (API Key Resend mancante)', action_link: linkData.properties?.action_link }
+      }
+
+      revalidatePath("/admin/teachers");
+      return { success: true, message: 'Link di accesso inviato a ' + teacher.email }
     }
 
     const redirectTo = `${process.env.NEXT_PUBLIC_APP_URL}/api/auth/callback?next=/accept-invite`;
     console.log('[INVITE] Redirect URL:', redirectTo);
 
     // 2. Modalità Debug in Development
-    if (process.env.NODE_ENV === 'development') {
+    if (process.env.NODE_ENV === 'development' && (!process.env.RESEND_API_KEY || process.env.RESEND_API_KEY.startsWith('re_12345678'))) {
       console.log('[INVITE DEV] Generazione link invece di invio email...')
       const { data: linkData, error: linkError } = await supabaseAdmin.auth.admin.generateLink({
         type: 'invite',
@@ -107,7 +136,7 @@ export async function inviteTeacher(teacher: { id: string; email: string; school
 
     console.log('[INVITE] Invito inviato con successo:', data.user?.id)
     revalidatePath("/admin/teachers");
-    return { success: true, message: 'Email di invito inviata' }
+    return { success: true, message: `Invito inviato a ${teacher.email}` }
 
   } catch (err) {
     console.error('[INVITE] Errore generico:', err)

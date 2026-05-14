@@ -180,15 +180,18 @@ export function TeacherSheet({ teacherId, open, onOpenChange, onEdit }: TeacherS
                   </div>
                 </div>
 
-                {teacher.profile_id ? (
-                  <Badge className="bg-green/10 text-green border-green/20 flex items-center gap-1 px-3 py-1">
-                    <Smartphone className="h-3.5 w-3.5" />
-                    Accesso attivo
-                  </Badge>
-                ) : (
+                <div className="flex items-center gap-2">
+                  {teacher.profile_id && (
+                    <Badge className="bg-green/10 text-green border-green/20 flex items-center gap-1 px-3 py-1">
+                      <Smartphone className="h-3.5 w-3.5" />
+                      Accesso attivo
+                    </Badge>
+                  )}
                   <Button 
                     size="sm" 
-                    className="bg-orange hover:bg-orange-dark text-white gap-2"
+                    className={teacher.profile_id 
+                      ? "bg-transparent border border-border text-muted-foreground hover:bg-stone-50 gap-2" 
+                      : "bg-orange hover:bg-orange-dark text-white gap-2"}
                     onClick={handleInvite}
                     disabled={inviting || cooldown > 0}
                   >
@@ -199,9 +202,9 @@ export function TeacherSheet({ teacherId, open, onOpenChange, onEdit }: TeacherS
                     ) : (
                       <Send className="h-3.5 w-3.5" />
                     )}
-                    {cooldown > 0 ? `Reinvia tra ${cooldown}s` : "Invita al portale"}
+                    {cooldown > 0 ? `Reinvia tra ${cooldown}s` : (teacher.profile_id ? "Reinvia accesso" : "Invita al portale")}
                   </Button>
-                )}
+                </div>
               </div>
             </SheetHeader>
 
