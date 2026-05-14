@@ -150,21 +150,21 @@ export function StudentSheet({ studentId, open, onOpenChange, onEdit }: StudentS
             </SheetHeader>
 
             <Tabs defaultValue="anagrafica" className="flex-1 flex flex-col">
-              <div className="px-6 border-b border-border/50 bg-stone-50/30">
-                <TabsList className="h-12 bg-transparent p-0 gap-6 w-full justify-start rounded-none">
-                  <TabsTrigger value="anagrafica" className="rounded-none border-b-2 border-transparent data-[state=active]:border-orange data-[state=active]:text-orange data-[state=active]:bg-transparent px-0 text-xs font-bold uppercase tracking-widest">
+              <div className="px-6 border-b border-border/50 bg-stone-50/30 overflow-x-auto no-scrollbar">
+                <TabsList className="h-12 bg-transparent p-0 gap-6 flex w-max min-w-full justify-start rounded-none">
+                  <TabsTrigger value="anagrafica" className="rounded-none border-b-2 border-transparent data-[state=active]:border-orange data-[state=active]:text-orange data-[state=active]:bg-transparent px-0 text-xs font-bold uppercase tracking-widest shrink-0">
                     Anagrafica
                   </TabsTrigger>
-                  <TabsTrigger value="iscrizioni" className="rounded-none border-b-2 border-transparent data-[state=active]:border-orange data-[state=active]:text-orange data-[state=active]:bg-transparent px-0 text-xs font-bold uppercase tracking-widest">
+                  <TabsTrigger value="iscrizioni" className="rounded-none border-b-2 border-transparent data-[state=active]:border-orange data-[state=active]:text-orange data-[state=active]:bg-transparent px-0 text-xs font-bold uppercase tracking-widest shrink-0">
                     Iscrizioni
                   </TabsTrigger>
-                  <TabsTrigger value="presenze" className="rounded-none border-b-2 border-transparent data-[state=active]:border-orange data-[state=active]:text-orange data-[state=active]:bg-transparent px-0 text-xs font-bold uppercase tracking-widest">
+                  <TabsTrigger value="presenze" className="rounded-none border-b-2 border-transparent data-[state=active]:border-orange data-[state=active]:text-orange data-[state=active]:bg-transparent px-0 text-xs font-bold uppercase tracking-widest shrink-0">
                     Presenze
                   </TabsTrigger>
-                  <TabsTrigger value="pagamenti" className="rounded-none border-b-2 border-transparent data-[state=active]:border-orange data-[state=active]:text-orange data-[state=active]:bg-transparent px-0 text-xs font-bold uppercase tracking-widest">
+                  <TabsTrigger value="pagamenti" className="rounded-none border-b-2 border-transparent data-[state=active]:border-orange data-[state=active]:text-orange data-[state=active]:bg-transparent px-0 text-xs font-bold uppercase tracking-widest shrink-0">
                     Pagamenti
                   </TabsTrigger>
-                  <TabsTrigger value="note" className="rounded-none border-b-2 border-transparent data-[state=active]:border-orange data-[state=active]:text-orange data-[state=active]:bg-transparent px-0 text-xs font-bold uppercase tracking-widest">
+                  <TabsTrigger value="note" className="rounded-none border-b-2 border-transparent data-[state=active]:border-orange data-[state=active]:text-orange data-[state=active]:bg-transparent px-0 text-xs font-bold uppercase tracking-widest shrink-0">
                     Note
                   </TabsTrigger>
                 </TabsList>
