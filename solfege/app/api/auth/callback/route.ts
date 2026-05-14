@@ -58,6 +58,7 @@ export async function GET(request: NextRequest) {
     }
   }
 
-  // Return user to login with an error if something went wrong
-  return NextResponse.redirect(`${origin}/login?error=auth_callback_failed`)
+  // Se arriviamo qui senza codice o con errore, mandiamo al login con l'errore specifico
+  const error_description = error?.message || 'codice_mancante';
+  return NextResponse.redirect(`${origin}/login?error=${encodeURIComponent(error_description)}`)
 }

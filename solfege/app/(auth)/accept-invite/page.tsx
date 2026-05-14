@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -16,6 +16,18 @@ export default function AcceptInvitePage() {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [userEmail, setUserEmail] = useState<string | null>(null);
+
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      if (user) {
+        setUserEmail(user.email ?? null);
+      } else {
+        // Se non c'è sessione, il link potrebbe essere scaduto o il callback fallito
+        toast.error("Sessione non trovata. Riprova a cliccare il link nell'email.");
+      }
+    });
+  }, [supabase]);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -54,6 +66,12 @@ export default function AcceptInvitePage() {
         <div className="text-center space-y-2">
           <h1 className="text-3xl font-serif font-bold text-foreground">Benvenuto!</h1>
           <p className="text-muted-foreground">Scegli la tua password per accedere al portale Solfège.</p>
+          {userEmail && (
+            <div className="mt-2 p-2 bg-orange/5 rounded border border-orange/10">
+              <p className="text-xs text-muted-foreground uppercase font-bold">Email account:</p>
+              <p className="text-sm font-medium text-foreground">{userEmail}</p>
+            </div>
+          )}
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
