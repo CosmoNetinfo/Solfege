@@ -11,6 +11,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { registerPublicStudent } from "@/app/actions/public-actions";
+import Link from "next/link";
 
 const registrationSchema = z.object({
   first_name: z.string().min(2, "Inserisci il tuo nome"),
@@ -152,7 +153,8 @@ export function RegistrationForm({ school }: RegistrationFormProps) {
         </Button>
 
         <p className="text-[10px] text-center text-stone-400 italic">
-          Inviando il modulo acconsenti al trattamento dei dati personali secondo la normativa vigente.
+          Inviando il modulo acconsenti al trattamento dei dati personali secondo la normativa vigente. 
+          Leggi la nostra <Link href="/privacy" className="underline hover:text-orange transition-colors">Privacy Policy</Link>.
         </p>
       </form>
     </div>

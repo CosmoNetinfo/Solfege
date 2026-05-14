@@ -220,11 +220,13 @@ function LoginFormContent() {
         </div>
       )}
 
-      <div className="text-center text-sm">
-        <span className="text-muted-foreground">Non hai una scuola? </span>
-        <Link href="/register" className="text-orange hover:underline font-medium">
-          Crea una nuova scuola &rarr;
-        </Link>
+      <div className="text-center text-sm space-y-2">
+        <div className="text-muted-foreground">
+          Non hai una scuola? <Link href="/register" className="text-orange hover:underline font-medium">Crea una nuova scuola &rarr;</Link>
+        </div>
+        <div className="text-xs text-muted-foreground/60 pt-4">
+          <Link href="/privacy" className="hover:underline">Privacy Policy</Link>
+        </div>
       </div>
     </div>
   );
