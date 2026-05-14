@@ -101,16 +101,44 @@ export function SchoolTab({ school }: { school: any }) {
             </span>
           )}
         </div>
-        <div>
-          <h4 className="font-medium mb-2">Logo Scuola</h4>
-          <p className="text-sm text-muted-foreground mb-4">PNG, JPG o WEBP (max 2MB). Sarà visibile nella sidebar e sulle ricevute.</p>
+        <div className="flex-1">
+          <h4 className="font-medium mb-1">Logo Scuola</h4>
+          <p className="text-xs text-muted-foreground mb-3">PNG, JPG o WEBP (max 2MB).</p>
           <Input 
             type="file" 
             accept="image/*" 
-            className="w-full max-w-[250px]" 
+            className="w-full max-w-[250px] h-9 text-xs" 
             onChange={handleLogoUpload}
             disabled={isUploading}
           />
+        </div>
+      </div>
+
+      <div className="p-6 border rounded-xl bg-orange/5 border-orange/10 space-y-4">
+        <div className="flex items-center justify-between">
+          <div>
+            <h3 className="font-bold text-orange flex items-center gap-2">
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-link"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+              Link Iscrizioni Pubblico
+            </h3>
+            <p className="text-sm text-stone-600 mt-1">Condividi questo link sui tuoi social o sul tuo sito per permettere ai nuovi allievi di iscriversi autonomamente.</p>
+          </div>
+        </div>
+        <div className="flex items-center gap-2">
+          <div className="flex-1 bg-white border border-orange/20 rounded-lg px-4 py-2 text-sm font-mono text-stone-700 truncate">
+            {typeof window !== 'undefined' ? `${window.location.origin}/${school.slug}/iscriviti` : `/${school.slug}/iscriviti`}
+          </div>
+          <Button 
+            variant="outline" 
+            className="border-orange/20 text-orange hover:bg-orange hover:text-white"
+            onClick={() => {
+              const url = `${window.location.origin}/${school.slug}/iscriviti`;
+              navigator.clipboard.writeText(url);
+              toast.success("Link copiato negli appunti!");
+            }}
+          >
+            Copia Link
+          </Button>
         </div>
       </div>
 
