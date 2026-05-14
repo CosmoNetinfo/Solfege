@@ -106,7 +106,7 @@ export function SubscriptionTab({ school }: { school: any }) {
                   <div className={`absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-1 text-xs font-bold uppercase rounded-full flex items-center gap-1 whitespace-nowrap
                     ${isPro ? 'bg-orange text-white' : 
                       isWhiteLabel ? 'bg-slate-800 text-white' : 
-                      'bg-orange/10 text-orange border border-orange/20'
+                      'bg-background text-orange border border-orange/30 shadow-sm'
                     }`}
                   >
                     {plan.badgeIcon && <plan.badgeIcon className="w-3 h-3 fill-current" />}
