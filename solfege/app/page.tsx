@@ -78,12 +78,12 @@ export default function LandingPage() {
             <div className="mockup-dot green"></div>
             <div className="mockup-url">solfege-five.vercel.app/login</div>
           </div>
-          <div className="relative aspect-[16/10] overflow-hidden bg-stone-100">
+          <div className="relative aspect-[16/10] overflow-hidden bg-white">
             <Image 
               src="/screenshots/01_Login.png" 
               alt="Login Solfège" 
               fill 
-              className="object-cover object-top hover:scale-[1.02] transition-transform duration-700 cursor-pointer"
+              className="object-contain object-top hover:scale-[1.02] transition-transform duration-700 cursor-pointer"
               priority
             />
           </div>
