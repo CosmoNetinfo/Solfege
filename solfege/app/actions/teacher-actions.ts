@@ -13,7 +13,7 @@ export async function inviteTeacher(teacher: { id: string; email: string; school
     const { data: usersData, error: listError } = await supabaseAdmin.auth.admin.listUsers()
     if (listError) {
       console.error('[INVITE] Errore listUsers:', listError)
-      return { success: false, error: 'Errore durante la verifica utente' }
+      return { success: false, error: `Errore listUsers: ${listError.message}` }
     }
 
     const alreadyExists = usersData.users.find(u => u.email === teacher.email)
@@ -44,7 +44,7 @@ export async function inviteTeacher(teacher: { id: string; email: string; school
 
       if (linkError) {
         console.error('[INVITE] Errore magiclink:', linkError)
-        return { success: false, error: linkError.message }
+        return { success: false, error: `Errore generateLink: ${linkError.message}` }
       }
 
       if (process.env.RESEND_API_KEY && !process.env.RESEND_API_KEY.startsWith('re_12345678')) {
@@ -70,6 +70,12 @@ export async function inviteTeacher(teacher: { id: string; email: string; school
             `
           })
         })
+
+        if (!res.ok) {
+          const resData = await res.text()
+          console.error('[INVITE] Errore API Resend:', res.status, resData)
+          return { success: false, error: `Errore Resend ${res.status}: ${resData}` }
+        }
       } else {
         console.log('[INVITE DEV] Link di accesso generato (Resend saltato):', linkData.properties?.action_link)
         return { success: true, message: 'Link di accesso generato in console (API Key Resend mancante)', action_link: linkData.properties?.action_link }
@@ -102,7 +108,7 @@ export async function inviteTeacher(teacher: { id: string; email: string; school
 
       if (linkError) {
         console.error('[INVITE DEV] Errore link:', linkError)
-        return { success: false, error: linkError.message }
+        return { success: false, error: `Errore generateLink DEV: ${linkError.message}` }
       }
 
       console.log('[INVITE DEV] Link generato:', linkData.properties?.action_link)
@@ -131,7 +137,7 @@ export async function inviteTeacher(teacher: { id: string; email: string; school
       if (error.message.includes('rate limit')) {
         return { success: false, error: 'Limite di invio raggiunto. Attendi qualche minuto.' }
       }
-      return { success: false, error: error.message }
+      return { success: false, error: `Errore Supabase Auth: ${error.message} (Status: ${error.status})` }
     }
 
     console.log('[INVITE] Invito inviato con successo:', data.user?.id)
@@ -140,6 +146,6 @@ export async function inviteTeacher(teacher: { id: string; email: string; school
 
   } catch (err) {
     console.error('[INVITE] Errore generico:', err)
-    return { success: false, error: 'Errore interno del server' }
+    return { success: false, error: `Errore Interno Server: ${err instanceof Error ? err.message : String(err)}` }
   }
 }
