@@ -73,7 +73,7 @@ export function UsersTab({ schoolId, schoolName }: { schoolId: string, schoolNam
     }
 
     try {
-      const res = await updateUserRole(userId, newRole);
+      const res = await updateUserRole(userId, newRole as "admin" | "segreteria" | "insegnante" | "studente" | "genitore");
       if (res.success) {
         toast.success('Ruolo aggiornato con successo');
         setUsers(users.map(u => u.id === userId ? { ...u, role: newRole } : u));

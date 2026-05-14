@@ -33,7 +33,7 @@ export async function deleteStaffUser(userId: string) {
   }
 }
 
-export async function updateUserRole(userId: string, newRole: string) {
+export async function updateUserRole(userId: string, newRole: "admin" | "segreteria" | "insegnante" | "studente" | "genitore") {
   try {
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
