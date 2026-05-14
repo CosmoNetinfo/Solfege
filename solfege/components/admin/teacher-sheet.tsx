@@ -154,7 +154,7 @@ export function TeacherSheet({ teacherId, open, onOpenChange, onEdit }: TeacherS
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent className="w-[95vw] sm:max-w-[900px] p-0 flex flex-col gap-0 border-l border-border bg-surface">
+      <SheetContent className="sm:max-w-[900px]! w-full! p-0 flex flex-col gap-0 border-l border-border bg-surface">
         {loading ? (
           <div className="flex-1 flex items-center justify-center text-muted-foreground">
             Caricamento...
