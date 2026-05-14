@@ -19,7 +19,7 @@ export default function AuthLayout({
       <div className="hidden w-1/2 flex-col justify-center bg-sidebar p-12 lg:flex">
         <div className="max-w-md space-y-4">
           <Image 
-            src="/solfege-logo.png" 
+            src="/logo.png" 
             alt="Solfège Logo" 
             width={300} 
             height={logoHeight} 

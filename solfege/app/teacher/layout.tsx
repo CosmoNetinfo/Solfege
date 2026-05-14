@@ -14,7 +14,7 @@ export default function TeacherLayout({
       <header className="sticky top-0 z-40 w-full h-20 bg-white border-b border-[#E8E4E0] flex items-center justify-center px-4">
         <div className="relative h-12 w-48">
           <Image 
-            src="/solfege-logo.png" 
+            src="/logo.png" 
             alt="Solfège Logo" 
             fill
             priority

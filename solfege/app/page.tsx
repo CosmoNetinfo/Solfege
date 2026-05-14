@@ -47,7 +47,9 @@ export default function LandingPage() {
     <div className="landing-body">
       {/* NAV */}
       <nav className="landing-nav">
-        <Link href="/" className="nav-logo">Solfège</Link>
+        <Link href="/" className="nav-logo flex items-center gap-2">
+          <Image src="/logo.png" alt="Solfège Logo" width={120} height={40} className="h-8 w-auto" />
+        </Link>
         <ul className="nav-links">
           <li><a href="#features">Funzioni</a></li>
           <li><a href="#pricing">Prezzi</a></li>
@@ -78,12 +80,13 @@ export default function LandingPage() {
             <div className="mockup-dot green"></div>
             <div className="mockup-url">solfege-five.vercel.app/login</div>
           </div>
-          <div className="relative aspect-[16/10] overflow-hidden bg-white">
+          <div className="relative overflow-hidden bg-white">
             <Image 
               src="/screenshots/01_Login.png" 
               alt="Login Solfège" 
-              fill 
-              className="object-contain object-top hover:scale-[1.02] transition-transform duration-700 cursor-pointer"
+              width={1600}
+              height={1000}
+              className="w-full h-auto hover:scale-[1.02] transition-transform duration-700 cursor-pointer"
               priority
             />
           </div>
@@ -518,7 +521,9 @@ export default function LandingPage() {
 
       {/* FOOTER */}
       <footer className="landing-footer">
-        <div className="footer-logo">Solfège</div>
+        <div className="footer-logo">
+          <Image src="/logo.png" alt="Solfège Logo" width={100} height={32} className="h-6 w-auto opacity-80" />
+        </div>
         <p>Il gestionale SaaS per scuole di musica · Made in Italy</p>
         <p style={{ marginTop: '.5rem' }}>
           <Link href="/register">Registrati</Link> ·

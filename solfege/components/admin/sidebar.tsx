@@ -93,7 +93,7 @@ export function Sidebar() {
       {/* Header Sidebar: Logo & School Name */}
       <div className="flex flex-col h-24 justify-center px-6 border-b border-sidebar-border/50">
         <Image 
-          src="/solfege-logo.png" 
+          src="/logo.png" 
           alt="Solfège Logo" 
           width={150} 
           height={40} 
