@@ -7,6 +7,9 @@ export async function GET(request: NextRequest) {
   const code = searchParams.get('code')
   const next = searchParams.get('next') ?? '/admin/dashboard'
 
+  console.log('[CALLBACK] Inizio scambio codice. URL:', request.url)
+  console.log('[CALLBACK] Code presente:', !!code, 'Next destination:', next)
+
   if (code) {
     const cookieStore = await cookies()
     const supabase = createServerClient(
@@ -54,13 +57,16 @@ export async function GET(request: NextRequest) {
           .eq('id', user.id);
       }
 
+      console.log('[CALLBACK] Scambio riuscito. Redirect a:', next)
       return NextResponse.redirect(`${origin}${next}`)
     }
     // Se c'è un errore nel cambio codice, mandiamo al login con l'errore specifico
     const error_msg = error?.message || 'auth_exchange_failed';
+    console.error('[CALLBACK] Errore scambio codice:', error_msg)
     return NextResponse.redirect(`${origin}/login?error=${encodeURIComponent(error_msg)}`)
   }
 
   // Se arriviamo qui senza codice
+  console.warn('[CALLBACK] Nessun codice trovato nell\'URL')
   return NextResponse.redirect(`${origin}/login?error=codice_mancante`)
 }
