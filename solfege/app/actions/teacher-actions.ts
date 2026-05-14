@@ -94,8 +94,9 @@ export async function inviteTeacher(teacher: { id: string; email: string; school
     const host = (await headers()).get("host");
     const protocol = host?.includes("localhost") ? "http" : "https";
     const origin = `${protocol}://${host}`;
-    const redirectTo = `${origin}/api/auth/callback?next=/accept-invite`;
-    console.log('[INVITE] Redirect URL dinamico:', redirectTo);
+    // Mandiamo direttamente a /accept-invite
+    const redirectTo = `${origin}/accept-invite`;
+    console.log('[INVITE] Redirect URL diretto:', redirectTo);
 
     // 2. Generazione Link e Invio Email via Resend (Bypassa SMTP interno di Supabase)
     console.log('[INVITE] Generazione link di invito per nuovo utente...')

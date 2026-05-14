@@ -19,17 +19,40 @@ export default function AcceptInvitePage() {
   const [userEmail, setUserEmail] = useState<string | null>(null);
 
   useEffect(() => {
-    // 1. Ascolta i cambiamenti di stato auth in tempo reale
+    async function handleAuth() {
+      // 1. Controlla se c'è un codice nell'URL (PKCE)
+      const params = new URLSearchParams(window.location.search);
+      const code = params.get('code');
+
+      if (code) {
+        console.log('[ACCEPT-INVITE] Scambio codice per sessione...');
+        const { error: exchangeError } = await supabase.auth.exchangeCodeForSession(code);
+        if (exchangeError) {
+          console.error('[ACCEPT-INVITE] Errore scambio codice:', exchangeError);
+          // Non blocchiamo, proviamo comunque a vedere se c'è una sessione già esistente
+        }
+      }
+
+      // 2. Verifica sessione e ottieni email
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        setUserEmail(user.email ?? null);
+        
+        // 3. Logica di associazione profilo
+        const { teacher_id, role } = user.user_metadata || {};
+        if (role === 'insegnante' && teacher_id) {
+          console.log('[ACCEPT-INVITE] Associazione profilo insegnante...');
+          await supabase.from('profiles').update({ role: 'insegnante' }).eq('id', user.id);
+          await supabase.from('teachers').update({ profile_id: user.id }).eq('id', teacher_id);
+        }
+      }
+    }
+
+    handleAuth();
+
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if (session?.user) {
         setUserEmail(session.user.email ?? null);
-      }
-    });
-
-    // 2. Controllo immediato
-    supabase.auth.getUser().then(({ data: { user } }) => {
-      if (user) {
-        setUserEmail(user.email ?? null);
       }
     });
 
