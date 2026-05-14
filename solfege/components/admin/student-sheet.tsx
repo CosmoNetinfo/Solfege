@@ -151,7 +151,7 @@ export function StudentSheet({ studentId, open, onOpenChange, onEdit }: StudentS
 
             <Tabs defaultValue="anagrafica" className="flex-1 flex flex-col">
               <div className="px-6 border-b border-border/50 bg-stone-50/30 overflow-x-auto no-scrollbar">
-                <TabsList className="h-12 bg-transparent p-0 gap-6 flex w-max min-w-full justify-start rounded-none">
+                <TabsList className="h-12 bg-transparent p-0 pr-6 gap-6 flex w-max min-w-full justify-start rounded-none">
                   <TabsTrigger value="anagrafica" className="rounded-none border-b-2 border-transparent data-[state=active]:border-orange data-[state=active]:text-orange data-[state=active]:bg-transparent px-0 text-xs font-bold uppercase tracking-widest shrink-0">
                     Anagrafica
                   </TabsTrigger>
