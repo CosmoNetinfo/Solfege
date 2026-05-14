@@ -75,12 +75,12 @@ export default function LandingPage() {
             <div className="mockup-dot red"></div>
             <div className="mockup-dot yellow"></div>
             <div className="mockup-dot green"></div>
-            <div className="mockup-url">solfege-five.vercel.app/admin/students</div>
+            <div className="mockup-url">solfege-five.vercel.app/login</div>
           </div>
           <div className="relative aspect-[16/10] overflow-hidden bg-stone-100">
             <Image 
-              src="/screenshots/04_Studenti_CRUD.png" 
-              alt="Dashboard Solfège" 
+              src="/screenshots/01_Login.png" 
+              alt="Login Solfège" 
               fill 
               className="object-cover object-top hover:scale-[1.02] transition-transform duration-700 cursor-pointer"
               priority
@@ -118,11 +118,11 @@ export default function LandingPage() {
           </div>
           <div className="group border rounded-xl overflow-hidden bg-white shadow-sm hover:shadow-md transition-all">
             <div className="relative aspect-video">
-              <Image src="/screenshots/07_Corsi_Lista.png" alt="Gestione Corsi" fill className="object-cover object-top" />
+              <Image src="/screenshots/04_Studenti_CRUD.png" alt="Anagrafica Allievi" fill className="object-cover object-top" />
             </div>
             <div className="p-4">
-              <h4 className="font-bold text-stone-900">Catalogo Corsi</h4>
-              <p className="text-xs text-stone-500 mt-1">Organizza materie, livelli e tariffe in modo flessibile.</p>
+              <h4 className="font-bold text-stone-900">Anagrafica Allievi</h4>
+              <p className="text-xs text-stone-500 mt-1">Gestisci ogni dettaglio degli iscritti, dai dati dei genitori allo storico lezioni.</p>
             </div>
           </div>
           <div className="group border rounded-xl overflow-hidden bg-white shadow-sm hover:shadow-md transition-all">
