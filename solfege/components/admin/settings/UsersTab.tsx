@@ -8,7 +8,8 @@ import { createClient } from '@/lib/supabase/client';
 import { getSchoolProfiles } from '@/lib/supabase/queries';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Mail, UserPlus, Shield, User, Trash2 } from 'lucide-react';
-import { deleteStaffUser } from '@/app/actions/user-actions';
+import { deleteStaffUser, updateUserRole } from '@/app/actions/user-actions';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 export function UsersTab({ schoolId, schoolName }: { schoolId: string, schoolName: string }) {
   const [users, setUsers] = useState<any[]>([]);
@@ -17,8 +18,11 @@ export function UsersTab({ schoolId, schoolName }: { schoolId: string, schoolNam
   const [isInviting, setIsInviting] = useState(false);
   const supabase = createClient();
 
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+
   useEffect(() => {
     loadUsers();
+    supabase.auth.getUser().then(({ data }) => setCurrentUserId(data.user?.id || null));
   }, [schoolId]);
 
   const loadUsers = async () => {
@@ -60,8 +64,29 @@ export function UsersTab({ schoolId, schoolName }: { schoolId: string, schoolNam
     }
   };
 
+  const handleRoleChange = async (userId: string, currentRole: string, newRole: string) => {
+    if (currentRole === newRole) return;
+    
+    if (userId === currentUserId) {
+      toast.error('Non puoi modificare il tuo stesso ruolo');
+      return;
+    }
+
+    try {
+      const res = await updateUserRole(userId, newRole);
+      if (res.success) {
+        toast.success('Ruolo aggiornato con successo');
+        setUsers(users.map(u => u.id === userId ? { ...u, role: newRole } : u));
+      } else {
+        toast.error(res.error || "Errore durante l'aggiornamento del ruolo");
+      }
+    } catch (e) {
+      toast.error("Errore durante l'aggiornamento del ruolo");
+    }
+  };
+
   const handleDeleteUser = async (userId: string) => {
-    if (!confirm('Sei sicuro di voler eliminare questo utente? L\\'azione è irreversibile.')) return;
+    if (!confirm("Sei sicuro di voler eliminare questo utente? L'azione è irreversibile.")) return;
     
     try {
       const res = await deleteStaffUser(userId);
@@ -69,10 +94,10 @@ export function UsersTab({ schoolId, schoolName }: { schoolId: string, schoolNam
         toast.success('Utente eliminato con successo');
         setUsers(users.filter(u => u.id !== userId));
       } else {
-        toast.error(res.error || 'Errore durante l\\'eliminazione');
+        toast.error(res.error || "Errore durante l'eliminazione");
       }
     } catch (e) {
-      toast.error('Errore durante l\\'eliminazione');
+      toast.error("Errore durante l'eliminazione");
     }
   };
 
@@ -135,15 +160,26 @@ export function UsersTab({ schoolId, schoolName }: { schoolId: string, schoolNam
                     </div>
                   </td>
                   <td className="px-4 py-3">
-                    {user.role === 'admin' ? (
-                      <span className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium rounded-full bg-primary/10 text-primary">
-                        <Shield className="w-3 h-3" /> Admin
-                      </span>
-                    ) : (
-                      <span className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium rounded-full bg-blue-100 text-blue-700">
-                        <UserPlus className="w-3 h-3" /> Segreteria
-                      </span>
-                    )}
+                    <Select 
+                      disabled={user.id === currentUserId}
+                      value={user.role} 
+                      onValueChange={(val) => handleRoleChange(user.id, user.role, val)}
+                    >
+                      <SelectTrigger className="h-8 w-[140px] border-0 bg-transparent hover:bg-muted focus:ring-0 shadow-none">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="admin">
+                          <span className="flex items-center gap-1.5"><Shield className="w-3 h-3 text-primary" /> Admin</span>
+                        </SelectItem>
+                        <SelectItem value="segreteria">
+                          <span className="flex items-center gap-1.5"><UserPlus className="w-3 h-3 text-blue-600" /> Segreteria</span>
+                        </SelectItem>
+                        <SelectItem value="insegnante">
+                          <span className="flex items-center gap-1.5"><User className="w-3 h-3 text-green-600" /> Insegnante</span>
+                        </SelectItem>
+                      </SelectContent>
+                    </Select>
                   </td>
                   <td className="px-4 py-3 text-muted-foreground">
                     {new Date(user.created_at).toLocaleDateString('it-IT')}
@@ -153,8 +189,9 @@ export function UsersTab({ schoolId, schoolName }: { schoolId: string, schoolNam
                       variant="ghost" 
                       size="icon" 
                       onClick={() => handleDeleteUser(user.id)}
-                      className="text-red-500 hover:bg-red-50 hover:text-red-600 h-8 w-8"
-                      title="Elimina utente"
+                      disabled={user.id === currentUserId}
+                      className="text-red-500 hover:bg-red-50 hover:text-red-600 h-8 w-8 disabled:opacity-30 disabled:hover:bg-transparent"
+                      title={user.id === currentUserId ? "Non puoi eliminare te stesso" : "Elimina utente"}
                     >
                       <Trash2 className="w-4 h-4" />
                     </Button>

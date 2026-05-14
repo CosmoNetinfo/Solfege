@@ -32,3 +32,32 @@ export async function deleteStaffUser(userId: string) {
     return { success: false, error: error.message || "Errore sconosciuto" };
   }
 }
+
+export async function updateUserRole(userId: string, newRole: string) {
+  try {
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+
+    if (!user) {
+      throw new Error("Non autorizzato");
+    }
+
+    if (user.id === userId) {
+      throw new Error("Non puoi cambiare il tuo stesso ruolo");
+    }
+
+    const { error } = await supabase
+      .from('profiles')
+      .update({ role: newRole })
+      .eq('id', userId);
+
+    if (error) {
+      throw error;
+    }
+
+    return { success: true };
+  } catch (error: any) {
+    console.error("Errore durante l'aggiornamento del ruolo:", error);
+    return { success: false, error: error.message || "Errore sconosciuto" };
+  }
+}
