@@ -62,7 +62,12 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [debugLog, setDebugLog] = useState<string[]>([]);
   const router = useRouter();
+  const searchParams = useSearchParams();
   const supabase = createClient();
+
+  const errorParam = searchParams.get('error');
+  const codeParam = searchParams.get('code');
+  const typeParam = searchParams.get('type');
 
   const {
     register,
@@ -203,6 +208,17 @@ export default function LoginPage() {
       <Suspense fallback={null}>
         <DebugPanel />
       </Suspense>
+
+      {/* Box di Debug per tracciare i reindirizzamenti falliti */}
+      {(errorParam || codeParam || typeParam) && (
+        <div className="p-4 bg-red/5 border border-red/10 rounded-lg text-xs font-mono text-red-700 space-y-1">
+          <p className="font-bold uppercase mb-1">Dati di Debug:</p>
+          <p>Errore: {errorParam || 'nessuno'}</p>
+          <p>Codice Auth: {codeParam ? 'presente' : 'assente'}</p>
+          <p>Tipo: {typeParam || 'nessuno'}</p>
+          <p>Se vedi questo box, il link ti ha mandato qui invece che su /accept-invite.</p>
+        </div>
+      )}
 
       <div className="text-center text-sm">
         <span className="text-muted-foreground">Non hai una scuola? </span>
