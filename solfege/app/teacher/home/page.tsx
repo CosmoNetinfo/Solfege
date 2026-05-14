@@ -97,7 +97,7 @@ export default function TeacherHomePage() {
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-xl font-medium text-[#7A736C]">Ciao, {teacherName} 👋</h2>
+        <h2 className="text-xl font-medium text-[#7A736C]">Bentornato, {teacherName}</h2>
         <p className="text-2xl font-bold text-[#1A1714] capitalize">{todayStr}</p>
       </div>
 

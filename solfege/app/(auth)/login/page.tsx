@@ -50,7 +50,7 @@ function DebugPanel() {
       whiteSpace: "pre-wrap",
       wordBreak: "break-all",
     }}>
-      <strong style={{ color: "#ff8800" }}>🐛 DEBUG SESSION</strong>
+      <strong style={{ color: "#ff8800" }}>[DEBUG SESSION]</strong>
       <br />
       {debugInfo ? JSON.stringify(debugInfo, null, 2) : "Caricamento..."}
     </div>
@@ -185,7 +185,7 @@ export default function LoginPage() {
           color: "#aaffaa",
           whiteSpace: "pre-wrap",
         }}>
-          <strong style={{ color: "#ffaa00" }}>🐛 Auth Log</strong>
+          <strong style={{ color: "#ffaa00" }}>[Auth Log]</strong>
           <br />
           {debugLog.join("\n")}
         </div>
