@@ -154,15 +154,15 @@ export function TeacherSheet({ teacherId, open, onOpenChange, onEdit }: TeacherS
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent className="sm:max-w-[600px] p-0 flex flex-col gap-0 border-l border-border bg-surface">
+      <SheetContent className="w-[90vw] sm:max-w-[700px] p-0 flex flex-col gap-0 border-l border-border bg-surface">
         {loading ? (
           <div className="flex-1 flex items-center justify-center text-muted-foreground">
             Caricamento...
           </div>
         ) : teacher ? (
           <>
-            <SheetHeader className="p-6 pb-4 bg-stone-50/50 border-b border-border/50">
-              <div className="flex items-center justify-between">
+            <SheetHeader className="p-6 pr-12 pb-4 bg-stone-50/50 border-b border-border/50">
+              <div className="flex flex-wrap items-center justify-between gap-4">
                 <div className="flex items-center gap-4">
                   <div className="h-14 w-14 rounded-full bg-orange/10 flex items-center justify-center text-orange shrink-0">
                     <GraduationCap className="h-7 w-7" />
