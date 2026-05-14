@@ -31,7 +31,7 @@ export function InstrumentsTab({ schoolId }: { schoolId: string }) {
   const loadInstruments = async () => {
     try {
       const data = await getInstruments(supabase, schoolId);
-      setInstruments(data as Instrument[]);
+      setInstruments(data as unknown as Instrument[]);
     } catch (e) {
       toast.error('Errore caricamento strumenti');
     } finally {
