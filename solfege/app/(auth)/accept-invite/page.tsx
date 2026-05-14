@@ -39,11 +39,29 @@ export default function AcceptInvitePage() {
         setUserEmail(user.email ?? null);
         
         // 3. Logica di associazione profilo
-        const { teacher_id, role } = user.user_metadata || {};
+        const { teacher_id, student_id, role, school_id } = user.user_metadata || {};
+        
         if (role === 'insegnante' && teacher_id) {
           console.log('[ACCEPT-INVITE] Associazione profilo insegnante...');
-          await supabase.from('profiles').update({ role: 'insegnante' }).eq('id', user.id);
+          await supabase.from('profiles').update({ 
+            role: 'insegnante',
+            school_id: school_id
+          }).eq('id', user.id);
           await supabase.from('teachers').update({ profile_id: user.id }).eq('id', teacher_id);
+        } else if (role === 'studente' && student_id) {
+          console.log('[ACCEPT-INVITE] Associazione profilo studente...');
+          await supabase.from('profiles').update({ 
+            role: 'studente',
+            school_id: school_id,
+            student_id: student_id
+          }).eq('id', user.id);
+        } else if (role === 'genitore' && student_id) {
+          console.log('[ACCEPT-INVITE] Associazione profilo genitore...');
+          await supabase.from('profiles').update({ 
+            role: 'genitore',
+            school_id: school_id,
+            student_id: student_id
+          }).eq('id', user.id);
         }
       }
     }
@@ -81,8 +99,15 @@ export default function AcceptInvitePage() {
       if (error) throw error;
 
       toast.success("Password impostata con successo!");
-      // Il redirect verrà gestito dal callback o possiamo farlo qui
-      router.push("/teacher/home");
+      
+      const { data: { user } } = await supabase.auth.getUser();
+      const role = user?.user_metadata?.role;
+
+      if (role === 'studente' || role === 'genitore') {
+        router.push("/portal/dashboard");
+      } else {
+        router.push("/teacher/home");
+      }
     } catch (err: any) {
       toast.error(err.message || "Errore durante l'impostazione della password");
     } finally {

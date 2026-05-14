@@ -60,6 +60,19 @@ export async function getSchoolData(supabase: SupabaseClient<Database>, schoolId
   });
 }
 
+export async function getSchoolBySlug(supabase: SupabaseClient<Database>, slug: string) {
+  return trackQuery('getSchoolBySlug', async () => {
+    const { data, error } = await supabase
+      .from('schools')
+      .select('*')
+      .eq('slug', slug)
+      .maybeSingle();
+
+    if (error) return null;
+    return data;
+  });
+}
+
 export async function getKpiDashboard(supabase: SupabaseClient<Database>, schoolId: string) {
   return trackQuery('getKpiDashboard', async () => {
     const now = new Date();
@@ -93,6 +106,42 @@ export async function getKpiDashboard(supabase: SupabaseClient<Database>, school
       totalTeachers: totalTeachers || 0,
       monthlyIncome,
       lessonsToday: lessonsToday || 0,
+    };
+  });
+}
+
+export async function getStudentDashboardData(supabase: SupabaseClient<Database>, studentId: string) {
+  return trackQuery('getStudentDashboardData', async () => {
+    const now = new Date().toISOString();
+    
+    // 1. Iscrizioni attive
+    const { data: enrollments } = await supabase
+      .from('enrollments')
+      .select('*, courses(*)')
+      .eq('student_id', studentId)
+      .eq('status', 'active');
+
+    // 2. Prossime lezioni (tramite tabella presenze)
+    const { data: attendance } = await supabase
+      .from('attendance')
+      .select('*, lessons!inner(*, courses(name), teachers(first_name, last_name))')
+      .eq('student_id', studentId)
+      .gte('lessons.data_ora_inizio', now)
+      .order('lessons(data_ora_inizio)', { ascending: true })
+      .limit(5);
+
+    // 3. Pagamenti in sospeso
+    const { data: payments } = await supabase
+      .from('payments')
+      .select('*')
+      .eq('student_id', studentId)
+      .in('status', ['in_attesa', 'in_ritardo'])
+      .order('due_date', { ascending: true });
+
+    return {
+      enrollments: enrollments || [],
+      upcomingLessons: attendance?.map(a => a.lessons) || [],
+      pendingPayments: payments || []
     };
   });
 }
@@ -161,7 +210,7 @@ export async function getPayments(supabase: SupabaseClient<Database>, schoolId: 
   return trackQuery('getPayments', async () => {
     let query = supabase
       .from('payments')
-      .select('*, students(first_name, last_name), enrollments(courses(name))')
+      .select('*, students(first_name, last_name, phone, parent_phone), enrollments(courses(name))')
       .eq('school_id', schoolId)
       .order('due_date', { ascending: false });
 
@@ -497,5 +546,41 @@ export async function markCompensationAsPaid(
       
     if (error) throw error;
     return data;
+  });
+}
+export async function checkPlanLimits(supabase: SupabaseClient<Database>, schoolId: string) {
+  return trackQuery('checkPlanLimits', async () => {
+    const school = await getSchoolData(supabase, schoolId);
+    if (!school) return null;
+
+    const plan = (school.plan || 'free') as 'free' | 'trial' | 'starter' | 'pro' | 'white_label';
+
+    const limits = {
+      free:        { students: 20,       teachers: 2  },
+      trial:       { students: Infinity, teachers: Infinity },
+      starter:     { students: 50,       teachers: 5  },
+      pro:         { students: Infinity, teachers: Infinity },
+      white_label: { students: Infinity, teachers: Infinity },
+    };
+
+    const [
+      { count: studentCount },
+      { count: teacherCount }
+    ] = await Promise.all([
+      supabase.from('students').select('*', { count: 'exact', head: true }).eq('school_id', schoolId).eq('active', true),
+      supabase.from('teachers').select('*', { count: 'exact', head: true }).eq('school_id', schoolId).eq('active', true)
+    ]);
+
+    const currentLimits = limits[plan] || limits.free;
+
+    return {
+      plan,
+      trial_ends_at: school.trial_ends_at,
+      limits: currentLimits,
+      studentCount: studentCount || 0,
+      teacherCount: teacherCount || 0,
+      canAddStudent: (studentCount || 0) < currentLimits.students,
+      canAddTeacher: (teacherCount || 0) < currentLimits.teachers,
+    };
   });
 }

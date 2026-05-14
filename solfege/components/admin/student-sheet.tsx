@@ -29,6 +29,9 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
+import { toast } from "sonner";
+import { Loader2 } from "lucide-react";
+import { inviteStudent } from "@/app/actions/portal-actions";
 
 interface StudentSheetProps {
   studentId: string | null;
@@ -45,6 +48,40 @@ export function StudentSheet({ studentId, open, onOpenChange, onEdit }: StudentS
   const [attendance, setAttendance] = useState<any[]>([]);
   const [payments, setPayments] = useState<any[]>([]);
   const [availability, setAvailability] = useState<any[]>([]);
+  const [inviting, setInviting] = useState(false);
+
+  async function handleInvitePortal() {
+    if (!student || (!student.email && !student.parent_email)) {
+      toast.error("L'allievo non ha un'email configurata.");
+      return;
+    }
+
+    setInviting(true);
+    try {
+      // Priorità email allievo, altrimenti genitore
+      const email = student.email || student.parent_email;
+      const isParent = !student.email && !!student.parent_email;
+
+      const result = await inviteStudent({
+        id: student.id,
+        email: email,
+        school_id: student.school_id,
+        first_name: student.first_name,
+        last_name: student.last_name,
+        isParent: isParent
+      });
+
+      if (result.success) {
+        toast.success(result.message);
+      } else {
+        toast.error(result.error);
+      }
+    } catch (error) {
+      toast.error("Errore durante l'invio dell'invito.");
+    } finally {
+      setInviting(false);
+    }
+  }
 
   useEffect(() => {
     if (open && studentId) {
@@ -335,8 +372,12 @@ export function StudentSheet({ studentId, open, onOpenChange, onEdit }: StudentS
                   >
                     Modifica Allievo
                   </button>
-                  <button className="flex-1 h-10 px-4 rounded-md bg-orange text-white text-sm font-medium hover:bg-orange-dark transition-colors">
-                    Invia Comunicazione
+                  <button 
+                    onClick={handleInvitePortal}
+                    disabled={inviting || !student.active}
+                    className="flex-1 h-10 px-4 rounded-md bg-stone-900 text-white text-sm font-medium hover:bg-stone-800 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+                  >
+                    {inviting ? <Loader2 className="h-4 w-4 animate-spin" /> : "Invita al Portale"}
                   </button>
                 </div>
               </div>

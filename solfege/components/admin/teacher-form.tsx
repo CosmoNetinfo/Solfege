@@ -4,9 +4,10 @@ import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { Loader2, X } from "lucide-react";
+import { Loader2, X, AlertTriangle } from "lucide-react";
 import { toast } from "sonner";
 import { createClient } from "@/lib/supabase/client";
+import { checkPlanLimits } from "@/lib/supabase/queries";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -46,6 +47,7 @@ export function TeacherFormDialog({
 }: TeacherFormDialogProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [slots, setSlots] = useState<SlotDisponibilita[]>(initialSlots);
+  const [planLimits, setPlanLimits] = useState<any>(null);
   const supabase = createClient();
   const isEdit = !!teacher;
 
@@ -58,8 +60,11 @@ export function TeacherFormDialog({
     if (open) {
       reset(getTeacherDefaultValues(teacher));
       setSlots(initialSlots);
+      if (!isEdit) {
+        checkPlanLimits(supabase, schoolId).then(setPlanLimits);
+      }
     }
-  }, [open, teacher, initialSlots, reset]);
+  }, [open, teacher, initialSlots, reset, schoolId, supabase, isEdit]);
 
   function getTeacherDefaultValues(t: any) {
     if (!t) return {};
@@ -151,6 +156,30 @@ export function TeacherFormDialog({
         </DialogHeader>
 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+          {planLimits && !planLimits.canAddTeacher && (
+            <div className="p-4 bg-red/5 border border-red/10 rounded-xl text-red-800 text-sm flex flex-col gap-3 animate-in fade-in slide-in-from-top-4 duration-500">
+              <div className="flex items-center gap-2 font-bold uppercase tracking-wider text-xs">
+                <AlertTriangle className="h-4 w-4 text-red-600" />
+                Limite piano raggiunto
+              </div>
+              <p className="opacity-90">
+                Hai raggiunto il limite di <strong>{planLimits.limits.teachers} docenti</strong> previsto dal piano <strong>{planLimits.plan}</strong>.
+              </p>
+              <Button 
+                type="button"
+                variant="outline" 
+                size="sm" 
+                className="w-fit bg-white border-red-200 text-red-600 hover:bg-red-50 font-bold"
+                onClick={() => {
+                  onOpenChange(false);
+                  window.location.href = '/admin/impostazioni';
+                }}
+              >
+                Passa a Starter →
+              </Button>
+            </div>
+          )}
+
           {/* Dati Anagrafici */}
           <div className="space-y-4">
             <h4 className="text-xs font-bold uppercase text-muted-foreground tracking-widest">Dati Anagrafici</h4>
@@ -228,7 +257,11 @@ export function TeacherFormDialog({
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)} className="border-border text-muted-foreground">
               Annulla
             </Button>
-            <Button type="submit" className="bg-orange hover:bg-orange-dark text-white" disabled={isLoading}>
+            <Button 
+              type="submit" 
+              className="bg-orange hover:bg-orange-dark text-white" 
+              disabled={isLoading || (!isEdit && planLimits && !planLimits.canAddTeacher)}
+            >
               {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : (isEdit ? "Salva Modifiche" : "Crea Insegnante")}
             </Button>
           </DialogFooter>

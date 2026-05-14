@@ -306,6 +306,9 @@ export type Database = {
           id: string
           lezione_recupero_di: string | null
           note_docente: string | null
+          topic: string | null
+          homework: string | null
+          internal_notes: string | null
           room_id: string | null
           school_id: string
           status: Database["public"]["Enums"]["stato_lezione"] | null
@@ -320,6 +323,9 @@ export type Database = {
           id?: string
           lezione_recupero_di?: string | null
           note_docente?: string | null
+          topic?: string | null
+          homework?: string | null
+          internal_notes?: string | null
           room_id?: string | null
           school_id: string
           status?: Database["public"]["Enums"]["stato_lezione"] | null
@@ -334,6 +340,9 @@ export type Database = {
           id?: string
           lezione_recupero_di?: string | null
           note_docente?: string | null
+          topic?: string | null
+          homework?: string | null
+          internal_notes?: string | null
           room_id?: string | null
           school_id?: string
           status?: Database["public"]["Enums"]["stato_lezione"] | null
@@ -507,6 +516,7 @@ export type Database = {
           phone: string | null
           role: Database["public"]["Enums"]["user_role"]
           school_id: string | null
+          student_id: string | null
           updated_at: string
         }
         Insert: {
@@ -518,6 +528,7 @@ export type Database = {
           phone?: string | null
           role?: Database["public"]["Enums"]["user_role"]
           school_id?: string | null
+          student_id?: string | null
           updated_at?: string
         }
         Update: {
@@ -529,6 +540,7 @@ export type Database = {
           phone?: string | null
           role?: Database["public"]["Enums"]["user_role"]
           school_id?: string | null
+          student_id?: string | null
           updated_at?: string
         }
         Relationships: [
@@ -544,6 +556,13 @@ export type Database = {
             columns: ["school_id"]
             isOneToOne: false
             referencedRelation: "schools"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "profiles_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "students"
             referencedColumns: ["id"]
           },
         ]
@@ -943,7 +962,7 @@ export type Database = {
         | "rimborsato"
         | "annullato"
       tipo_corso: "individuale" | "collettivo" | "online"
-      user_role: "admin" | "segreteria" | "insegnante"
+      user_role: "admin" | "segreteria" | "insegnante" | "studente" | "genitore"
     }
     CompositeTypes: {
       [_ in never]: never

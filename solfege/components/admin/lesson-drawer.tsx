@@ -17,6 +17,8 @@ import { it } from "date-fns/locale";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
 import { createClient } from "@/lib/supabase/client";
+import { LessonTopicEditor } from "./LessonTopicEditor";
+import { CheckCircle } from "lucide-react";
 
 type LessonDrawerProps = {
   lessonId: string | null;
@@ -165,6 +167,18 @@ export function LessonDrawer({ lessonId, isOpen, onClose, onRefresh }: LessonDra
               </div>
             </div>
 
+            <div className="space-y-4">
+              {lesson.status !== 'completata' && (
+                <Button 
+                  onClick={() => updateStatus('completata')}
+                  disabled={updating}
+                  className="w-full bg-green-600 hover:bg-green-700 text-white font-bold h-12 shadow-lg shadow-green-200 animate-in zoom-in-95 duration-500"
+                >
+                  <CheckCircle className="mr-2 h-5 w-5" /> Segna come Svolta
+                </Button>
+              )}
+            </div>
+
             <Separator />
 
             <div className="space-y-4">
@@ -219,6 +233,16 @@ export function LessonDrawer({ lessonId, isOpen, onClose, onRefresh }: LessonDra
                 </div>
               )}
             </div>
+
+            <Separator />
+
+            <LessonTopicEditor 
+              lessonId={lessonId}
+              initialTopic={lesson.topic}
+              initialHomework={lesson.homework}
+              initialInternalNotes={lesson.internal_notes}
+              onSave={onRefresh}
+            />
 
             <div className="pt-6 flex flex-col gap-3">
               <Button variant="outline" className="w-full text-stone-600">

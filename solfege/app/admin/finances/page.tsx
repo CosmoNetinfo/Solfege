@@ -14,13 +14,16 @@ import {
   AlertCircle,
   TrendingUp,
   CheckCircle2,
-  Plus
+  Plus,
+  MessageCircle,
+  Loader2
 } from "lucide-react";
 import { format } from "date-fns";
 import { it } from "date-fns/locale";
 import { toast } from "sonner";
 import { createClient } from "@/lib/supabase/client";
 import { getPayments, getFinancesSummary, getSchoolData } from "@/lib/supabase/queries";
+import { sendPaymentReminder } from "@/app/actions/email-actions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -144,6 +147,46 @@ export default function FinancesPage() {
       loadData();
     } catch (err: any) {
       toast.error("Errore: " + err.message);
+    }
+  }
+
+  function sendWhatsAppReminder(payment: any) {
+    const phone = payment.students?.phone || payment.students?.parent_phone;
+    if (!phone) {
+      toast.error("Numero di telefono non disponibile");
+      return;
+    }
+
+    const cleanPhone = phone.replace(/\D/g, "");
+    // Assumiamo prefisso italiano se non specificato
+    const formattedPhone = cleanPhone.startsWith('39') ? cleanPhone : `39${cleanPhone}`;
+    
+    const name = payment.students?.first_name;
+    const amount = Number(payment.amount).toFixed(2);
+    const dueDate = format(new Date(payment.due_date), "dd/MM/yyyy");
+    
+    const message = `Ciao ${name}, da Solfège ti ricordiamo la scadenza del pagamento di € ${amount} prevista per il ${dueDate}. Grazie!`;
+    const url = `https://wa.me/${formattedPhone}?text=${encodeURIComponent(message)}`;
+    
+    window.open(url, "_blank");
+  }
+
+  const [sendingEmail, setSendingEmail] = useState<string | null>(null);
+
+  async function handleEmailReminder(payment: any) {
+    if (!school) return;
+    setSendingEmail(payment.id);
+    try {
+      const result = await sendPaymentReminder(payment, school.name);
+      if (result.success) {
+        toast.success("Sollecito email inviato con successo");
+      } else {
+        toast.error("Errore: " + result.error);
+      }
+    } catch (err: any) {
+      toast.error("Errore durante l'invio: " + err.message);
+    } finally {
+      setSendingEmail(null);
     }
   }
 
@@ -303,9 +346,24 @@ export default function FinancesPage() {
                           {p.status === "pagato" && school && (
                             <PDFButton school={school} payment={p} />
                           )}
-                          <DropdownMenuItem className="cursor-pointer">
-                            <Mail className="mr-2 h-4 w-4" /> Invia Sollecito
-                          </DropdownMenuItem>
+                          {p.status !== "pagato" && (
+                            <>
+                              <DropdownMenuItem 
+                                className="cursor-pointer"
+                                onClick={() => handleEmailReminder(p)}
+                                disabled={sendingEmail === p.id}
+                              >
+                                {sendingEmail === p.id ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Mail className="mr-2 h-4 w-4" />}
+                                Sollecito Email
+                              </DropdownMenuItem>
+                              <DropdownMenuItem 
+                                className="cursor-pointer text-green-600 focus:text-green-600"
+                                onClick={() => sendWhatsAppReminder(p)}
+                              >
+                                <MessageCircle className="mr-2 h-4 w-4" /> Sollecito WhatsApp
+                              </DropdownMenuItem>
+                            </>
+                          )}
                           <DropdownMenuSeparator />
                           <DropdownMenuItem className="text-red focus:text-red cursor-pointer">
                             Annulla Pagamento

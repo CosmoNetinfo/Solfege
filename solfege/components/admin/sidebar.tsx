@@ -31,25 +31,36 @@ const navItems = [
   { name: "Impostazioni", href: "/admin/impostazioni", icon: Settings },
 ];
 
+import { Badge } from "@/components/ui/badge";
+
 export function Sidebar() {
-  const [schoolName, setSchoolName] = useState<string | null>(null);
+  const [schoolInfo, setSchoolInfo] = useState<{ name: string | null, plan: string | null, trialEndsAt: string | null }>({
+    name: null,
+    plan: null,
+    trialEndsAt: null
+  });
   const pathname = usePathname();
   const supabase = createClient();
 
   useEffect(() => {
-    async function loadSchoolName() {
+    async function loadSchoolData() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
       const { data: profile } = await supabase
         .from("profiles")
-        .select("school_id, schools(name)")
+        .select("school_id, schools(name, plan, trial_ends_at)")
         .eq("id", user.id)
         .single();
-      if (profile?.schools?.name) {
-        setSchoolName(profile.schools.name);
+      
+      if (profile?.schools) {
+        setSchoolInfo({
+          name: profile.schools.name,
+          plan: profile.schools.plan,
+          trialEndsAt: profile.schools.trial_ends_at
+        });
       }
     }
-    loadSchoolName();
+    loadSchoolData();
   }, []);
 
   const handleLogout = async () => {
@@ -57,8 +68,28 @@ export function Sidebar() {
     window.location.href = "/login";
   };
 
+  const PlanBadge = ({ plan, trialEndsAt }: { plan: string | null, trialEndsAt: string | null }) => {
+    if (!plan && plan !== 'free') return null;
+    
+    switch(plan) {
+      case 'free':
+        return <Badge variant="outline" className="text-[9px] h-4 px-1.5 border-stone-300 text-stone-500 uppercase font-bold">Free</Badge>;
+      case 'trial':
+        const days = trialEndsAt ? Math.ceil((new Date(trialEndsAt).getTime() - new Date().getTime()) / (1000 * 3600 * 24)) : 0;
+        return <Badge className="text-[9px] h-4 px-1.5 bg-amber-500 text-white border-none uppercase font-bold">Trial {days > 0 ? `· ${days}gg` : ''}</Badge>;
+      case 'starter':
+        return <Badge className="text-[9px] h-4 px-1.5 bg-blue-500 text-white border-none uppercase font-bold">Starter</Badge>;
+      case 'pro':
+        return <Badge className="text-[9px] h-4 px-1.5 bg-green-600 text-white border-none uppercase font-bold">Pro</Badge>;
+      case 'white_label':
+        return <Badge className="text-[9px] h-4 px-1.5 bg-slate-900 text-white border-none uppercase font-bold text-center">White Label</Badge>;
+      default:
+        return <Badge variant="outline" className="text-[9px] h-4 px-1.5 border-stone-300 text-stone-500 uppercase font-bold">Free</Badge>;
+    }
+  };
+
   return (
-    <div className="flex h-screen w-64 flex-col bg-sidebar border-r border-sidebar-border">
+    <div className="flex h-screen w-64 flex-col bg-sidebar border-r border-sidebar-border shrink-0">
       {/* Header Sidebar: Logo & School Name */}
       <div className="flex flex-col h-24 justify-center px-6 border-b border-sidebar-border/50">
         <Image 
@@ -69,10 +100,13 @@ export function Sidebar() {
           className="h-8 w-auto object-contain self-start"
           priority
         />
-        {schoolName && (
-          <p className="mt-2 text-xs font-semibold text-orange uppercase tracking-wider truncate">
-            {schoolName}
-          </p>
+        {schoolInfo.name && (
+          <div className="mt-2 flex items-center justify-between gap-2 overflow-hidden">
+            <p className="text-xs font-semibold text-orange uppercase tracking-wider truncate flex-1">
+              {schoolInfo.name}
+            </p>
+            <PlanBadge plan={schoolInfo.plan} trialEndsAt={schoolInfo.trialEndsAt} />
+          </div>
         )}
       </div>
 
