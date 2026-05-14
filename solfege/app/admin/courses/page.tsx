@@ -52,7 +52,7 @@ export default function CoursesPage() {
 
     const [coursesRes, instrRes, roomsRes] = await Promise.all([
       supabase.from("courses").select("*, instruments(name), rooms(name)").eq("school_id", id).order("name"),
-      supabase.from("instruments").select("id, name").eq("school_id", id).order("name"),
+      supabase.from("instruments").select("id, name, is_global").or(`is_global.eq.true,school_id.eq.${id}`).order("name"),
       supabase.from("rooms").select("id, name").eq("school_id", id).order("name"),
     ]);
 
