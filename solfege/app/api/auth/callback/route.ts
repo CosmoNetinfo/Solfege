@@ -5,10 +5,11 @@ import { NextResponse, type NextRequest } from 'next/server'
 export async function GET(request: NextRequest) {
   const { searchParams, origin } = new URL(request.url)
   const code = searchParams.get('code')
+  const type = searchParams.get('type')
   const next = searchParams.get('next') ?? '/admin/dashboard'
 
-  console.log('[CALLBACK] Inizio scambio codice. URL:', request.url)
-  console.log('[CALLBACK] Code presente:', !!code, 'Next destination:', next)
+  console.log('[CALLBACK] URL:', request.url)
+  console.log('[CALLBACK] code:', !!code, 'type:', type, 'next:', next)
 
   if (code) {
     const cookieStore = await cookies()
@@ -17,9 +18,7 @@ export async function GET(request: NextRequest) {
       process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
       {
         cookies: {
-          getAll() {
-            return cookieStore.getAll()
-          },
+          getAll() { return cookieStore.getAll() },
           setAll(cookiesToSet) {
             cookiesToSet.forEach(({ name, value, options }) =>
               cookieStore.set(name, value, options)
@@ -30,43 +29,45 @@ export async function GET(request: NextRequest) {
     )
 
     const { data: { user }, error } = await supabase.auth.exchangeCodeForSession(code)
-    
+
     if (!error && user) {
-      // Logic for teacher invitation
-      const { teacher_id, school_id, role } = user.user_metadata || {};
-      
+      const { teacher_id, school_id, role } = user.user_metadata || {}
+
       if (role === 'insegnante' && teacher_id) {
-        const { createAdminClient } = await import('@/lib/supabase/admin');
-        const admin = createAdminClient();
-        
-        // 1. Update teachers table
+        const { createAdminClient } = await import('@/lib/supabase/admin')
+        const admin = createAdminClient()
+
         await admin
           .from('teachers')
           .update({ profile_id: user.id })
-          .eq('id', teacher_id);
-          
-        // 2. Update profiles table (role and school_id)
+          .eq('id', teacher_id)
+
         await admin
           .from('profiles')
-          .update({ 
-            role: 'insegnante', 
+          .update({
+            role: 'insegnante',
             school_id: school_id,
             first_name: user.user_metadata.first_name || null,
-            last_name: user.user_metadata.last_name || null
+            last_name: user.user_metadata.last_name || null,
           })
-          .eq('id', user.id);
+          .eq('id', user.id)
       }
 
-      console.log('[CALLBACK] Scambio riuscito. Redirect a:', next)
+      // Se è un invito (type=invite o ruolo insegnante) → pagina imposta password
+      if (type === 'invite' || role === 'insegnante' || next === '/accept-invite') {
+        console.log('[CALLBACK] Invito rilevato → /accept-invite')
+        return NextResponse.redirect(`${origin}/accept-invite`)
+      }
+
+      console.log('[CALLBACK] Redirect a:', next)
       return NextResponse.redirect(`${origin}${next}`)
     }
-    // Se c'è un errore nel cambio codice, mandiamo al login con l'errore specifico
-    const error_msg = error?.message || 'auth_exchange_failed';
-    console.error('[CALLBACK] Errore scambio codice:', error_msg)
+
+    const error_msg = error?.message || 'auth_exchange_failed'
+    console.error('[CALLBACK] Errore:', error_msg)
     return NextResponse.redirect(`${origin}/login?error=${encodeURIComponent(error_msg)}`)
   }
 
-  // Se arriviamo qui senza codice
-  console.warn('[CALLBACK] Nessun codice trovato nell\'URL')
+  console.warn('[CALLBACK] Nessun codice trovato')
   return NextResponse.redirect(`${origin}/login?error=codice_mancante`)
 }

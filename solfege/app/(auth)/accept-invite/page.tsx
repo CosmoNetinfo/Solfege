@@ -1,174 +1,80 @@
-"use client";
-
-import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
-import { createClient } from "@/lib/supabase/client";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { toast } from "sonner";
-import { Loader2, Eye, EyeOff } from "lucide-react";
+'use client'
+import { useState, useEffect } from 'react'
+import { createClient } from '@/lib/supabase/client'
+import { useRouter } from 'next/navigation'
+import Image from 'next/image'
 
 export default function AcceptInvitePage() {
-  const router = useRouter();
-  const supabase = createClient();
-  const [password, setPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
-  const [showPassword, setShowPassword] = useState(false);
-  const [userEmail, setUserEmail] = useState<string | null>(null);
+  const [password, setPassword] = useState('')
+  const [confirm, setConfirm] = useState('')
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState('')
+  const [ready, setReady] = useState(false)
+  const supabase = createClient()
+  const router = useRouter()
 
   useEffect(() => {
-    async function handleAuth() {
-      // 1. Controlla se c'è un codice nell'URL (PKCE)
-      const params = new URLSearchParams(window.location.search);
-      const code = params.get('code');
+    supabase.auth.getSession().then(({ data }) => {
+      if (data.session) setReady(true)
+      else router.push('/login')
+    })
+  }, [])
 
-      if (code) {
-        console.log('[ACCEPT-INVITE] Scambio codice per sessione...');
-        const { error: exchangeError } = await supabase.auth.exchangeCodeForSession(code);
-        if (exchangeError) {
-          console.error('[ACCEPT-INVITE] Errore scambio codice:', exchangeError);
-          // Non blocchiamo, proviamo comunque a vedere se c'è una sessione già esistente
-        }
-      }
-
-      // 2. Verifica sessione e ottieni email
-      const { data: { user } } = await supabase.auth.getUser();
-      if (user) {
-        setUserEmail(user.email ?? null);
-        
-        // 3. Logica di associazione profilo
-        const { teacher_id, student_id, role, school_id } = user.user_metadata || {};
-        
-        if (role === 'insegnante' && teacher_id) {
-          console.log('[ACCEPT-INVITE] Associazione profilo insegnante...');
-          await supabase.from('profiles').update({ 
-            role: 'insegnante',
-            school_id: school_id
-          }).eq('id', user.id);
-          await supabase.from('teachers').update({ profile_id: user.id }).eq('id', teacher_id);
-        } else if (role === 'studente' && student_id) {
-          console.log('[ACCEPT-INVITE] Associazione profilo studente...');
-          await supabase.from('profiles').update({ 
-            role: 'studente',
-            school_id: school_id,
-            student_id: student_id
-          }).eq('id', user.id);
-        } else if (role === 'genitore' && student_id) {
-          console.log('[ACCEPT-INVITE] Associazione profilo genitore...');
-          await supabase.from('profiles').update({ 
-            role: 'genitore',
-            school_id: school_id,
-            student_id: student_id
-          }).eq('id', user.id);
-        }
-      }
-    }
-
-    handleAuth();
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      if (session?.user) {
-        setUserEmail(session.user.email ?? null);
-      }
-    });
-
-    return () => subscription.unsubscribe();
-  }, [supabase]);
-
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
-
-    if (password.length < 6) {
-      toast.error("La password deve essere di almeno 6 caratteri.");
-      return;
-    }
-
-    if (password !== confirmPassword) {
-      toast.error("Le password non coincidono.");
-      return;
-    }
-
-    setIsLoading(true);
-    try {
-      const { error } = await supabase.auth.updateUser({
-        password: password
-      });
-
-      if (error) throw error;
-
-      toast.success("Password impostata con successo!");
-      
-      const { data: { user } } = await supabase.auth.getUser();
-      const role = user?.user_metadata?.role;
-
-      if (role === 'studente' || role === 'genitore') {
-        router.push("/portal/dashboard");
-      } else {
-        router.push("/teacher/home");
-      }
-    } catch (err: any) {
-      toast.error(err.message || "Errore durante l'impostazione della password");
-    } finally {
-      setIsLoading(false);
-    }
+  async function handleSubmit() {
+    if (password !== confirm) { setError('Le password non coincidono'); return }
+    if (password.length < 8) { setError('Minimo 8 caratteri'); return }
+    setLoading(true)
+    const { error } = await supabase.auth.updateUser({ password })
+    if (error) { setError(error.message); setLoading(false); return }
+    const { data: { user } } = await supabase.auth.getUser()
+    const { data: profile } = await supabase.from('profiles').select('role').eq('id', user?.id).maybeSingle()
+    router.push(profile?.role === 'insegnante' ? '/teacher/home' : '/admin/dashboard')
   }
 
+  if (!ready) return (
+    <div style={{ display:'flex', alignItems:'center', justifyContent:'center', minHeight:'100vh', fontFamily:'DM Sans, sans-serif' }}>
+      Caricamento...
+    </div>
+  )
+
   return (
-    <div className="min-h-screen bg-stone-50 flex items-center justify-center p-4">
-      <div className="max-w-md w-full bg-white rounded-2xl shadow-xl p-8 space-y-6 border border-border/50">
-        <div className="text-center space-y-2">
-          <h1 className="text-3xl font-serif font-bold text-foreground">Benvenuto!</h1>
-          <p className="text-muted-foreground">Scegli la tua password per accedere al portale Solfège.</p>
-          {userEmail && (
-            <div className="mt-2 p-2 bg-orange/5 rounded border border-orange/10">
-              <p className="text-xs text-muted-foreground uppercase font-bold">Email account:</p>
-              <p className="text-sm font-medium text-foreground">{userEmail}</p>
-            </div>
-          )}
-        </div>
-
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="password">Nuova Password</Label>
-            <div className="relative">
-              <Input 
-                id="password" 
-                type={showPassword ? "text" : "password"} 
-                value={password} 
-                onChange={(e) => setPassword(e.target.value)} 
-                required 
-              />
-              <button 
-                type="button" 
-                onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3 top-2.5 text-muted-foreground hover:text-foreground focus:outline-none"
-              >
-                {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-              </button>
-            </div>
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="confirmPassword">Conferma Password</Label>
-            <Input 
-              id="confirmPassword" 
-              type={showPassword ? "text" : "password"} 
-              value={confirmPassword} 
-              onChange={(e) => setConfirmPassword(e.target.value)} 
-              required 
-            />
-          </div>
-
-          <Button 
-            type="submit" 
-            className="w-full bg-orange hover:bg-orange-dark text-white py-6 text-lg" 
-            disabled={isLoading}
+    <div style={{ display:'flex', minHeight:'100vh', fontFamily:'DM Sans, sans-serif' }}>
+      {/* Sinistra */}
+      <div style={{ flex:1, background:'#1A1714', display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', padding:'2rem' }}>
+        <Image src="/logo.png" alt="Solfège Logo" width={180} height={60} style={{ objectFit:'contain', marginBottom:'1rem' }} />
+        <p style={{ color:'#C8C1BA', marginTop:'0.5rem', textAlign:'center' }}>Il tuo portale docenti ti aspetta</p>
+      </div>
+      {/* Destra */}
+      <div style={{ flex:1, display:'flex', alignItems:'center', justifyContent:'center', background:'#FAFAF9', padding:'2rem' }}>
+        <div style={{ width:'100%', maxWidth:'400px' }}>
+          <h2 style={{ fontSize:'1.5rem', fontWeight:600, marginBottom:'0.5rem', color:'#1A1714' }}>Benvenuto su Solfège</h2>
+          <p style={{ color:'#7A736C', marginBottom:'2rem' }}>Scegli la tua password per accedere al portale docenti.</p>
+          {error && <p style={{ color:'#C0392B', marginBottom:'1rem', fontSize:'0.9rem' }}>{error}</p>}
+          <label style={{ fontSize:'0.875rem', fontWeight:500, color:'#1A1714', display:'block', marginBottom:'0.25rem' }}>Nuova password</label>
+          <input
+            type="password"
+            value={password}
+            onChange={e => setPassword(e.target.value)}
+            placeholder="Minimo 8 caratteri"
+            style={{ width:'100%', padding:'0.65rem 0.75rem', border:'1px solid #E2DDD8', borderRadius:'6px', marginBottom:'1rem', fontSize:'0.9rem', background:'white', boxSizing:'border-box' }}
+          />
+          <label style={{ fontSize:'0.875rem', fontWeight:500, color:'#1A1714', display:'block', marginBottom:'0.25rem' }}>Conferma password</label>
+          <input
+            type="password"
+            value={confirm}
+            onChange={e => setConfirm(e.target.value)}
+            placeholder="Ripeti la password"
+            style={{ width:'100%', padding:'0.65rem 0.75rem', border:'1px solid #E2DDD8', borderRadius:'6px', marginBottom:'1.5rem', fontSize:'0.9rem', background:'white', boxSizing:'border-box' }}
+          />
+          <button
+            onClick={handleSubmit}
+            disabled={loading}
+            style={{ width:'100%', background:'#E8621A', color:'white', padding:'0.85rem', borderRadius:'6px', border:'none', fontWeight:600, fontSize:'1rem', cursor: loading ? 'not-allowed' : 'pointer', opacity: loading ? 0.8 : 1 }}
           >
-            {isLoading ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : "Inizia ad usare Solfège"}
-          </Button>
-        </form>
+            {loading ? 'Salvataggio...' : 'Accedi al portale →'}
+          </button>
+        </div>
       </div>
     </div>
-  );
+  )
 }

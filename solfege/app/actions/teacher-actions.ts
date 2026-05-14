@@ -54,7 +54,7 @@ export async function inviteTeacher(teacher: { id: string; email: string; school
         type: 'magiclink',
         email: teacher.email,
         options: {
-          redirectTo: `${origin}/teacher/home`
+          redirectTo: `${origin}/api/auth/callback?type=invite&next=/accept-invite`
         }
       })
 
@@ -94,9 +94,9 @@ export async function inviteTeacher(teacher: { id: string; email: string; school
     const host = (await headers()).get("host");
     const protocol = host?.includes("localhost") ? "http" : "https";
     const origin = `${protocol}://${host}`;
-    // Mandiamo direttamente a /accept-invite
-    const redirectTo = `${origin}/accept-invite`;
-    console.log('[INVITE] Redirect URL diretto:', redirectTo);
+    // Passa sempre dal callback per scambiare il codice, poi redirect a /accept-invite
+    const redirectTo = `${origin}/api/auth/callback?type=invite&next=/accept-invite`;
+    console.log('[INVITE] Redirect URL:', redirectTo);
 
     // 2. Generazione Link e Invio Email via Resend (Bypassa SMTP interno di Supabase)
     console.log('[INVITE] Generazione link di invito per nuovo utente...')
