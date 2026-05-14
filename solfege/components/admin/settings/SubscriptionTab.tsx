@@ -84,9 +84,9 @@ export function SubscriptionTab({ school }: { school: any }) {
       </div>
 
       {/* Pricing Plans */}
-      <div className="space-y-4">
+      <div className="space-y-6">
         <h3 className="text-lg font-medium">Piani disponibili</h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 pt-2">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 pt-4">
           {PLANS.map((plan) => {
             const isPro = plan.type === 'pro';
             const isWhiteLabel = plan.type === 'whitelabel';

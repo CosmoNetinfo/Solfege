@@ -2,12 +2,23 @@
 
 import { createAdminClient } from "@/lib/supabase/admin";
 import { revalidatePath } from "next/cache";
+import nodemailer from 'nodemailer';
 
 export async function inviteTeacher(teacher: { id: string; email: string; school_id: string; first_name: string; last_name: string }) {
   console.log('[INVITE] Inizio invito per:', teacher.email)
   
   try {
     const supabaseAdmin = createAdminClient();
+
+    const transporter = nodemailer.createTransport({
+      host: 'smtp.gmail.com',
+      port: 587,
+      secure: false,
+      auth: {
+        user: process.env.GMAIL_USER,
+        pass: process.env.GMAIL_APP_PASSWORD
+      }
+    });
 
     // 1. Controlla se l'utente esiste già in auth.users
     const { data: usersData, error: listError } = await supabaseAdmin.auth.admin.listUsers()
@@ -47,38 +58,28 @@ export async function inviteTeacher(teacher: { id: string; email: string; school
         return { success: false, error: `Errore generateLink: ${linkError.message}` }
       }
 
-      if (process.env.RESEND_API_KEY && !process.env.RESEND_API_KEY.startsWith('re_12345678')) {
-        const res = await fetch('https://api.resend.com/emails', {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${process.env.RESEND_API_KEY}`,
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
-            from: 'Solfège <onboarding@resend.dev>',
-            to: [teacher.email],
-            subject: 'Accedi al portale Solfège',
-            html: `
-              <h2>Ciao ${teacher.first_name}!</h2>
+      if (process.env.GMAIL_USER && process.env.GMAIL_APP_PASSWORD) {
+        await transporter.sendMail({
+          from: `"Solfège" <${process.env.GMAIL_USER}>`,
+          to: teacher.email,
+          subject: 'Accedi al portale Solfège',
+          html: `
+            <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto;">
+              <h2 style="color: #E8621A;">Ciao ${teacher.first_name}!</h2>
               <p>Clicca il link per accedere al tuo portale docente:</p>
               <a href="${linkData?.properties?.action_link}" 
-                 style="background:#E8621A;color:white;padding:12px 24px;
-                        border-radius:6px;text-decoration:none;display:inline-block;margin-top:10px;">
+                 style="display:inline-block;background:#E8621A;color:white;
+                        padding:12px 24px;border-radius:6px;text-decoration:none;
+                        font-weight:bold;margin-top:10px;">
                 Accedi al portale
               </a>
-              <p>Il link scade tra 24 ore.</p>
-            `
-          })
+              <p style="color:#7A736C;font-size:14px;margin-top:20px;">Il link scade tra 24 ore.</p>
+            </div>
+          `
         })
-
-        if (!res.ok) {
-          const resData = await res.text()
-          console.error('[INVITE] Errore API Resend:', res.status, resData)
-          return { success: false, error: `Errore Resend ${res.status}: ${resData}` }
-        }
       } else {
-        console.log('[INVITE DEV] Link di accesso generato (Resend saltato):', linkData.properties?.action_link)
-        return { success: true, message: 'Link di accesso generato in console (API Key Resend mancante)', action_link: linkData.properties?.action_link }
+        console.log('[INVITE DEV] Link di accesso generato (Gmail saltato):', linkData.properties?.action_link)
+        return { success: true, message: 'Link generato in console (Credenziali Gmail mancanti)', action_link: linkData.properties?.action_link }
       }
 
       revalidatePath("/admin/teachers");
@@ -110,40 +111,30 @@ export async function inviteTeacher(teacher: { id: string; email: string; school
       return { success: false, error: `Errore generateLink: ${linkError.message}` }
     }
 
-    if (process.env.RESEND_API_KEY && !process.env.RESEND_API_KEY.startsWith('re_12345678')) {
-      console.log('[INVITE] Invio email tramite API Resend a:', teacher.email)
-      const res = await fetch('https://api.resend.com/emails', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${process.env.RESEND_API_KEY}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          from: 'Solfège <onboarding@resend.dev>',
-          to: [teacher.email],
-          subject: 'Invito a unirti a Solfège',
-          html: `
-            <h2>Ciao ${teacher.first_name}!</h2>
-            <p>Sei stato invitato come insegnante sulla piattaforma Solfège.</p>
+    if (process.env.GMAIL_USER && process.env.GMAIL_APP_PASSWORD) {
+      console.log('[INVITE] Invio email tramite Nodemailer a:', teacher.email)
+      await transporter.sendMail({
+        from: `"Solfège" <${process.env.GMAIL_USER}>`,
+        to: teacher.email,
+        subject: 'Invito a unirti a Solfège',
+        html: `
+          <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto;">
+            <h2 style="color: #E8621A;">Benvenuto su Solfège, ${teacher.first_name}!</h2>
+            <p>Sei stato invitato come docente sulla piattaforma Solfège.</p>
             <p>Clicca il link qui sotto per accettare l'invito e impostare la tua password di accesso:</p>
             <a href="${linkData?.properties?.action_link}" 
-               style="background:#E8621A;color:white;padding:12px 24px;
-                      border-radius:6px;text-decoration:none;display:inline-block;margin-top:10px;">
+               style="display:inline-block;background:#E8621A;color:white;
+                      padding:12px 24px;border-radius:6px;text-decoration:none;
+                      font-weight:bold;margin-top:10px;">
               Accetta Invito e Crea Password
             </a>
-            <p>Il link scade tra 24 ore.</p>
-          `
-        })
+            <p style="color:#7A736C;font-size:14px;margin-top:20px;">Il link scade tra 24 ore.</p>
+          </div>
+        `
       })
-
-      if (!res.ok) {
-        const resData = await res.text()
-        console.error('[INVITE] Errore API Resend:', res.status, resData)
-        return { success: false, error: `Errore Resend ${res.status}: ${resData}` }
-      }
     } else {
-      console.log('[INVITE DEV] Link di invito generato (Resend saltato):', linkData.properties?.action_link)
-      return { success: true, message: 'Link di invito generato in console (API Key Resend mancante)', action_link: linkData.properties?.action_link }
+      console.log('[INVITE DEV] Link di invito generato (Gmail saltato):', linkData.properties?.action_link)
+      return { success: true, message: 'Link generato in console (Credenziali Gmail mancanti)', action_link: linkData.properties?.action_link }
     }
 
     console.log('[INVITE] Invito completato per:', teacher.email)
