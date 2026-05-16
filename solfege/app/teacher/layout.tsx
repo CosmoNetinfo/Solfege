@@ -24,8 +24,39 @@ export default function TeacherLayout({
       </header>
 
       {/* Main Content Area */}
-      <main className="flex-1 pb-24 p-4 max-w-md mx-auto w-full">
+      <main className="flex-1 pb-24 p-4 max-w-md mx-auto w-full flex flex-col">
         {children}
+        
+        <div style={{
+          padding: '1.5rem 0',
+          borderTop: '1px solid #E8E4E0',
+          marginTop: 'auto',
+          textAlign: 'center'
+        }}>
+          <p style={{ fontSize: '0.7rem', color: '#5A534C', lineHeight: 1.5 }}>
+            Sviluppato da<br/>
+            <a 
+              href="https://www.cosmonet.info"
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{ color: '#7A736C', textDecoration: 'none' }}
+            >
+              Daniele Spalletti
+            </a>
+            {' '}·{' '}
+            <a 
+              href="https://www.cosmonet.info"
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{ color: '#7A736C', textDecoration: 'none' }}
+            >
+              CosmoNet.info
+            </a>
+          </p>
+          <p style={{ fontSize: '0.65rem', color: '#3D3830', marginTop: '0.25rem' }}>
+            Solfège v1.5
+          </p>
+        </div>
       </main>
 
       {/* Navigation Inferiore */}

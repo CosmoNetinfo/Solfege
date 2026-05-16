@@ -142,7 +142,7 @@ export function SubscriptionTab({ school }: { school: any }) {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 items-stretch">
         {PLANS.map((plan) => {
           const price = isAnnual ? plan.annualPrice : plan.monthlyPrice;
           const displayPrice = `€${price}`;
@@ -153,7 +153,7 @@ export function SubscriptionTab({ school }: { school: any }) {
           return (
             <div 
               key={plan.id}
-              className={`relative flex flex-col rounded-2xl p-8 transition-all duration-300
+              className={`relative flex flex-col justify-between rounded-2xl p-8 transition-all duration-300
                 ${isPro ? 'border-2 border-orange bg-orange/5 shadow-xl scale-105 z-10' : 
                   isWhite ? 'border-2 border-[#1A1714] bg-stone-50 shadow-md' : 
                   'border border-border bg-card shadow-sm hover:shadow-md'

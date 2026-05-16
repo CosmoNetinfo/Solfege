@@ -89,7 +89,7 @@ export function Sidebar() {
   };
 
   return (
-    <div className="flex h-screen w-64 flex-col bg-sidebar border-r border-sidebar-border shrink-0">
+    <div className="flex flex-col h-full shrink-0">
       {/* Header Sidebar: Logo & School Name */}
       <div className="flex flex-col h-24 justify-center px-6 border-b border-sidebar-border/50">
         <Image 
@@ -137,15 +137,46 @@ export function Sidebar() {
         })}
       </nav>
 
-      {/* Footer Sidebar: Logout */}
-      <div className="p-4 border-t border-sidebar-border">
-        <button
-          onClick={handleLogout}
-          className="flex w-full items-center gap-3 px-3 py-2 text-sm font-medium text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-foreground rounded-md transition-colors"
-        >
-          <LogOut className="h-5 w-5 opacity-70" />
-          Esci
-        </button>
+      {/* Footer Sidebar: Logout & Credits */}
+      <div className="mt-auto border-t border-sidebar-border">
+        <div className="p-4">
+          <button
+            onClick={handleLogout}
+            className="flex w-full items-center gap-3 px-3 py-2 text-sm font-medium text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-foreground rounded-md transition-colors"
+          >
+            <LogOut className="h-5 w-5 opacity-70" />
+            Esci
+          </button>
+        </div>
+
+        <div style={{
+          padding: '0.75rem 1rem',
+          borderTop: '1px solid rgba(255,255,255,0.08)',
+        }}>
+          <p style={{ fontSize: '0.7rem', color: '#5A534C', lineHeight: 1.5 }}>
+            Sviluppato da<br/>
+            <a 
+              href="https://www.cosmonet.info"
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{ color: '#7A736C', textDecoration: 'none' }}
+            >
+              Daniele Spalletti
+            </a>
+            {' '}·{' '}
+            <a 
+              href="https://www.cosmonet.info"
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{ color: '#7A736C', textDecoration: 'none' }}
+            >
+              CosmoNet.info
+            </a>
+          </p>
+          <p style={{ fontSize: '0.65rem', color: '#3D3830', marginTop: '0.25rem' }}>
+            Solfège v1.5
+          </p>
+        </div>
       </div>
     </div>
   );

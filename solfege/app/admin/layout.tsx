@@ -20,9 +20,11 @@ export default async function AdminLayout({
         trialEndsAt={school?.trial_ends_at || null} 
         plan={school?.plan || null} 
       />
-      <div className="flex flex-1 overflow-hidden">
-        <Sidebar />
-        <main className="flex-1 overflow-y-auto">
+      <div className="flex flex-1">
+        <aside className="w-64 bg-sidebar sticky top-0 h-screen overflow-y-auto shrink-0 border-r border-sidebar-border">
+          <Sidebar />
+        </aside>
+        <main className="flex-1 min-h-screen">
           {children}
         </main>
       </div>
