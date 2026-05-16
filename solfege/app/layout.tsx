@@ -21,9 +21,20 @@ const jetbrains = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Solfège — Gestione Scuole di Musica",
-  description: "Il gestionale SaaS premium per la tua scuola di musica.",
-};
+  title: 'Solfège — Gestionale Scuola di Musica',
+  description: 'Il gestionale SaaS per scuole di musica con prezzi trasparenti',
+  icons: {
+    icon: [
+      { url: '/favicon-16x16.png', sizes: '16x16', type: 'image/png' },
+      { url: '/favicon-32x32.png', sizes: '32x32', type: 'image/png' },
+      { url: '/favicon.ico' },
+    ],
+    apple: '/apple-touch-icon.png',
+    other: [
+      { rel: 'manifest', url: '/site.webmanifest' },
+    ],
+  },
+}
 
 export default function RootLayout({
   children,
