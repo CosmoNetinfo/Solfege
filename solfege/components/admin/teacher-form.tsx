@@ -114,7 +114,7 @@ export function TeacherFormDialog({
         teacherId = teacher.id;
       } else {
         const result = await createTeacherWithAccess(payload, schoolId, "");
-        if (!result.success) throw new Error(result.error);
+        if (!result.success || !result.teacher) throw new Error(result.error || "Errore creazione insegnante");
         teacherId = result.teacher.id;
       }
 

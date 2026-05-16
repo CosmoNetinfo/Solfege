@@ -143,3 +143,51 @@ export async function sendCredenziali({ to, nome, password, schoolName, loginUrl
     return { success: false, error: String(err) };
   }
 }
+export async function sendNuoveCredenziali({
+  to,
+  nome,
+  password,
+  schoolName,
+  loginUrl
+}: {
+  to: string
+  nome: string
+  password: string
+  schoolName: string
+  loginUrl: string
+}) {
+  if (!to || !process.env.GMAIL_USER || !process.env.GMAIL_APP_PASSWORD) {
+    console.log('[EMAIL RESET] Saltato: Email o credenziali SMTP mancanti');
+    return;
+  }
+
+  try {
+    await transporter.sendMail({
+      from: `"${schoolName}" <${process.env.GMAIL_USER}>`,
+      to,
+      subject: `Nuove credenziali Solfège — ${schoolName}`,
+      html: `
+        <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto;">
+          <h2 style="color: #E8621A;">Nuove credenziali di accesso</h2>
+          <p>Ciao <strong>${nome}</strong>,</p>
+          <p>Ecco le tue nuove credenziali per accedere a Solfège:</p>
+          <div style="background: #F5F5F5; padding: 1rem; border-radius: 6px; margin: 1rem 0;">
+            <p style="margin:0"><strong>Email:</strong> ${to}</p>
+            <p style="margin:0.5rem 0 0"><strong>Nuova password temporanea:</strong> ${password}</p>
+          </div>
+          <a href="${loginUrl}" style="display:inline-block;background:#E8621A;color:white;padding:12px 24px;border-radius:6px;text-decoration:none;font-weight:bold;">
+            Accedi al portale
+          </a>
+          <p style="color:#7A736C;font-size:14px;margin-top:1rem;">
+            Ti consigliamo di cambiare la password dopo il primo accesso.
+          </p>
+          <p style="color:#7A736C;font-size:12px;">— ${schoolName}</p>
+        </div>
+      `
+    });
+    console.log('[EMAIL RESET] Inviata con successo a:', to);
+  } catch (err) {
+    console.error('[EMAIL RESET] Errore:', err);
+    throw err;
+  }
+}
