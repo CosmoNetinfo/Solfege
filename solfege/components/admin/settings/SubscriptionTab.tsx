@@ -2,27 +2,16 @@
 
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Check, X, MessageCircle, Mail, Star } from 'lucide-react';
+import { Check, X, MessageCircle, Mail, Star, Zap } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from '@/components/ui/badge';
 
-// Custom Switch component to avoid dependency issues
-const Switch = ({ checked, onCheckedChange }: { checked: boolean, onCheckedChange: (v: boolean) => void }) => (
-    <button 
-        type="button"
-        role="switch"
-        aria-checked={checked}
-        onClick={() => onCheckedChange(!checked)}
-        className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer items-center rounded-full border-2 border-transparent transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:cursor-not-allowed disabled:opacity-50 ${checked ? 'bg-orange' : 'bg-stone-200'}`}
-    >
-        <span className={`pointer-events-none block h-5 w-5 rounded-full bg-white shadow-lg ring-0 transition-transform ${checked ? 'translate-x-5' : 'translate-x-0'}`} />
-    </button>
-);
+type BillingCycle = 'monthly' | 'annual' | 'lifetime';
 
 export function SubscriptionTab({ school }: { school: any }) {
-  const [isAnnual, setIsAnnual] = useState(false);
+  const [billingCycle, setBillingCycle] = useState<BillingCycle>('annual');
   const [contactDialog, setContactDialog] = useState<{ open: boolean, planName: string, planPrice: string, isWhiteLabel?: boolean }>({
     open: false,
     planName: '',
@@ -30,14 +19,17 @@ export function SubscriptionTab({ school }: { school: any }) {
   });
 
   const currentPlan = school?.plan || 'free';
+  const isLifetime = billingCycle === 'lifetime';
 
   const PLANS = [
     {
       id: 'free',
       name: 'Free',
-      subtitle: 'Perfetto per iniziare',
+      subtitle: isLifetime ? 'Sempre gratis' : 'Perfetto per iniziare',
       monthlyPrice: 0,
       annualPrice: 0,
+      lifetimePrice: 0,
+      foundersPrice: 0,
       description: 'Per sempre',
       features: [
         { label: 'Fino a 20 allievi', included: true },
@@ -50,15 +42,18 @@ export function SubscriptionTab({ school }: { school: any }) {
         { label: 'App docenti mobile', included: false },
         { label: 'Supporto prioritario', included: false },
       ],
-      buttonText: currentPlan === 'free' ? 'Piano Attuale' : 'Downgrade',
+      buttonText: currentPlan === 'free' ? 'Piano Attuale' : (isLifetime ? 'Inizia gratis' : 'Downgrade'),
       disabled: currentPlan === 'free'
     },
     {
       id: 'starter',
       name: 'Starter',
-      subtitle: 'Ideale fino a 50 allievi',
+      subtitle: isLifetime ? 'Una volta · per sempre' : 'Ideale fino a 50 allievi',
       monthlyPrice: 14,
       annualPrice: 129,
+      lifetimePrice: 249,
+      foundersPrice: 159,
+      savingsLabel: 'Equivale a 1.9 anni di Starter annuale',
       description: 'Per piccole scuole',
       features: [
         { label: 'Fino a 50 allievi', included: true },
@@ -72,15 +67,18 @@ export function SubscriptionTab({ school }: { school: any }) {
         { label: 'Export CSV', included: false },
         { label: 'White label', included: false },
       ],
-      buttonText: currentPlan === 'starter' ? 'Piano Attuale' : 'Attiva Starter',
+      buttonText: currentPlan === 'starter' ? 'Piano Attuale' : (isLifetime ? 'Acquista Lifetime' : 'Attiva Starter'),
       disabled: currentPlan === 'starter'
     },
     {
       id: 'pro',
       name: 'Pro',
-      subtitle: 'Tutto illimitato',
+      subtitle: isLifetime ? 'Una volta · per sempre' : 'Tutto illimitato',
       monthlyPrice: 29,
       annualPrice: 249,
+      lifetimePrice: 449,
+      foundersPrice: 289,
+      savingsLabel: 'Equivale a 1.8 anni di Pro annuale',
       description: 'Per scuole in crescita',
       badge: 'Più Popolare',
       features: [
@@ -95,15 +93,18 @@ export function SubscriptionTab({ school }: { school: any }) {
         { label: 'Branding custom', included: false },
         { label: 'Dominio proprio', included: false },
       ],
-      buttonText: currentPlan === 'pro' ? 'Piano Attuale' : 'Attiva Pro',
+      buttonText: currentPlan === 'pro' ? 'Piano Attuale' : (isLifetime ? 'Acquista Lifetime' : 'Attiva Pro'),
       disabled: currentPlan === 'pro'
     },
     {
       id: 'white_label',
       name: 'White Label',
-      subtitle: 'Per franchising e catene',
+      subtitle: isLifetime ? 'Una volta · per sempre' : 'Per franchising e catene',
       monthlyPrice: 79,
       annualPrice: 790,
+      lifetimePrice: 1290,
+      foundersPrice: 849,
+      savingsLabel: 'Equivale a 1.6 anni di White Label annuale',
       description: 'Personalizzazione totale',
       badge: 'ENTERPRISE',
       isWhiteLabel: true,
@@ -117,7 +118,7 @@ export function SubscriptionTab({ school }: { school: any }) {
         { label: 'SLA garantito', included: true },
         { label: 'Fatturazione elettr.', included: true },
       ],
-      buttonText: currentPlan === 'white_label' ? 'Piano Attuale' : 'Contattaci',
+      buttonText: currentPlan === 'white_label' ? 'Piano Attuale' : (isLifetime ? 'Contattaci' : 'Contattaci'),
       disabled: currentPlan === 'white_label'
     }
   ];
@@ -130,23 +131,74 @@ export function SubscriptionTab({ school }: { school: any }) {
           <p className="text-muted-foreground mt-2">Prezzi trasparenti. Nessuna chiamata di vendita. Cambia piano quando vuoi.</p>
         </div>
 
-        <div className="flex items-center gap-4 bg-muted/50 p-2 rounded-lg border border-border/50">
-          <Label className={`text-sm font-medium ${!isAnnual ? 'text-foreground' : 'text-muted-foreground'}`}>Mensile</Label>
-          <Switch 
-            checked={isAnnual} 
-            onCheckedChange={setIsAnnual} 
-          />
-          <Label className={`text-sm font-medium ${isAnnual ? 'text-foreground' : 'text-muted-foreground'}`}>
-            Annuale <Badge variant="secondary" className="ml-1 bg-green-100 text-green-700 hover:bg-green-100 border-none">Risparmia fino al 28%</Badge>
-          </Label>
+        <div className="flex p-1 bg-muted/50 rounded-xl border border-border/50 self-start md:self-auto">
+          {(['monthly', 'annual', 'lifetime'] as BillingCycle[]).map((cycle) => (
+            <button
+              key={cycle}
+              onClick={() => setBillingCycle(cycle)}
+              className={`px-4 py-2 text-sm font-bold rounded-lg transition-all ${
+                billingCycle === cycle 
+                  ? 'bg-white text-orange shadow-sm' 
+                  : 'text-muted-foreground hover:text-foreground'
+              }`}
+            >
+              {cycle === 'monthly' && 'Mensile'}
+              {cycle === 'annual' && (
+                <span className="flex items-center gap-1.5">
+                  Annuale
+                  <Badge className="bg-green-100 text-green-700 border-none px-1.5 text-[10px]"> -28% </Badge>
+                </span>
+              )}
+              {cycle === 'lifetime' && (
+                <span className="flex items-center gap-1.5">
+                  Lifetime
+                  <Badge className="bg-orange/10 text-orange border-none px-1.5 text-[10px]"> PAGHI UNA VOLTA </Badge>
+                </span>
+              )}
+            </button>
+          ))}
         </div>
       </div>
 
+      {isLifetime && (
+        <div className="bg-[#FDF0E8] border border-orange/30 rounded-2xl p-6 flex flex-col md:flex-row items-center justify-between gap-6 shadow-sm">
+          <div className="flex items-center gap-4">
+            <div className="bg-orange text-white p-3 rounded-xl shadow-lg shadow-orange/20">
+              <Zap className="h-6 w-6" />
+            </div>
+            <div>
+              <h3 className="text-lg font-bold text-orange-950 flex items-center gap-2">
+                Founders Deal — Solo per i primi 30 acquirenti
+              </h3>
+              <p className="text-orange-800 font-medium">Sconto 35% sul prezzo lifetime. 12 posti rimasti.</p>
+            </div>
+          </div>
+          <div className="flex flex-wrap justify-center gap-4 text-sm font-bold text-orange-900 bg-white/50 px-6 py-3 rounded-xl border border-orange/10">
+            <div className="flex flex-col items-center">
+              <span className="text-[10px] opacity-60 uppercase">Starter</span>
+              <span>€159</span>
+            </div>
+            <div className="w-px h-8 bg-orange/20" />
+            <div className="flex flex-col items-center">
+              <span className="text-[10px] opacity-60 uppercase">Pro</span>
+              <span>€289</span>
+            </div>
+            <div className="w-px h-8 bg-orange/20" />
+            <div className="flex flex-col items-center">
+              <span className="text-[10px] opacity-60 uppercase">White Label</span>
+              <span>€849</span>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 items-stretch">
         {PLANS.map((plan) => {
-          const price = isAnnual ? plan.annualPrice : plan.monthlyPrice;
-          const displayPrice = `€${price}`;
-          const periodLabel = isAnnual ? '/anno' : '/mese';
+          let price = billingCycle === 'annual' ? plan.annualPrice : plan.monthlyPrice;
+          if (isLifetime) price = plan.lifetimePrice;
+          
+          const displayPrice = `€${isLifetime && plan.foundersPrice > 0 ? plan.foundersPrice : price}`;
+          const periodLabel = billingCycle === 'monthly' ? '/mese' : (billingCycle === 'annual' ? '/anno' : '');
           const isPro = plan.id === 'pro';
           const isWhite = plan.id === 'white_label';
 
@@ -168,17 +220,34 @@ export function SubscriptionTab({ school }: { school: any }) {
               )}
 
               <div className="mb-8">
-                <h3 className="text-xl font-bold text-foreground mb-1">{plan.name}</h3>
-                <p className="text-xs text-muted-foreground font-medium uppercase tracking-wider mb-4">{plan.description}</p>
-                <div className="flex items-baseline gap-1">
-                  <span className="text-4xl font-extrabold text-foreground">{displayPrice}</span>
-                  <span className="text-muted-foreground text-sm font-medium">{periodLabel}</span>
+                <div className="flex items-center justify-between mb-1">
+                  <h3 className="text-xl font-bold text-foreground">{plan.name}</h3>
+                  {isLifetime && plan.lifetimePrice > 0 && (
+                    <Badge className="bg-orange/10 text-orange border-none text-[9px] font-black uppercase tracking-tighter h-5">
+                      LIFETIME
+                    </Badge>
+                  )}
                 </div>
-                {isAnnual && plan.monthlyPrice > 0 && (
-                    <p className="text-[10px] text-green-600 font-bold mt-1 italic">
-                        Circa €{Math.round(plan.annualPrice / 12)}/mese
+                <p className="text-xs text-muted-foreground font-medium uppercase tracking-wider mb-4">{plan.description}</p>
+                <div className="flex flex-col">
+                  <div className="flex items-baseline gap-1">
+                    <span className="text-4xl font-extrabold text-foreground">{displayPrice}</span>
+                    <span className="text-muted-foreground text-sm font-medium">{periodLabel}</span>
+                    {isLifetime && plan.lifetimePrice > 0 && (
+                      <span className="text-muted-foreground text-sm line-through opacity-50 ml-1">€{plan.lifetimePrice}</span>
+                    )}
+                  </div>
+                  {isLifetime && plan.savingsLabel && (
+                    <p className="text-[10px] text-orange-600 font-bold mt-1 uppercase tracking-tight">
+                      {plan.savingsLabel}
                     </p>
-                )}
+                  )}
+                  {billingCycle === 'annual' && plan.monthlyPrice > 0 && (
+                    <p className="text-[10px] text-green-600 font-bold mt-1 italic">
+                      Circa €{Math.round(plan.annualPrice / 12)}/mese
+                    </p>
+                  )}
+                </div>
                 <p className="text-sm text-foreground/80 mt-4 font-medium">{plan.subtitle}</p>
               </div>
 
@@ -198,9 +267,9 @@ export function SubscriptionTab({ school }: { school: any }) {
               </ul>
 
               <Button
-                variant={isPro ? 'default' : 'outline'}
+                variant={isPro ? 'default' : (isLifetime && !isWhite && !plan.disabled ? 'default' : 'outline')}
                 className={`w-full py-6 text-sm font-bold uppercase tracking-wider transition-all
-                  ${isPro ? 'bg-orange hover:bg-orange-dark text-white' : 
+                  ${isPro || (isLifetime && !isWhite && !plan.disabled) ? 'bg-orange hover:bg-orange-dark text-white' : 
                     isWhite ? 'border-2 border-[#1A1714] hover:bg-[#1A1714] hover:text-white' : 
                     'hover:bg-orange/5 hover:border-orange/30'
                   }
@@ -209,8 +278,8 @@ export function SubscriptionTab({ school }: { school: any }) {
                 disabled={plan.disabled}
                 onClick={() => setContactDialog({ 
                     open: true, 
-                    planName: plan.name, 
-                    planPrice: `${displayPrice}${periodLabel}`,
+                    planName: isLifetime ? `${plan.name} Lifetime` : plan.name, 
+                    planPrice: isLifetime ? `Pagamento unico: ${displayPrice}` : `${displayPrice}${periodLabel}`,
                     isWhiteLabel: plan.isWhiteLabel
                 })}
               >
@@ -220,6 +289,26 @@ export function SubscriptionTab({ school }: { school: any }) {
           );
         })}
       </div>
+
+      {isLifetime && (
+        <div className="bg-stone-50 border border-stone-200 p-6 rounded-2xl text-center max-w-3xl mx-auto shadow-sm">
+          <p className="text-sm text-stone-600 leading-relaxed font-medium">
+            Il Lifetime Deal include tutti gli aggiornamenti futuri (v1.5, v2.0), 
+            migrazione dati assistita, 1 ora di onboarding e supporto prioritario WhatsApp.<br />
+            <span className="text-orange font-bold">Pagamento via WhatsApp o email — Stripe disponibile in v2.0.</span>
+          </p>
+        </div>
+      )}
+
+      {!isLifetime && (
+        <div className="bg-stone-100/80 p-6 rounded-2xl border border-border/40 text-center max-w-2xl mx-auto">
+          <p className="text-xs text-muted-foreground leading-relaxed">
+            L'integrazione pagamenti automatica con Stripe (addebito mensile, fatture automatiche, cancellazione autonoma) 
+            sarà disponibile nella versione 2.0 di Solfège — prevista per fine 2026.<br />
+            Per attivare un piano ora contatta il supporto via WhatsApp o email.
+          </p>
+        </div>
+      )}
 
       <div className="pt-12 space-y-8">
         <h3 className="text-2xl font-serif font-bold text-center">Perché Solfège?</h3>
@@ -255,14 +344,6 @@ export function SubscriptionTab({ school }: { school: any }) {
             </TableBody>
           </Table>
         </div>
-      </div>
-
-      <div className="bg-stone-100/80 p-6 rounded-2xl border border-border/40 text-center max-w-2xl mx-auto">
-        <p className="text-xs text-muted-foreground leading-relaxed">
-          L'integrazione pagamenti automatica con Stripe (addebito mensile, fatture automatiche, cancellazione autonoma) 
-          sarà disponibile nella versione 2.0 di Solfège — prevista per fine 2026.<br />
-          Per attivare un piano ora contatta il supporto via WhatsApp o email.
-        </p>
       </div>
 
       <Dialog open={contactDialog.open} onOpenChange={(o) => setContactDialog(p => ({ ...p, open: o }))}>
@@ -320,3 +401,4 @@ export function SubscriptionTab({ school }: { school: any }) {
     </div>
   );
 }
+
