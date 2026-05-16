@@ -23,7 +23,7 @@ import { format } from "date-fns";
 import { it } from "date-fns/locale";
 import { toast } from "sonner";
 import { createClient } from "@/lib/supabase/client";
-import { resetTeacherPassword } from "@/app/actions/teacher-actions";
+import { inviteExistingTeacher, resetTeacherPassword } from "@/app/actions/teacher-actions";
 import { 
   Sheet, 
   SheetContent, 
@@ -46,7 +46,7 @@ interface TeacherSheetProps {
 export function TeacherSheet({ teacherId, open, onOpenChange, onEdit }: TeacherSheetProps) {
   const supabase = createClient();
   const [loading, setLoading] = useState(true);
-  const [resetting, setResetting] = useState(false);
+  const [actionLoading, setActionLoading] = useState(false);
   const [teacher, setTeacher] = useState<any>(null);
   const [courses, setCourses] = useState<any[]>([]);
   const [lessons, setLessons] = useState<any[]>([]);
@@ -101,36 +101,60 @@ export function TeacherSheet({ teacherId, open, onOpenChange, onEdit }: TeacherS
     }
   }
 
-  async function handleResetPassword() {
+  async function handleManualInvite() {
     if (!teacher) return;
-    if (!teacher.profile_id) {
-      toast.error("L'insegnante non ha un accesso configurato.");
+    if (!teacher.email) {
+      toast.error("L'insegnante non ha un indirizzo email.");
       return;
     }
-
     if (cooldown > 0) {
-      toast.warning(`Attendi ${cooldown} secondi prima di procedere.`);
+      toast.warning(`Attendi ${cooldown}s`);
       return;
     }
 
-    setResetting(true);
+    setActionLoading(true);
     try {
-      const result = await resetTeacherPassword({
-        email: teacher.email,
-        first_name: teacher.first_name,
-        profile_id: teacher.profile_id
-      }, ""); // Pass empty school name to force fetch in action
-      
+      const result = await inviteExistingTeacher(teacher, "");
       if (result.success) {
-        toast.success(`Nuova password inviata a ${teacher.email}`);
+        toast.success(`Invito inviato a ${teacher.email}`);
+        setCooldown(60);
+        loadData();
+      } else {
+        toast.error(result.error || "Errore durante l'invito");
+      }
+    } catch (err) {
+      toast.error("Errore imprevisto");
+    } finally {
+      setActionLoading(false);
+    }
+  }
+
+  async function handleResendCredentials() {
+    if (!teacher) return;
+    if (cooldown > 0) {
+      toast.warning(`Attendi ${cooldown}s`);
+      return;
+    }
+
+    setActionLoading(true);
+    try {
+      const result = await resetTeacherPassword(
+        teacher.email,
+        teacher.first_name,
+        teacher.profile_id,
+        "",
+        teacher.school_id
+      );
+      if (result.success) {
+        toast.success(`Nuove credenziali inviate a ${teacher.email}`);
         setCooldown(60);
       } else {
-        toast.error(result.error || "Errore durante il reset della password");
+        toast.error(result.error || "Errore durante il reset");
       }
-    } catch (err: any) {
-      toast.error("Errore durante il reset della password");
+    } catch (err) {
+      toast.error("Errore imprevisto");
     } finally {
-      setResetting(false);
+      setActionLoading(false);
     }
   }
 
@@ -174,24 +198,36 @@ export function TeacherSheet({ teacherId, open, onOpenChange, onEdit }: TeacherS
                       <Button 
                         size="sm" 
                         variant="outline"
-                        className="gap-2 border-orange/20 text-orange hover:bg-orange/5"
-                        onClick={handleResetPassword}
-                        disabled={resetting || cooldown > 0}
+                        className="gap-2 border-border text-muted-foreground hover:bg-stone-50"
+                        onClick={handleResendCredentials}
+                        disabled={actionLoading || cooldown > 0}
                       >
-                        {resetting ? (
+                        {actionLoading ? (
                           <Loader2 className="h-3.5 w-3.5 animate-spin" />
                         ) : cooldown > 0 ? (
                           <span className="text-xs font-mono">{cooldown}s</span>
                         ) : (
                           <Send className="h-3.5 w-3.5" />
                         )}
-                        Reimposta password
+                        Reinvia credenziali
                       </Button>
                     </>
                   ) : (
-                    <Badge variant="outline" className="text-muted-foreground border-border">
-                      Accesso non configurato
-                    </Badge>
+                    <Button 
+                      size="sm" 
+                      className="bg-orange hover:bg-orange-dark text-white gap-2"
+                      onClick={handleManualInvite}
+                      disabled={actionLoading || cooldown > 0}
+                    >
+                      {actionLoading ? (
+                        <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                      ) : cooldown > 0 ? (
+                        <span className="text-xs font-mono">{cooldown}s</span>
+                      ) : (
+                        <Send className="h-3.5 w-3.5" />
+                      )}
+                      Invita al portale
+                    </Button>
                   )}
                 </div>
               </div>
