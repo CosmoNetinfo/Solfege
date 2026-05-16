@@ -23,7 +23,7 @@ import { format } from "date-fns";
 import { it } from "date-fns/locale";
 import { toast } from "sonner";
 import { createClient } from "@/lib/supabase/client";
-import { inviteTeacher } from "@/app/actions/teacher-actions";
+import { resetTeacherPassword } from "@/app/actions/teacher-actions";
 import { 
   Sheet, 
   SheetContent, 
@@ -46,7 +46,7 @@ interface TeacherSheetProps {
 export function TeacherSheet({ teacherId, open, onOpenChange, onEdit }: TeacherSheetProps) {
   const supabase = createClient();
   const [loading, setLoading] = useState(true);
-  const [inviting, setInviting] = useState(false);
+  const [resetting, setResetting] = useState(false);
   const [teacher, setTeacher] = useState<any>(null);
   const [courses, setCourses] = useState<any[]>([]);
   const [lessons, setLessons] = useState<any[]>([]);
@@ -101,52 +101,36 @@ export function TeacherSheet({ teacherId, open, onOpenChange, onEdit }: TeacherS
     }
   }
 
-  async function handleInvite() {
+  async function handleResetPassword() {
     if (!teacher) return;
-    if (!teacher.email) {
-      toast.error("L'insegnante non ha un indirizzo email.");
+    if (!teacher.profile_id) {
+      toast.error("L'insegnante non ha un accesso configurato.");
       return;
     }
 
     if (cooldown > 0) {
-      toast.warning(`Attendi ${cooldown} secondi prima di reinviare l'invito.`);
+      toast.warning(`Attendi ${cooldown} secondi prima di procedere.`);
       return;
     }
 
-    setInviting(true);
+    setResetting(true);
     try {
-      const result = await inviteTeacher({
-        id: teacher.id,
+      const result = await resetTeacherPassword({
         email: teacher.email,
-        school_id: teacher.school_id,
         first_name: teacher.first_name,
-        last_name: teacher.last_name
-      });
+        profile_id: teacher.profile_id
+      }, ""); // Pass empty school name to force fetch in action
       
       if (result.success) {
-        toast.success(result.message || "Invito inviato con successo!");
+        toast.success(`Nuova password inviata a ${teacher.email}`);
         setCooldown(60);
-        
-        // Log the link in dev mode for testing
-        if ((result as any).action_link) {
-          console.log("[INVITE] Link invito:", (result as any).action_link);
-        }
-
-        // Se l'utente era già esistente, ricarichiamo i dati per mostrare "Accesso attivo"
-        if (result.message?.includes("già registrato")) {
-          loadData();
-        }
       } else {
-        if (result.error?.includes("Limite di invio")) {
-          toast.warning(result.error);
-        } else {
-          toast.error(result.error || "Errore durante l'invio dell'invito");
-        }
+        toast.error(result.error || "Errore durante il reset della password");
       }
     } catch (err: any) {
-      toast.error("Errore durante l'invio dell'invito");
+      toast.error("Errore durante il reset della password");
     } finally {
-      setInviting(false);
+      setResetting(false);
     }
   }
 
@@ -181,29 +165,34 @@ export function TeacherSheet({ teacherId, open, onOpenChange, onEdit }: TeacherS
                 </div>
 
                 <div className="flex items-center gap-2">
-                  {teacher.profile_id && (
-                    <Badge className="bg-green/10 text-green border-green/20 flex items-center gap-1 px-3 py-1">
-                      <Smartphone className="h-3.5 w-3.5" />
-                      Accesso attivo
+                  {teacher.profile_id ? (
+                    <>
+                      <Badge className="bg-green/10 text-green border-green/20 flex items-center gap-1 px-3 py-1">
+                        <Smartphone className="h-3.5 w-3.5" />
+                        Accesso attivo
+                      </Badge>
+                      <Button 
+                        size="sm" 
+                        variant="outline"
+                        className="gap-2 border-orange/20 text-orange hover:bg-orange/5"
+                        onClick={handleResetPassword}
+                        disabled={resetting || cooldown > 0}
+                      >
+                        {resetting ? (
+                          <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                        ) : cooldown > 0 ? (
+                          <span className="text-xs font-mono">{cooldown}s</span>
+                        ) : (
+                          <Send className="h-3.5 w-3.5" />
+                        )}
+                        Reimposta password
+                      </Button>
+                    </>
+                  ) : (
+                    <Badge variant="outline" className="text-muted-foreground border-border">
+                      Accesso non configurato
                     </Badge>
                   )}
-                  <Button 
-                    size="sm" 
-                    className={teacher.profile_id 
-                      ? "bg-transparent border border-border text-muted-foreground hover:bg-stone-50 gap-2" 
-                      : "bg-orange hover:bg-orange-dark text-white gap-2"}
-                    onClick={handleInvite}
-                    disabled={inviting || cooldown > 0}
-                  >
-                    {inviting ? (
-                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                    ) : cooldown > 0 ? (
-                      <span className="text-xs font-mono">{cooldown}s</span>
-                    ) : (
-                      <Send className="h-3.5 w-3.5" />
-                    )}
-                    {cooldown > 0 ? `Reinvia tra ${cooldown}s` : (teacher.profile_id ? "Reinvia accesso" : "Invita al portale")}
-                  </Button>
                 </div>
               </div>
             </SheetHeader>

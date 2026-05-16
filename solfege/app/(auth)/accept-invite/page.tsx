@@ -43,10 +43,12 @@ export default function AcceptInvitePage() {
     if (error) { setError(error.message); setLoading(false); return }
 
     const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return
+
     const { data: profile } = await supabase
       .from('profiles')
       .select('role')
-      .eq('id', user?.id)
+      .eq('id', user.id)
       .maybeSingle()
 
     router.push(profile?.role === 'insegnante' ? '/teacher/home' : '/admin/dashboard')

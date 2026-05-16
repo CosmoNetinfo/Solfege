@@ -2,156 +2,130 @@
 
 import { createAdminClient } from "@/lib/supabase/admin";
 import { revalidatePath } from "next/cache";
-import { headers } from "next/headers";
-import nodemailer from 'nodemailer';
+import { sendCredenziali } from "./email-actions";
 
-export async function inviteTeacher(teacher: { id: string; email: string; school_id: string; first_name: string; last_name: string }) {
-  console.log('[INVITE] Inizio invito per:', teacher.email)
-  
-  try {
-    const supabaseAdmin = createAdminClient();
-
-    const transporter = nodemailer.createTransport({
-      host: 'smtp.gmail.com',
-      port: 587,
-      secure: false,
-      auth: {
-        user: process.env.GMAIL_USER,
-        pass: process.env.GMAIL_APP_PASSWORD
-      }
-    });
-
-    // 1. Controlla se l'utente esiste già in auth.users
-    const { data: usersData, error: listError } = await supabaseAdmin.auth.admin.listUsers()
-    if (listError) {
-      console.error('[INVITE] Errore listUsers:', listError)
-      return { success: false, error: `Errore listUsers: ${listError.message}` }
-    }
-
-    const alreadyExists = usersData.users.find(u => u.email === teacher.email)
-    
-    if (alreadyExists) {
-      console.log('[INVITE] Utente già esistente in auth:', alreadyExists.id)
-      
-      // Caso 1: esiste già → collega profilo e genera magic link di accesso
-      await supabaseAdmin.from('profiles').upsert({
-        id: alreadyExists.id,
-        role: 'insegnante',
-        school_id: teacher.school_id,
-        first_name: teacher.first_name,
-        last_name: teacher.last_name
-      })
-      await supabaseAdmin.from('teachers')
-        .update({ profile_id: alreadyExists.id })
-        .eq('id', teacher.id)
-
-      const host = (await headers()).get("host");
-      const protocol = host?.includes("localhost") ? "http" : "https";
-      const origin = `${protocol}://${host}`;
-
-      // Genera link di accesso (non invito) e mandalo via Gmail
-      const { data: linkData, error: linkError } = await supabaseAdmin.auth.admin.generateLink({
-        type: 'magiclink',
-        email: teacher.email,
-        options: {
-          redirectTo: `${origin}/api/auth/callback?type=invite&next=/accept-invite`
-        }
-      })
-
-      if (linkError) {
-        console.error('[INVITE] Errore magiclink:', linkError)
-        return { success: false, error: `Errore generateLink: ${linkError.message}` }
-      }
-
-      if (process.env.GMAIL_USER && process.env.GMAIL_APP_PASSWORD) {
-        await transporter.sendMail({
-          from: `"Solfège" <${process.env.GMAIL_USER}>`,
-          to: teacher.email,
-          subject: 'Accedi al portale Solfège',
-          html: `
-            <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto;">
-              <h2 style="color: #E8621A;">Ciao ${teacher.first_name}!</h2>
-              <p>Clicca il link per accedere al tuo portale docente:</p>
-              <a href="${linkData?.properties?.action_link}" 
-                 style="display:inline-block;background:#E8621A;color:white;
-                        padding:12px 24px;border-radius:6px;text-decoration:none;
-                        font-weight:bold;margin-top:10px;">
-                Accedi al portale
-              </a>
-              <p style="color:#7A736C;font-size:14px;margin-top:20px;">Il link scade tra 24 ore.</p>
-            </div>
-          `
-        })
-      } else {
-        console.log('[INVITE DEV] Link di accesso generato (Gmail saltato):', linkData.properties?.action_link)
-        return { success: true, message: 'Link generato in console (Credenziali Gmail mancanti)', action_link: linkData.properties?.action_link }
-      }
-
-      revalidatePath("/admin/teachers");
-      return { success: true, message: 'Link di accesso inviato a ' + teacher.email }
-    }
-
-    const host = (await headers()).get("host");
-    const protocol = host?.includes("localhost") ? "http" : "https";
-    const appUrl = process.env.NEXT_PUBLIC_APP_URL || `${protocol}://${host}`;
-    // Passa sempre dal callback per scambiare il codice, poi redirect a /accept-invite
-    const redirectTo = `${appUrl}/api/auth/callback?type=invite&next=/accept-invite`;
-    console.log('[INVITE] Redirect URL:', redirectTo);
-
-    // 2. Generazione Link e Invio Email via Resend (Bypassa SMTP interno di Supabase)
-    console.log('[INVITE] Generazione link di invito per nuovo utente...')
-    const { data: linkData, error: linkError } = await supabaseAdmin.auth.admin.generateLink({
-      type: 'invite',
-      email: teacher.email,
-      options: {
-        redirectTo: redirectTo,
-        data: {
-          teacher_id: teacher.id,
-          school_id: teacher.school_id,
-          role: 'insegnante',
-          first_name: teacher.first_name,
-          last_name: teacher.last_name
-        }
-      }
-    })
-
-    if (linkError) {
-      console.error('[INVITE] Errore generateLink:', linkError)
-      return { success: false, error: `Errore generateLink: ${linkError.message}` }
-    }
-
-    if (process.env.GMAIL_USER && process.env.GMAIL_APP_PASSWORD) {
-      console.log('[INVITE] Invio email tramite Nodemailer a:', teacher.email)
-      await transporter.sendMail({
-        from: `"Solfège" <${process.env.GMAIL_USER}>`,
-        to: teacher.email,
-        subject: 'Invito a unirti a Solfège',
-        html: `
-          <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto;">
-            <h2 style="color: #E8621A;">Benvenuto su Solfège, ${teacher.first_name}!</h2>
-            <p>Sei stato invitato come docente sulla piattaforma Solfège.</p>
-            <p>Clicca il link qui sotto per accettare l'invito e impostare la tua password di accesso:</p>
-            <a href="${linkData?.properties?.action_link}" 
-               style="display:inline-block;background:#E8621A;color:white;
-                      padding:12px 24px;border-radius:6px;text-decoration:none;
-                      font-weight:bold;margin-top:10px;">
-              Accetta Invito e Crea Password
-            </a>
-            <p style="color:#7A736C;font-size:14px;margin-top:20px;">Il link scade tra 24 ore.</p>
-          </div>
-        `
-      })
-    } else {
-      console.log('[INVITE DEV] Link di invito generato (Gmail saltato):', linkData.properties?.action_link)
-      return { success: true, message: 'Link generato in console (Credenziali Gmail mancanti)', action_link: linkData.properties?.action_link }
-    }
-
-    console.log('[INVITE] Invito completato per:', teacher.email)
-    revalidatePath("/admin/teachers");
-    return { success: true, message: `Invito inviato a ${teacher.email}` }
-
-  } catch (err) {
-    console.error('[INVITE] Errore generico:', err)
-    return { success: false, error: `Errore Interno Server: ${err instanceof Error ? err.message : String(err)}` }
-  }
+// Genera password temporanea
+function generateTempPassword(): string {
+  const base = 'Solfege'
+  const year = new Date().getFullYear()
+  const random = Math.floor(1000 + Math.random() * 9000)
+  return `${base}${year}!${random}`
 }
+
+export async function createTeacherWithAccess(teacherData: any, schoolId: string, schoolName: string) {
+  const supabaseAdmin = createAdminClient()
+  const tempPassword = generateTempPassword()
+
+  console.log(`[CREATE TEACHER] Creazione utente per ${teacherData.email} con password temporanea.`)
+
+  // 1. Crea utente Auth
+  const { data: authUser, error: authError } = await supabaseAdmin.auth.admin.createUser({
+    email: teacherData.email,
+    password: tempPassword,
+    email_confirm: true,
+    user_metadata: { role: 'insegnante', school_id: schoolId }
+  })
+
+  if (authError) {
+    console.error('[CREATE TEACHER] Errore Auth:', authError)
+    return { success: false, error: authError.message }
+  }
+
+  // 2. Crea profilo
+  const { error: profileError } = await supabaseAdmin.from('profiles').upsert({
+    id: authUser.user.id,
+    role: 'insegnante',
+    school_id: schoolId,
+    first_name: teacherData.first_name,
+    last_name: teacherData.last_name,
+  })
+
+  if (profileError) {
+    console.error('[CREATE TEACHER] Errore Profilo:', profileError)
+    return { success: false, error: profileError.message }
+  }
+
+  // 3. INSERT insegnante
+  const { data: teacher, error: teacherError } = await supabaseAdmin
+    .from('teachers')
+    .insert({
+      first_name: teacherData.first_name,
+      last_name: teacherData.last_name,
+      email: teacherData.email,
+      phone: teacherData.phone,
+      bio: teacherData.bio,
+      school_id: schoolId,
+      profile_id: authUser.user.id
+    })
+    .select()
+    .single()
+
+  if (teacherError) {
+    console.error('[CREATE TEACHER] Errore Teachers table:', teacherError)
+    return { success: false, error: teacherError.message }
+  }
+
+  // 4. Manda email con credenziali
+  let finalSchoolName = schoolName;
+  if (!finalSchoolName) {
+    const { data: school } = await supabaseAdmin.from('schools').select('name').eq('id', schoolId).single();
+    finalSchoolName = school?.name || 'Solfège';
+  }
+
+  await sendCredenziali({
+    to: teacherData.email,
+    nome: teacherData.first_name,
+    password: tempPassword,
+    schoolName: finalSchoolName,
+    loginUrl: `${process.env.NEXT_PUBLIC_APP_URL}/login`
+  })
+
+  revalidatePath("/admin/teachers")
+  return { success: true, teacher }
+}
+
+export async function resetTeacherPassword(teacher: { email: string, first_name: string, profile_id: string }, schoolName: string) {
+  if (!teacher.profile_id) return { success: false, error: "L'insegnante non ha un profilo collegato." }
+  
+  const supabaseAdmin = createAdminClient()
+  const tempPassword = generateTempPassword()
+
+  console.log(`[RESET PASSWORD] Reset per ${teacher.email}`)
+
+  const { error } = await supabaseAdmin.auth.admin.updateUserById(teacher.profile_id, {
+    password: tempPassword
+  })
+
+  if (error) {
+    console.error('[RESET PASSWORD] Errore Auth:', error)
+    return { success: false, error: error.message }
+  }
+
+  await sendCredenziali({
+    to: teacher.email,
+    nome: teacher.first_name,
+    password: tempPassword,
+    schoolName: schoolName,
+    loginUrl: `${process.env.NEXT_PUBLIC_APP_URL}/login`
+  })
+
+  return { success: true, password: tempPassword }
+}
+
+export async function deleteTeacher(teacherId: string, profileId?: string) {
+  const supabaseAdmin = createAdminClient()
+  
+  // 1. Elimina dalla tabella teachers
+  const { error: teacherError } = await supabaseAdmin.from('teachers').delete().eq('id', teacherId)
+  if (teacherError) return { success: false, error: teacherError.message }
+
+  // 2. Se ha un profilo, eliminalo (questo eliminerà anche l'utente auth via trigger o manuale se preferito)
+  if (profileId) {
+    await supabaseAdmin.auth.admin.deleteUser(profileId)
+    await supabaseAdmin.from('profiles').delete().eq('id', profileId)
+  }
+
+  revalidatePath("/admin/teachers")
+  return { success: true }
+}
+

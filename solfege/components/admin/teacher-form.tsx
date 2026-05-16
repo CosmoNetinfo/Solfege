@@ -8,6 +8,7 @@ import { Loader2, X, AlertTriangle } from "lucide-react";
 import { toast } from "sonner";
 import { createClient } from "@/lib/supabase/client";
 import { checkPlanLimits } from "@/lib/supabase/queries";
+import { createTeacherWithAccess } from "@/app/actions/teacher-actions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -112,9 +113,9 @@ export function TeacherFormDialog({
         if (error) throw error;
         teacherId = teacher.id;
       } else {
-        const { data: newTeacher, error } = await supabase.from("teachers").insert(payload).select("id").single();
-        if (error) throw error;
-        teacherId = newTeacher.id;
+        const result = await createTeacherWithAccess(payload, schoolId, "");
+        if (!result.success) throw new Error(result.error);
+        teacherId = result.teacher.id;
       }
 
       // Salva disponibilità: delete + re-insert
