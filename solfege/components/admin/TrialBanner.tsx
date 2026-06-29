@@ -33,7 +33,7 @@ export function TrialBanner({ trialEndsAt, plan }: TrialBannerProps) {
         <Button 
           variant="outline" 
           className="bg-white text-red-600 hover:bg-stone-100 border-none h-8 px-4 text-xs font-bold uppercase"
-          onClick={() => window.location.href = '/admin/impostazioni'}
+          onClick={() => window.location.href = '/admin/impostazioni?tab=abbonamento'}
         >
           Attiva Ora
         </Button>
@@ -55,7 +55,7 @@ export function TrialBanner({ trialEndsAt, plan }: TrialBannerProps) {
       <Button 
         variant="outline" 
         className="bg-white text-amber-600 hover:bg-stone-100 border-none h-8 px-4 text-xs font-bold uppercase"
-        onClick={() => window.location.href = '/admin/impostazioni'}
+        onClick={() => window.location.href = '/admin/impostazioni?tab=abbonamento'}
       >
         Vedi Piani
       </Button>
