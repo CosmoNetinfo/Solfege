@@ -83,7 +83,7 @@ pub async fn activate_license(
 ) -> Result<bool, String> {
     let client = reqwest::Client::new();
     let os_info = std::env::consts::OS.to_string();
-    let app_version = "1.0.0"; // default desktop version
+    let app_version = env!("CARGO_PKG_VERSION");
 
     let payload = json!({
         "license_key": license_key,

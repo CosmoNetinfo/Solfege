@@ -199,6 +199,17 @@ CREATE TABLE IF NOT EXISTS room_bookings (
   created_at TEXT DEFAULT (datetime('now'))
 );
 
+CREATE TABLE IF NOT EXISTS sessions (
+  id INTEGER PRIMARY KEY CHECK (id = 1),
+  user_id TEXT NOT NULL,
+  username TEXT NOT NULL,
+  role TEXT NOT NULL,
+  nome TEXT NOT NULL,
+  cognome TEXT NOT NULL,
+  logged_in_at TEXT NOT NULL DEFAULT (datetime('now')),
+  last_activity_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
 -- Inserisce configurazione iniziale
 INSERT OR IGNORE INTO app_config (key, value) VALUES
   ('app_version', '1.0.0'),

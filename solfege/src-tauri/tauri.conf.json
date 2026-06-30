@@ -1,6 +1,6 @@
 {
   "productName": "Solfège",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "identifier": "info.cosmonet.solfege",
   "build": {
     "beforeDevCommand": "npm run dev",
@@ -19,7 +19,8 @@
         "minHeight": 680,
         "resizable": true,
         "fullscreen": false,
-        "center": true
+        "center": true,
+        "devtools": true
       }
     ],
     "security": {

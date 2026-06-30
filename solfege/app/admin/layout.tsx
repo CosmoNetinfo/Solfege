@@ -19,6 +19,7 @@ export default function AdminLayout({
   const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [authenticated, setAuthenticated] = useState(false);
+  const [authError, setAuthError] = useState<string | null>(null);
 
   useEffect(() => {
     async function checkAuth() {
@@ -26,28 +27,43 @@ export default function AdminLayout({
         try {
           // Check setup status first
           const setupCompleted = await invoke<string | null>("get_config", { key: "setup_completed" });
+          console.log("[AUTH] setup_completed:", setupCompleted);
           if (setupCompleted !== "true") {
             router.push("/setup");
             return;
           }
 
           // Check if trial is expired
-          const trial = await invoke<{ is_trial: boolean; is_expired: boolean }>("get_trial_status");
+          let trial: { is_trial: boolean; is_expired: boolean };
+          try {
+            trial = await invoke<{ is_trial: boolean; is_expired: boolean }>("get_trial_status");
+            console.log("[AUTH] trial status:", trial);
+          } catch (trialErr) {
+            console.error("[AUTH] get_trial_status failed:", trialErr);
+            // Se il trial check fallisce, non blocchiamo — assumiamo non scaduto
+            trial = { is_trial: false, is_expired: false };
+          }
+
           if (trial.is_trial && trial.is_expired) {
+            console.log("[AUTH] Trial scaduto, redirect /setup");
             router.push("/setup");
             return;
           }
 
           // Get current user session
           const user = await invoke("get_current_user");
+          console.log("[AUTH] get_current_user:", user);
           if (!user) {
+            console.warn("[AUTH] Nessun utente in sessione, redirect /login-desktop");
             router.push("/login-desktop");
           } else {
             setAuthenticated(true);
           }
         } catch (err) {
-          console.error("Auth check failed on desktop:", err);
-          router.push("/login-desktop");
+          console.error("[AUTH] checkAuth failed:", err);
+          setAuthError(String(err));
+          // Aspetta 3 secondi prima di redirect così l'errore è leggibile
+          setTimeout(() => router.push("/login-desktop"), 3000);
         } finally {
           setLoading(false);
         }
@@ -77,6 +93,19 @@ export default function AdminLayout({
     return (
       <div className="min-h-screen bg-[#FAFAF9] flex items-center justify-center">
         <div className="text-stone-400 font-serif text-lg animate-pulse">Caricamento...</div>
+      </div>
+    );
+  }
+
+  // Mostra l'errore per 3 secondi prima di redirigere — leggibile anche senza DevTools
+  if (authError) {
+    return (
+      <div className="min-h-screen bg-[#FAFAF9] flex items-center justify-center p-6">
+        <div className="bg-red-50 border border-red-200 rounded-2xl p-6 max-w-md w-full space-y-3">
+          <h2 className="font-bold text-red-700 text-lg">Errore di autenticazione</h2>
+          <p className="text-red-600 text-sm font-mono break-all">{authError}</p>
+          <p className="text-stone-400 text-xs">Reindirizzamento al login in corso...</p>
+        </div>
       </div>
     );
   }

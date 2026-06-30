@@ -19,6 +19,10 @@ pub fn run() {
             database::initialize(app.handle()).unwrap_or_else(|e| {
                 eprintln!("Errore inizializzazione DB: {}", e);
             });
+            // Ripristina sessione precedente (se esisteva prima di un riavvio dell'app)
+            if let Some(auth_state) = app.try_state::<commands::auth::AuthState>() {
+                commands::auth::load_session_from_db(app.handle(), &auth_state);
+            }
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![

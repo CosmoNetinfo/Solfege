@@ -1,5 +1,11 @@
 # Changelog
 
+## v1.0.3
+- Implementata sessione utente persistente su tabella SQLite dedicata (`sessions`) per risolvere la disconnessione automatica al refresh/cambio pagina nel webview desktop
+- Aggiunta schermata di errore di autenticazione visibile nel layout admin per facilitare la diagnosi di eventuali futuri bug di sessione
+- Abilitati DevTools (F12) nelle finestre Tauri per agevolare il debugging
+- Corretto il recupero automatico della versione dell'app nel comando Rust `activate_license` da Cargo.toml
+
 ## v1.0.2
 - Rimosso banner di debug giallo dalla schermata di login
 - Risolto bug login: username normalizzato (minuscolo, senza spazi) sia al salvataggio che alla verifica

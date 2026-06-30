@@ -14,6 +14,66 @@ pub struct LocalUser {
 
 pub struct AuthState(pub std::sync::Mutex<Option<LocalUser>>);
 
+// ── Sessione persistente su tabella dedicata ────────────────────────────────
+//
+// La tabella `sessions` ha un vincolo PRIMARY KEY CHECK (id = 1) che garantisce
+// una sola riga attiva per volta. INSERT OR REPLACE sovrascrive la riga ad ogni
+// login. DELETE la rimuove al logout. Non vengono mai salvate password o hash.
+
+/// Carica la sessione dal DB all'avvio dell'app.
+/// Chiamato da lib.rs nel .setup() hook dopo initialize().
+pub fn load_session_from_db(app: &AppHandle, state: &AuthState) {
+    if let Ok(conn) = database::get_connection(app) {
+        let result = conn.query_row(
+            "SELECT user_id, username, role, nome, cognome FROM sessions WHERE id = 1",
+            [],
+            |row| {
+                Ok(LocalUser {
+                    id: row.get(0)?,
+                    username: row.get(1)?,
+                    role: row.get(2)?,
+                    nome: row.get(3)?,
+                    cognome: row.get(4)?,
+                })
+            },
+        );
+        if let Ok(user) = result {
+            if let Ok(mut session) = state.0.lock() {
+                println!("[SESSION] Sessione ripristinata per: {}", user.username);
+                *session = Some(user);
+            }
+        }
+    }
+}
+
+fn save_session(app: &AppHandle, user: &LocalUser) {
+    if let Ok(conn) = database::get_connection(app) {
+        let _ = conn.execute(
+            "INSERT OR REPLACE INTO sessions
+                (id, user_id, username, role, nome, cognome, logged_in_at, last_activity_at)
+             VALUES (1, ?, ?, ?, ?, ?, datetime('now'), datetime('now'))",
+            [&user.id, &user.username, &user.role, &user.nome, &user.cognome],
+        );
+    }
+}
+
+fn update_last_activity(app: &AppHandle) {
+    if let Ok(conn) = database::get_connection(app) {
+        let _ = conn.execute(
+            "UPDATE sessions SET last_activity_at = datetime('now') WHERE id = 1",
+            [],
+        );
+    }
+}
+
+fn clear_session(app: &AppHandle) {
+    if let Ok(conn) = database::get_connection(app) {
+        let _ = conn.execute("DELETE FROM sessions WHERE id = 1", []);
+    }
+}
+
+// ── Comandi Tauri ───────────────────────────────────────────────────────────
+
 #[tauri::command]
 pub async fn login(
     app: AppHandle,
@@ -21,7 +81,7 @@ pub async fn login(
     username: String,
     password: String,
 ) -> Result<LocalUser, String> {
-    // Normalizza username: sempre minuscolo e senza spazi — coerente con create_first_user
+    // Normalizza username: sempre minuscolo e senza spazi
     let username = username.trim().to_lowercase();
 
     let conn = database::get_connection(&app)?;
@@ -40,13 +100,9 @@ pub async fn login(
 
         let matches = verify(&password, &password_hash).map_err(|e| e.to_string())?;
         if matches {
-            let user = LocalUser {
-                id,
-                username: db_username,
-                role,
-                nome,
-                cognome,
-            };
+            let user = LocalUser { id, username: db_username, role, nome, cognome };
+            // Persisti su DB (sopravvive a navigate/reload) e in memoria
+            save_session(&app, &user);
             let mut session = state.0.lock().map_err(|_| "Failed to lock session")?;
             *session = Some(user.clone());
             Ok(user)
@@ -59,16 +115,62 @@ pub async fn login(
 }
 
 #[tauri::command]
-pub async fn logout(state: State<'_, AuthState>) -> Result<(), String> {
+pub async fn logout(
+    app: AppHandle,
+    state: State<'_, AuthState>,
+) -> Result<(), String> {
+    // Rimuove dal DB e dalla memoria
+    clear_session(&app);
     let mut session = state.0.lock().map_err(|_| "Failed to lock session")?;
     *session = None;
     Ok(())
 }
 
 #[tauri::command]
-pub async fn get_current_user(state: State<'_, AuthState>) -> Result<Option<LocalUser>, String> {
-    let session = state.0.lock().map_err(|_| "Failed to lock session")?;
-    Ok(session.clone())
+pub async fn get_current_user(
+    app: AppHandle,
+    state: State<'_, AuthState>,
+) -> Result<Option<LocalUser>, String> {
+    // 1. Controlla prima la memoria (fast path)
+    {
+        let session = state.0.lock().map_err(|_| "Failed to lock session")?;
+        if session.is_some() {
+            // Aggiorna last_activity_at in background (non blocca la risposta)
+            drop(session);
+            update_last_activity(&app);
+            let session = state.0.lock().map_err(|_| "Failed to lock session")?;
+            return Ok(session.clone());
+        }
+    }
+
+    // 2. Fallback: ricarica dal DB (caso di navigate che azzera lo stato in-memory)
+    let conn = database::get_connection(&app).map_err(|e| e.to_string())?;
+    let result = conn.query_row(
+        "SELECT user_id, username, role, nome, cognome FROM sessions WHERE id = 1",
+        [],
+        |row| {
+            Ok(LocalUser {
+                id: row.get(0)?,
+                username: row.get(1)?,
+                role: row.get(2)?,
+                nome: row.get(3)?,
+                cognome: row.get(4)?,
+            })
+        },
+    );
+
+    match result {
+        Ok(user) => {
+            // Ripristina in memoria e aggiorna activity
+            update_last_activity(&app);
+            let mut session = state.0.lock().map_err(|_| "Failed to lock session")?;
+            *session = Some(user.clone());
+            println!("[SESSION] Sessione ripristinata da DB per: {}", user.username);
+            Ok(Some(user))
+        }
+        Err(rusqlite::Error::QueryReturnedNoRows) => Ok(None),
+        Err(e) => Err(e.to_string()),
+    }
 }
 
 #[tauri::command]

@@ -18,7 +18,7 @@ pub fn get_connection(app: &AppHandle) -> Result<Connection, String> {
 
 pub fn initialize(app: &AppHandle) -> Result<(), Box<dyn std::error::Error>> {
     let conn = get_connection(app)?;
-    
+
     // Controlla se la tabella app_config esiste già
     let table_exists: bool = conn.query_row(
         "SELECT count(*) FROM sqlite_master WHERE type='table' AND name='app_config'",
@@ -32,9 +32,23 @@ pub fn initialize(app: &AppHandle) -> Result<(), Box<dyn std::error::Error>> {
         conn.execute_batch(initial_sql)?;
         println!("Migrazione iniziale completata con successo!");
     } else {
-        println!("Database già inizializzato.");
+        // Per install esistenti: assicura che la tabella sessions esista
+        // (aggiunta in v1.0.3 — non presente nei DB creati con versioni precedenti)
+        conn.execute_batch(
+            "CREATE TABLE IF NOT EXISTS sessions (
+                id INTEGER PRIMARY KEY CHECK (id = 1),
+                user_id TEXT NOT NULL,
+                username TEXT NOT NULL,
+                role TEXT NOT NULL,
+                nome TEXT NOT NULL,
+                cognome TEXT NOT NULL,
+                logged_in_at TEXT NOT NULL DEFAULT (datetime('now')),
+                last_activity_at TEXT NOT NULL DEFAULT (datetime('now'))
+            );"
+        )?;
+        println!("Database già inizializzato. Tabella sessions verificata.");
     }
-    
+
     Ok(())
 }
 
