@@ -962,7 +962,7 @@ export type Database = {
         | "rimborsato"
         | "annullato"
       tipo_corso: "individuale" | "collettivo" | "online"
-      user_role: "admin" | "segreteria" | "insegnante" | "studente" | "genitore"
+      user_role: "admin" | "segreteria" | "insegnante" | "studente" | "genitore" | "superadmin"
     }
     CompositeTypes: {
       [_ in never]: never

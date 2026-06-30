@@ -9,6 +9,7 @@ import {
   AlertTriangle,
   Package,
   LogOut,
+  Monitor
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { createClient } from "@/lib/supabase/client";
@@ -83,7 +84,14 @@ export function SuperadminSidebar() {
 
       {/* Footer: Logout + Credits */}
       <div className="mt-auto border-t border-sidebar-border">
-        <div className="p-4">
+        <div className="p-4 flex flex-col gap-2">
+          <Link
+            href="/admin/dashboard"
+            className="flex w-full items-center gap-3 px-3 py-2 text-sm font-medium text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-foreground rounded-md transition-colors"
+          >
+            <Monitor className="h-5 w-5 opacity-70" />
+            Vai all'App
+          </Link>
           <button
             onClick={handleLogout}
             className="flex w-full items-center gap-3 px-3 py-2 text-sm font-medium text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-foreground rounded-md transition-colors"

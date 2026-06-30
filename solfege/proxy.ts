@@ -58,19 +58,21 @@ export default async function proxy(request: NextRequest) {
 
   const path = request.nextUrl.pathname
 
-  // 3. Superadmin protection
-  if (path.startsWith('/superadmin')) {
-    if (role !== 'superadmin') {
-      return NextResponse.redirect(new URL('/admin/dashboard', request.url))
-    }
-  }
-
-  // 4. RBAC Enforcement for /admin
-  if (path.startsWith('/admin')) {
-    if (role === 'superadmin') {
-      // Superadmin accessing /admin — redirect to superadmin panel
+  // 3. Superadmin logic
+  if (role === 'superadmin') {
+    if (!path.startsWith('/superadmin') && !path.startsWith('/admin')) {
       return NextResponse.redirect(new URL('/superadmin', request.url))
     }
+    return supabaseResponse
+  }
+
+  // 4. Superadmin route protection for other roles
+  if (path.startsWith('/superadmin')) {
+    return NextResponse.redirect(new URL('/admin/dashboard', request.url))
+  }
+
+  // 5. RBAC Enforcement for /admin
+  if (path.startsWith('/admin')) {
     if (role !== 'admin' && role !== 'segreteria') {
       return NextResponse.redirect(new URL(role === 'insegnante' ? '/teacher/home' : '/login', request.url))
     }

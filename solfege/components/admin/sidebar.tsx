@@ -14,7 +14,8 @@ import {
   Banknote,
   DoorOpen,
   Settings,
-  LogOut
+  LogOut,
+  ShieldCheck
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { createClient } from "@/lib/supabase/client";
@@ -34,6 +35,7 @@ const navItems = [
 import { Badge } from "@/components/ui/badge";
 
 export function Sidebar() {
+  const [role, setRole] = useState<string | null>(null);
   const [schoolInfo, setSchoolInfo] = useState<{ name: string | null, plan: string | null, trialEndsAt: string | null }>({
     name: null,
     plan: null,
@@ -48,16 +50,19 @@ export function Sidebar() {
       if (!user) return;
       const { data: profile } = await supabase
         .from("profiles")
-        .select("school_id, schools(name, plan, trial_ends_at)")
+        .select("school_id, role, schools(name, plan, trial_ends_at)")
         .eq("id", user.id)
         .single();
       
-      if (profile?.schools) {
-        setSchoolInfo({
-          name: profile.schools.name,
-          plan: profile.schools.plan,
-          trialEndsAt: profile.schools.trial_ends_at
-        });
+      if (profile) {
+        setRole(profile.role);
+        if (profile.schools) {
+          setSchoolInfo({
+            name: profile.schools.name,
+            plan: profile.schools.plan,
+            trialEndsAt: profile.schools.trial_ends_at
+          });
+        }
       }
     }
     loadSchoolData();
@@ -109,6 +114,18 @@ export function Sidebar() {
           </div>
         )}
       </div>
+
+      {role === 'superadmin' && (
+        <div className="px-3 pt-4">
+          <Link
+            href="/superadmin"
+            className="flex items-center gap-2 px-3 py-2 rounded-md bg-[rgba(232,98,26,0.15)] border border-[#E8621A] text-[#E8621A] hover:bg-[rgba(232,98,26,0.25)] transition-colors text-xs font-bold uppercase tracking-wider cursor-pointer"
+          >
+            <ShieldCheck className="h-4 w-4 shrink-0" />
+            Super Admin Panel
+          </Link>
+        </div>
+      )}
 
       {/* Navigazione */}
       <nav className="flex-1 space-y-1 px-3 py-4 overflow-y-auto">
