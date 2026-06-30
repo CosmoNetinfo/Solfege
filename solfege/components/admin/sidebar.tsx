@@ -204,7 +204,7 @@ export function Sidebar() {
             </a>
           </p>
           <p style={{ fontSize: '0.65rem', color: '#3D3830', marginTop: '0.25rem' }}>
-            Solfège v1.5
+            Solfège v2.0
           </p>
         </div>
       </div>

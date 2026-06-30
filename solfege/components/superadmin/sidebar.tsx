@@ -135,7 +135,7 @@ export function SuperadminSidebar() {
               marginTop: "0.25rem",
             }}
           >
-            Solfege v1.5
+            Solfege v2.0
           </p>
         </div>
       </div>
