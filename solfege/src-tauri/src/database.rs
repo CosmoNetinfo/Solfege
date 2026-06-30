@@ -16,9 +16,25 @@ pub fn get_connection(app: &AppHandle) -> Result<Connection, String> {
     Connection::open(path).map_err(|e| e.to_string())
 }
 
-pub async fn initialize(_app: &AppHandle) -> Result<(), Box<dyn std::error::Error>> {
-    // Le migrazioni vengono gestite da tauri-plugin-sql
-    // Il file solfege.db viene creato automaticamente in AppData/Application Support
+pub fn initialize(app: &AppHandle) -> Result<(), Box<dyn std::error::Error>> {
+    let conn = get_connection(app)?;
+    
+    // Controlla se la tabella app_config esiste già
+    let table_exists: bool = conn.query_row(
+        "SELECT count(*) FROM sqlite_master WHERE type='table' AND name='app_config'",
+        [],
+        |row| row.get(0),
+    ).unwrap_or(0) > 0;
+
+    if !table_exists {
+        println!("Tabella app_config non trovata. Eseguo migrazione iniziale...");
+        let initial_sql = include_str!("../migrations/001_initial.sql");
+        conn.execute_batch(initial_sql)?;
+        println!("Migrazione iniziale completata con successo!");
+    } else {
+        println!("Database già inizializzato.");
+    }
+    
     Ok(())
 }
 

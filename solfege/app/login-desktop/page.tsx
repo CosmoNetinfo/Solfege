@@ -37,7 +37,8 @@ export default function LoginDesktopPage() {
           router.push('/setup')
         }
       } catch (err) {
-        console.error('Error checking setup status:', err)
+        console.error('Error checking setup status, redirecting to setup:', err)
+        router.push('/setup')
       }
     }
     checkSetup()

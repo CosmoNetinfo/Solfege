@@ -15,12 +15,9 @@ pub fn run() {
         .plugin(tauri_plugin_fs::init())
         .plugin(tauri_plugin_shell::init())
         .setup(|app| {
-            // Inizializza database al primo avvio
-            let app_handle = app.handle().clone();
-            tauri::async_runtime::spawn(async move {
-                database::initialize(&app_handle).await.unwrap_or_else(|e| {
-                    eprintln!("Errore inizializzazione DB: {}", e);
-                });
+            // Inizializza database in modo sincrono al primo avvio per evitare race conditions
+            database::initialize(app.handle()).unwrap_or_else(|e| {
+                eprintln!("Errore inizializzazione DB: {}", e);
             });
             Ok(())
         })
