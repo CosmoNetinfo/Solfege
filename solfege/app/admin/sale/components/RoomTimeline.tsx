@@ -49,9 +49,9 @@ export default function RoomTimeline({ rooms, bookings, onSlotClick, onBookingCl
   return (
     <div className="flex-1 flex overflow-auto relative bg-slate-50">
       {/* Colonna Orari */}
-      <div className="w-20 flex-shrink-0 border-r bg-white sticky left-0 z-20">
-        <div className="h-14 border-b bg-muted/30 sticky top-0 z-30" />
-        <div className="relative" style={{ height: (END_HOUR - START_HOUR) * HOUR_HEIGHT }}>
+      <div className="w-20 flex-shrink-0 border-r bg-white sticky left-0 z-20 flex flex-col">
+        <div className="h-14 border-b bg-white sticky top-0 z-30 flex-shrink-0" />
+        <div className="relative flex-shrink-0" style={{ height: (END_HOUR - START_HOUR) * HOUR_HEIGHT }}>
           {hours.filter(h => h.endsWith(':00')).map((hour) => (
             <div 
               key={hour} 
@@ -70,15 +70,15 @@ export default function RoomTimeline({ rooms, bookings, onSlotClick, onBookingCl
           const roomBookings = bookings.filter(b => b.room_id === room.id);
 
           return (
-            <div key={room.id} className="flex-1 min-w-[200px] border-r flex flex-col relative bg-white">
-              <div className="h-14 flex flex-col items-center justify-center border-b bg-muted/30 sticky top-0 z-10 font-medium">
+            <div key={room.id} className="flex-1 min-w-[200px] border-r flex flex-col bg-white">
+              <div className="h-14 flex flex-col items-center justify-center border-b bg-white sticky top-0 z-10 font-medium flex-shrink-0">
                 {room.name || room.nome}
                 <span className="text-xs text-muted-foreground font-normal">
                   Capacità: {room.capacita || room.capacity || 1}
                 </span>
               </div>
 
-              <div className="relative flex-1" style={{ height: (END_HOUR - START_HOUR) * HOUR_HEIGHT }}>
+              <div className="relative flex-shrink-0" style={{ height: (END_HOUR - START_HOUR) * HOUR_HEIGHT }}>
                 {/* Griglia orizzontale per gli slot di 30 min */}
                 {hours.map((hour, idx) => (
                   <div

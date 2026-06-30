@@ -12,6 +12,7 @@
     "windows": [
       {
         "title": "Solfège — Gestionale Scuola di Musica",
+        "url": "/login-desktop",
         "width": 1280,
         "height": 800,
         "minWidth": 1024,
