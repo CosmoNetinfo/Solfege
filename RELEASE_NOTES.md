@@ -1,38 +1,50 @@
-# Release Notes Solfège v1.1.0
+# Note di Rilascio (Changelog) - Solfège
 
-Questa release introduce importanti novità sul fronte dell'accessibilità mobile per gli allievi, il sistema di sincronizzazione dati desktop-cloud e la gestione delle iscrizioni web, oltre a vari bugfix strutturali sulla stabilità dell'app desktop.
+In questo documento sono raccolti i dettagli degli aggiornamenti, dei bugfix e delle nuove funzionalità introdotte nelle ultime versioni di Solfège.
 
 ---
 
-## 🚀 Nuove Funzionalità (Feature)
+## 🚀 Versione 1.1.1 - Bugfix Blocco Database
 
-### 1. Portale Allievi Mobile-First
+Questa release corregge l'errore di blocco concorrente del database SQLite locale durante il login.
+
+### 🛠️ Correzioni e Ottimizzazioni (Bugfix)
+* **SQLite Busy Timeout**: Configurato un tempo di attesa di **5 secondi** (`busy_timeout(5000)`) su tutte le connessioni aperte dal backend in Rust (`database.rs`).
+  - *Problema risolto*: Durante il login, l'app provava a salvare la sessione nel DB mentre il frontend (tramite `tauri-plugin-sql`) manteneva un blocco di lettura/scrittura attivo sul database locale. Questo causava il fallimento immediato dell'operazione restituendo l'errore `database is locked`.
+  - *Comportamento attuale*: In caso di lock concorrente, il backend attende fino a 5 secondi che la risorsa si liberi prima di ritornare l'errore, consentendo un accesso concorrente fluido e privo di crash.
+
+---
+
+## 🚀 Versione 1.1.0 - Bacheca Pubblica e Portale Mobile
+
+Questa release introduce importanti novità sul fronte dell'accessibilità mobile per gli allievi, il sistema di sincronizzazione dati desktop-cloud e la gestione delle iscrizioni web.
+
+### 📢 Nuove Funzionalità (Feature)
+
+#### 1. Portale Allievi Mobile-First
 * **Interfaccia Responsive**: Il portale allievi `/portal/dashboard` è stato completamente ridisegnato per l'uso da smartphone. Ora presenta un'elegante **Bottom Navigation Bar** fissa per muoversi fluidamente tra le sezioni.
 * **Le tue Lezioni**: Sezione dedicata per consultare lo storico delle presenze e le future lezioni in programma. Consente di espandere ciascuna lezione passata per leggere gli **argomenti trattati** e i **compiti assegnati** dal docente.
 * **Pagamenti**: Tracciamento trasparente delle quote scolastiche con badge colorati per stato (`Pagato`, `Scaduto`, `In attesa`), metodo di pagamento e numero di ricevuta.
 * **Mio Profilo**: Visualizzazione dei dati anagrafici personali e del genitore referente associato (se l'allievo è minorenne).
 
-### 2. Motore di Sincronizzazione Dati (SQLite ➔ Supabase)
+#### 2. Sincronizzazione Dati Cloud & Bacheca
 * **Sincronizzazione in 1-Click**: Aggiunto un pulsante **"Sincronizza Cloud"** nella barra laterale dell'applicazione desktop.
 * **Payload Unificato**: Il motore esegue l'estrazione locale e l'upsert protetto sul cloud di: *scuola, allievi, insegnanti, corsi, iscrizioni, lezioni, presenze, pagamenti e avvisi*.
 * **Sicurezza Multi-Tenant**: Ogni sincronizzazione è autenticata tramite chiave di licenza. I dati vengono isolati tramite policy RLS (Row Level Security) associate allo `school_id` univoco, impedendo a scuole diverse di sovrascrivere o visualizzare record altrui.
 
-### 3. Bacheca Avvisi Pubblica (Senza Login)
+#### 3. Bacheca Avvisi Pubblica (Senza Login)
 * **Atterraggio Scuola (`/[school-slug]`)**: Creata una landing page pubblica per ciascuna scuola che mostra:
   - Nome, logo e contatti della scuola.
   - Bacheca degli avvisi generali con evidenza grafica per quelli contrassegnati come *Importanti*.
   - **Variazioni d'orario**: Elenco in tempo reale delle lezioni annullate o dei recuperi programmati nell'ultima settimana e futuri.
 * **Accesso Rapido**: Link diretti per accedere al portale privato o per inviare una candidatura online.
 
-### 4. Iscrizioni Online & Gestione Desktop
+#### 4. Iscrizioni Online & Gestione Desktop
 * **Iscriviti Online (`/[school-slug]/iscriviti`)**: Form multi-step pubblico per l'inserimento autonomo dei candidati allievi (con gestione minorenni).
 * **Pannello Desktop**: Aggiunta la sezione **"Iscrizioni Web"** nell'app desktop per visionare le richieste pendenti, approvarle (importando l'allievo direttamente nel DB locale SQLite) o rifiutarle.
 * **Link in Impostazioni**: Mostrati e resi copiabili in *Impostazioni ➔ Scuola* sia il *Link Bacheca Pubblica* che il *Link Iscrizioni Pubblico*.
 
----
-
-## 🛠️ Correzioni e Ottimizzazioni (Bugfix)
-
+### 🛠️ Correzioni e Ottimizzazioni (Bugfix)
 * **Tauri IPC Guards (isDesktop)**: Aggiunto il controllo `isDesktop()` nelle nuove pagine di amministrazione (`iscrizioni` e `bacheca`) per prevenire crash ed errori Javascript in console (`Cannot read properties of undefined (reading 'invoke')`) quando le pagine vengono compilate o caricate via browser.
 * **Tracciamento Errori di Login**: Modificato il comando Rust `login` per non procedere a memoria se la scrittura su SQLite in `sessions` fallisce. Qualsiasi blocco del database o errore di scrittura viene ora mostrato chiaramente in rosso sulla schermata di login per facilitare la diagnostica.
 * **Rust Trait Imports**: Risolto l'errore di build Rust dovuto all'assenza del trait `tauri::Manager` nel file `lib.rs` inserendo l'importazione corretta.
