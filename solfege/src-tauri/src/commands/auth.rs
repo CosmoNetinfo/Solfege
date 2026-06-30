@@ -21,12 +21,15 @@ pub async fn login(
     username: String,
     password: String,
 ) -> Result<LocalUser, String> {
+    // Normalizza username: sempre minuscolo e senza spazi — coerente con create_first_user
+    let username = username.trim().to_lowercase();
+
     let conn = database::get_connection(&app)?;
     let mut stmt = conn
         .prepare("SELECT id, username, password_hash, role, nome, cognome FROM users WHERE username = ?")
         .map_err(|e| e.to_string())?;
-    
-    let mut rows = stmt.query([username]).map_err(|e| e.to_string())?;
+
+    let mut rows = stmt.query([&username]).map_err(|e| e.to_string())?;
     if let Some(row) = rows.next().map_err(|e| e.to_string())? {
         let id: String = row.get(0).map_err(|e| e.to_string())?;
         let db_username: String = row.get(1).map_err(|e| e.to_string())?;
@@ -48,10 +51,10 @@ pub async fn login(
             *session = Some(user.clone());
             Ok(user)
         } else {
-            Err("Credenziali non valide".to_string())
+            Err("Username o password non corretti.".to_string())
         }
     } else {
-        Err("Credenziali non valide".to_string())
+        Err("Username o password non corretti.".to_string())
     }
 }
 
@@ -76,14 +79,30 @@ pub async fn create_first_user(
     nome: String,
     cognome: String,
 ) -> Result<(), String> {
+    // Normalizza username: sempre minuscolo e senza spazi extra
+    let username = username.trim().to_lowercase();
+
     let conn = database::get_connection(&app)?;
-    
-    // Hash password with bcrypt
-    let hashed = hash(password, DEFAULT_COST).map_err(|e| e.to_string())?;
+
+    // Verifica che non esista già un utente con lo stesso username
+    let existing: i64 = conn
+        .query_row(
+            "SELECT COUNT(*) FROM users WHERE username = ?",
+            [&username],
+            |row| row.get(0),
+        )
+        .map_err(|e| e.to_string())?;
+
+    if existing > 0 {
+        return Err(format!("Username '{}' già in uso.", username));
+    }
+
+    // Hash password con bcrypt (DEFAULT_COST = 12)
+    let hashed = hash(&password, DEFAULT_COST).map_err(|e| e.to_string())?;
 
     conn.execute(
         "INSERT INTO users (username, password_hash, role, nome, cognome) VALUES (?, ?, 'admin', ?, ?)",
-        [username, hashed, nome, cognome],
+        [username.as_str(), hashed.as_str(), nome.as_str(), cognome.as_str()],
     )
     .map_err(|e| e.to_string())?;
 

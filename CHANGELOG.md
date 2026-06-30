@@ -1,5 +1,11 @@
 # Changelog
 
+## v1.0.2
+- Rimosso banner di debug giallo dalla schermata di login
+- Risolto bug login: username normalizzato (minuscolo, senza spazi) sia al salvataggio che alla verifica
+- La landing page commerciale non viene più mostrata all'interno dell'app desktop
+- Messaggio di errore login più chiaro in caso di credenziali errate
+
 ## v1.0.1
 - Risolto errore `Command plugin:sql|load not allowed by ACL` durante il wizard di configurazione iniziale
 - Risolto bug critico: tabelle SQLite non venivano create al primo avvio (`no such table: users`)
