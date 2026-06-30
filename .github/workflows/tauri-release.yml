@@ -95,7 +95,6 @@ jobs:
         with:
           projectPath: solfege
           releaseId: ${{ needs.create-release.outputs.release_id }}
-          target: ${{ matrix.target }}
           args: --target ${{ matrix.target }}
 
   publish-release:
