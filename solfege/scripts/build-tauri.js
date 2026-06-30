@@ -6,8 +6,8 @@ const apiPath = path.join(__dirname, '../app/api');
 const apiTempPath = path.join(__dirname, '../api_temp');
 const superadminPath = path.join(__dirname, '../app/(superadmin)');
 const superadminTempPath = path.join(__dirname, '../superadmin_temp');
-const invitePath = path.join(__dirname, '../app/(auth)/accept-invite');
-const inviteTempPath = path.join(__dirname, '../accept-invite_temp');
+const authPath = path.join(__dirname, '../app/(auth)');
+const authTempPath = path.join(__dirname, '../auth_temp');
 const actionsDir = path.join(__dirname, '../app/actions');
 
 console.log('Preparing Tauri static export build...');
@@ -21,16 +21,15 @@ if (!fs.existsSync(superadminPath) && fs.existsSync(superadminTempPath)) {
   fs.renameSync(superadminTempPath, superadminPath);
   console.log('[SAFETY] Restored app/(superadmin) from interrupted previous build');
 }
-if (!fs.existsSync(invitePath) && fs.existsSync(inviteTempPath)) {
-  fs.renameSync(inviteTempPath, invitePath);
-  console.log('[SAFETY] Restored app/(auth)/accept-invite from interrupted previous build');
+if (!fs.existsSync(authPath) && fs.existsSync(authTempPath)) {
+  fs.renameSync(authTempPath, authPath);
+  console.log('[SAFETY] Restored app/(auth) from interrupted previous build');
 }
 
 let apiMoved = false;
 let superadminMoved = false;
-let inviteMoved = false;
+let authMoved = false;
 let backupContents = {};
-
 
 const mocks = {
   'email-actions.ts': `
@@ -72,11 +71,11 @@ try {
     console.log('Temporarily moved app/(superadmin) to root superadmin_temp');
   }
 
-  // 3. Move accept-invite page outside app folder (not used in desktop, avoids Supabase client init crash during static build)
-  if (fs.existsSync(invitePath)) {
-    fs.renameSync(invitePath, inviteTempPath);
-    inviteMoved = true;
-    console.log('Temporarily moved app/(auth)/accept-invite to root accept-invite_temp');
+  // 3. Move (auth) group directory outside app folder (web-only Supabase authentication flows)
+  if (fs.existsSync(authPath)) {
+    fs.renameSync(authPath, authTempPath);
+    authMoved = true;
+    console.log('Temporarily moved app/(auth) to root auth_temp');
   }
 
   // 4. Mock app/actions to remove server-side node dependencies and "use server" directives
@@ -116,10 +115,10 @@ try {
     console.log('Restored app/(superadmin) from root superadmin_temp');
   }
 
-  // 3. Restore accept-invite page
-  if (inviteMoved && fs.existsSync(inviteTempPath)) {
-    fs.renameSync(inviteTempPath, invitePath);
-    console.log('Restored app/(auth)/accept-invite from root accept-invite_temp');
+  // 3. Restore (auth) group directory
+  if (authMoved && fs.existsSync(authTempPath)) {
+    fs.renameSync(authTempPath, authPath);
+    console.log('Restored app/(auth) from root auth_temp');
   }
 
   // 4. Restore actions contents

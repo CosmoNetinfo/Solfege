@@ -94,6 +94,7 @@ jobs:
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
           NEXT_PUBLIC_SUPABASE_URL: https://placeholder.supabase.co
           NEXT_PUBLIC_SUPABASE_ANON_KEY: placeholder-key-for-build-only
+          SUPABASE_SERVICE_ROLE_KEY: placeholder-service-key-for-build-only
         with:
           projectPath: solfege
           releaseId: ${{ needs.create-release.outputs.release_id }}
