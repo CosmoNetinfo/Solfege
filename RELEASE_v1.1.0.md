@@ -1,0 +1,120 @@
+# Release Notes Solfège v1.1.0
+
+Questa release introduce importanti novità sul fronte dell'accessibilità mobile per gli allievi, il sistema di sincronizzazione dati desktop-cloud e la gestione delle iscrizioni web, oltre a vari bugfix strutturali sulla stabilità dell'app desktop.
+
+---
+
+## 🚀 Nuove Funzionalità (Feature)
+
+### 1. Portale Allievi Mobile-First
+* **Interfaccia Responsive**: Il portale allievi `/portal/dashboard` è stato completamente ridisegnato per l'uso da smartphone. Ora presenta un'elegante **Bottom Navigation Bar** fissa per muoversi fluidamente tra le sezioni.
+* **Le tue Lezioni**: Sezione dedicata per consultare lo storico delle presenze e le future lezioni in programma. Consente di espandere ciascuna lezione passata per leggere gli **argomenti trattati** e i **compiti assegnati** dal docente.
+* **Pagamenti**: Tracciamento trasparente delle quote scolastiche con badge colorati per stato (`Pagato`, `Scaduto`, `In attesa`), metodo di pagamento e numero di ricevuta.
+* **Mio Profilo**: Visualizzazione dei dati anagrafici personali e del genitore referente associato (se l'allievo è minorenne).
+
+### 2. Motore di Sincronizzazione Dati (SQLite ➔ Supabase)
+* **Sincronizzazione in 1-Click**: Aggiunto un pulsante **"Sincronizza Cloud"** nella barra laterale dell'applicazione desktop.
+* **Payload Unificato**: Il motore esegue l'estrazione locale e l'upsert protetto sul cloud di: *scuola, allievi, insegnanti, corsi, iscrizioni, lezioni, presenze, pagamenti e avvisi*.
+* **Sicurezza Multi-Tenant**: Ogni sincronizzazione è autenticata tramite chiave di licenza. I dati vengono isolati tramite policy RLS (Row Level Security) associate allo `school_id` univoco, impedendo a scuole diverse di sovrascrivere o visualizzare record altrui.
+
+### 3. Bacheca Avvisi Pubblica (Senza Login)
+* **Atterraggio Scuola (`/[school-slug]`)**: Creata una landing page pubblica per ciascuna scuola che mostra:
+  - Nome, logo e contatti della scuola.
+  - Bacheca degli avvisi generali con evidenza grafica per quelli contrassegnati come *Importanti*.
+  - **Variazioni d'orario**: Elenco in tempo reale delle lezioni annullate o dei recuperi programmati nell'ultima settimana e futuri.
+* **Accesso Rapido**: Link diretti per accedere al portale privato o per inviare una candidatura online.
+
+### 4. Iscrizioni Online & Gestione Desktop
+* **Iscriviti Online (`/[school-slug]/iscriviti`)**: Form multi-step pubblico per l'inserimento autonomo dei candidati allievi (con gestione minorenni).
+* **Pannello Desktop**: Aggiunta la sezione **"Iscrizioni Web"** nell'app desktop per visionare le richieste pendenti, approvarle (importando l'allievo direttamente nel DB locale SQLite) o rifiutarle.
+* **Link in Impostazioni**: Mostrati e resi copiabili in *Impostazioni ➔ Scuola* sia il *Link Bacheca Pubblica* che il *Link Iscrizioni Pubblico*.
+
+---
+
+## 🛠️ Correzioni e Ottimizzazioni (Bugfix)
+
+* **Tauri IPC Guards (isDesktop)**: Aggiunto il controllo `isDesktop()` nelle nuove pagine di amministrazione (`iscrizioni` e `bacheca`) per prevenire crash ed errori Javascript in console (`Cannot read properties of undefined (reading 'invoke')`) quando le pagine vengono compilate o caricate via browser.
+* **Tracciamento Errori di Login**: Modificato il comando Rust `login` per non procedere a memoria se la scrittura su SQLite in `sessions` fallisce. Qualsiasi blocco del database o errore di scrittura viene ora mostrato chiaramente in rosso sulla schermata di login per facilitare la diagnostica.
+* **Rust Trait Imports**: Risolto l'errore di build Rust dovuto all'assenza del trait `tauri::Manager` nel file `lib.rs` inserendo l'importazione corretta.
+* **DevTools in Release**: Abilitata la console DevTools (F12) anche per le build di produzione release nel file `tauri.conf.json` per facilitare il debug dell'eseguibile installato.
+
+---
+
+## 💾 Aggiornamenti Schema Database (Supabase SQL)
+
+Se non ancora eseguito, per supportare la bacheca avvisi e le iscrizioni online, eseguire la seguente query SQL nel Query Editor di Supabase:
+
+```sql
+-- Tabella per le registrazioni online temporanee
+CREATE TABLE IF NOT EXISTS online_registrations (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  school_id UUID NOT NULL REFERENCES schools(id) ON DELETE CASCADE,
+  nome TEXT NOT NULL,
+  cognome TEXT NOT NULL,
+  data_nascita DATE,
+  codice_fiscale TEXT,
+  email TEXT,
+  telefono TEXT,
+  is_minorenne BOOLEAN DEFAULT false,
+  genitore_nome TEXT,
+  genitore_cognome TEXT,
+  genitore_email TEXT,
+  genitore_telefono TEXT,
+  genitore_codice_fiscale TEXT,
+  corso_interesse TEXT,
+  note TEXT,
+  status TEXT NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'approved', 'rejected')),
+  created_at TIMESTAMPTZ DEFAULT now(),
+  updated_at TIMESTAMPTZ DEFAULT now()
+);
+
+ALTER TABLE online_registrations ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY anon_insert_registrations ON online_registrations
+  FOR INSERT TO anon WITH CHECK (true);
+
+CREATE POLICY superadmin_all_registrations ON online_registrations
+  FOR ALL TO authenticated
+  USING (
+    EXISTS (
+      SELECT 1 FROM profiles 
+      WHERE id = auth.uid() AND role = 'superadmin'
+    )
+  );
+
+CREATE POLICY school_admin_manage_registrations ON online_registrations
+  FOR ALL TO authenticated
+  USING (
+    EXISTS (
+      SELECT 1 FROM profiles
+      WHERE id = auth.uid() AND (role = 'admin' OR role = 'segreteria') AND school_id = online_registrations.school_id
+    )
+  );
+
+-- Associa la licenza ad una scuola specifica su Supabase
+ALTER TABLE licenses ADD COLUMN IF NOT EXISTS school_id UUID REFERENCES schools(id) ON DELETE SET NULL;
+
+-- Tabella per gli avvisi/comunicazioni della scuola in bacheca
+CREATE TABLE IF NOT EXISTS school_notices (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  school_id UUID NOT NULL REFERENCES schools(id) ON DELETE CASCADE,
+  title TEXT NOT NULL,
+  content TEXT NOT NULL,
+  is_important BOOLEAN DEFAULT false,
+  created_at TIMESTAMPTZ DEFAULT now()
+);
+
+ALTER TABLE school_notices ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY public_read_notices ON school_notices
+  FOR SELECT TO anon USING (true);
+
+CREATE POLICY school_admin_manage_notices ON school_notices
+  FOR ALL TO authenticated
+  USING (
+    EXISTS (
+      SELECT 1 FROM profiles
+      WHERE id = auth.uid() AND (role = 'admin' OR role = 'segreteria') AND school_id = school_notices.school_id
+    )
+  );
+```
