@@ -1,5 +1,8 @@
 # Changelog
 
+## v1.0.5
+- Rimosso il box "Link Iscrizioni Pubblico" e il campo "Slug URL" (con relativa anteprima) dalle impostazioni della scuola, poiché le iscrizioni online autonome non sono attualmente supportate
+
 ## v1.0.4
 - Abilitati i DevTools anche nelle build di produzione Tauri attivando la feature `devtools` nel file Cargo.toml
 - Aumentato a 5 secondi il tempo di visualizzazione dei dettagli degli errori di autenticazione a schermo per consentire la diagnosi visiva del "flash" al login
