@@ -33,7 +33,11 @@ export default async function proxy(request: NextRequest) {
   } = await supabase.auth.getUser()
 
   if (!user) {
-    if (request.nextUrl.pathname.startsWith('/admin') || request.nextUrl.pathname.startsWith('/teacher')) {
+    if (
+      request.nextUrl.pathname.startsWith('/admin') ||
+      request.nextUrl.pathname.startsWith('/teacher') ||
+      request.nextUrl.pathname.startsWith('/superadmin')
+    ) {
       return NextResponse.redirect(new URL('/login', request.url))
     }
     return supabaseResponse
@@ -48,28 +52,33 @@ export default async function proxy(request: NextRequest) {
       .from('profiles')
       .select('role')
       .eq('id', user.id)
-      .single()
+      .maybeSingle()
     role = profile?.role
-    
-    // Note: We don't update metadata here because middleware should be read-only ideally,
-    // but we use the resolved role for the rest of the checks.
   }
 
   const path = request.nextUrl.pathname
 
-  // 3. RBAC Enforcement
+  // 3. Superadmin protection
+  if (path.startsWith('/superadmin')) {
+    if (role !== 'superadmin') {
+      return NextResponse.redirect(new URL('/admin/dashboard', request.url))
+    }
+  }
+
+  // 4. RBAC Enforcement for /admin
   if (path.startsWith('/admin')) {
-    if (role !== 'admin') {
-      // If not admin, and is teacher, send to teacher home. Otherwise to login.
+    if (role === 'superadmin') {
+      // Superadmin accessing /admin — redirect to superadmin panel
+      return NextResponse.redirect(new URL('/superadmin', request.url))
+    }
+    if (role !== 'admin' && role !== 'segreteria') {
       return NextResponse.redirect(new URL(role === 'insegnante' ? '/teacher/home' : '/login', request.url))
     }
   }
 
   if (path.startsWith('/teacher')) {
     if (role !== 'insegnante' && role !== 'admin') {
-      // Admins are allowed in teacher view for testing/debug usually, 
-      // but if we want strict separation:
-      // return NextResponse.redirect(new URL('/admin/dashboard', request.url))
+      // Non-teacher, non-admin users cannot access teacher routes
     }
   }
 
@@ -77,5 +86,6 @@ export default async function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/admin/:path*', '/teacher/:path*'],
+  matcher: ['/admin/:path*', '/teacher/:path*', '/superadmin/:path*'],
 }
+
