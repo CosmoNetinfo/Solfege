@@ -16,19 +16,40 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Extract release notes from CHANGELOG.md
+        id: changelog
+        run: |
+          TAG="${{ github.ref_name }}"
+          # Estrae il blocco relativo al tag corrente dal CHANGELOG.md
+          # Cerca dalla riga "## <tag>" fino alla riga "## " successiva (esclusa)
+          NOTES=$(awk "/^## ${TAG}$/,/^## /" CHANGELOG.md | grep -v "^## ${TAG}$" | grep -v "^## " | sed '/^[[:space:]]*$/d' | head -50)
+          if [ -z "$NOTES" ]; then
+            NOTES="Vedi CHANGELOG.md per i dettagli di questa versione."
+          fi
+          # Salva su file per evitare problemi con caratteri speciali
+          echo "$NOTES" > release_notes.txt
+          echo "notes_file=release_notes.txt" >> $GITHUB_OUTPUT
+
       - name: Create GitHub Release (draft)
         id: create-release
         uses: actions/github-script@v7
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
+            const fs = require('fs')
             const tag = context.ref.replace('refs/tags/', '')
+            let body = ''
+            try {
+              body = fs.readFileSync('release_notes.txt', 'utf8').trim()
+            } catch (e) {
+              body = 'Vedi CHANGELOG.md per i dettagli di questa versione.'
+            }
             const { data } = await github.rest.repos.createRelease({
               owner: context.repo.owner,
               repo: context.repo.repo,
               tag_name: tag,
               name: `Solfège ${tag}`,
-              body: 'Nuova versione di Solfège Desktop. Vedi le note di rilascio complete nel pannello Super Admin.',
+              body: body,
               draft: true,
               prerelease: false
             })
@@ -100,18 +121,6 @@ jobs:
           releaseId: ${{ needs.create-release.outputs.release_id }}
           args: --target ${{ matrix.target }}
 
-  publish-release:
-    needs: [create-release, build-tauri]
-    runs-on: ubuntu-latest
-    steps:
-      - name: Publish Release (draft → public)
-        uses: actions/github-script@v7
-        with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          script: |
-            await github.rest.repos.updateRelease({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              release_id: ${{ needs.create-release.outputs.release_id }},
-              draft: false
-            })
+  # La release rimane in DRAFT fino a pubblicazione manuale.
+  # Per pubblicarla: vai su GitHub → Releases → Edit → "Publish release"
+  # In questo modo puoi rivedere le note e i file allegati prima che i clienti li vedano.
