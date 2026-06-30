@@ -462,15 +462,15 @@ export default function LandingPage() {
       </section>
 
       {/* CTA FINALE */}
-      <section className="section bg-[#1A1714] text-white">
-        <h2 className="section-title text-white">Pronto a portare ordine nella tua scuola?</h2>
-        <p className="section-sub text-stone-400">15 giorni di prova completa. Poi €249 una tantum, per sempre.</p>
+      <section className="section" style={{ backgroundColor: '#FAFAF9' }}>
+        <h2 className="section-title text-stone-900">Pronto a portare ordine nella tua scuola?</h2>
+        <p className="section-sub text-stone-500">15 giorni di prova completa. Poi €249 una tantum, per sempre.</p>
         
         <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mt-8">
           <a href="https://wa.me/393517064080" target="_blank" rel="noopener noreferrer" className="btn-primary bg-[#E8621A] hover:bg-[#C94E0E] text-white py-3 px-6 rounded-xl font-bold uppercase tracking-wider text-sm flex items-center gap-2">
             Acquista ora — €249
           </a>
-          <a href="https://wa.me/393517064080" target="_blank" rel="noopener noreferrer" className="btn-outline border-white hover:bg-white/10 py-3 px-6 rounded-xl font-bold uppercase tracking-wider text-sm" style={{ color: '#ffffff', borderColor: '#ffffff' }}>
+          <a href="https://wa.me/393517064080" target="_blank" rel="noopener noreferrer" className="btn-outline py-3 px-6 rounded-xl font-bold uppercase tracking-wider text-sm">
             Scrivici su WhatsApp
           </a>
         </div>
