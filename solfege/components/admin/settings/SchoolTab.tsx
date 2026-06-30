@@ -157,23 +157,46 @@ export function SchoolTab({ school }: { school: any }) {
         </div>
       </div>
 
-      {/* Link iscrizioni pubblico */}
-      <div className="p-6 border rounded-xl bg-orange/5 border-orange/10 space-y-4">
-        <div>
-          <h3 className="font-bold text-orange flex items-center gap-2">
-            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
-            Link Iscrizioni Pubblico
-          </h3>
-          <p className="text-sm text-stone-600 mt-1">Condividi questo link per permettere ai nuovi allievi di iscriversi autonomamente.</p>
-        </div>
-        <div className="flex items-center gap-2">
-          <div className="flex-1 bg-white border border-orange/20 rounded-lg px-4 py-2 text-sm font-mono text-stone-700 truncate">
-            {appUrl}/{slugPreview || school?.slug}/iscriviti
+      {/* Link pubblici */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {/* Link bacheca pubblica */}
+        <div className="p-6 border rounded-xl bg-orange/5 border-orange/10 space-y-4">
+          <div>
+            <h3 className="font-bold text-orange flex items-center gap-2">
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/></svg>
+              Link Bacheca Pubblica
+            </h3>
+            <p className="text-sm text-stone-600 mt-1">Consenti a tutti gli allievi di leggere avvisi e variazioni orari senza login.</p>
           </div>
-          <Button variant="outline" className="border-orange/20 text-orange hover:bg-orange hover:text-white shrink-0"
-            onClick={() => { navigator.clipboard.writeText(`${appUrl}/${slugPreview || school?.slug}/iscriviti`); toast.success('Link copiato!'); }}>
-            Copia Link
-          </Button>
+          <div className="flex items-center gap-2">
+            <div className="flex-1 bg-white border border-orange/20 rounded-lg px-4 py-2 text-sm font-mono text-stone-700 truncate">
+              {appUrl}/{slugPreview || school?.slug}
+            </div>
+            <Button variant="outline" className="border-orange/20 text-orange hover:bg-orange hover:text-white shrink-0"
+              onClick={() => { navigator.clipboard.writeText(`${appUrl}/${slugPreview || school?.slug}`); toast.success('Link copiato!'); }}>
+              Copia Link
+            </Button>
+          </div>
+        </div>
+
+        {/* Link iscrizioni pubblico */}
+        <div className="p-6 border rounded-xl bg-orange/5 border-orange/10 space-y-4">
+          <div>
+            <h3 className="font-bold text-orange flex items-center gap-2">
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+              Link Iscrizioni Pubblico
+            </h3>
+            <p className="text-sm text-stone-600 mt-1">Condividi questo link per permettere ai nuovi allievi di iscriversi autonomamente.</p>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="flex-1 bg-white border border-orange/20 rounded-lg px-4 py-2 text-sm font-mono text-stone-700 truncate">
+              {appUrl}/{slugPreview || school?.slug}/iscriviti
+            </div>
+            <Button variant="outline" className="border-orange/20 text-orange hover:bg-orange hover:text-white shrink-0"
+              onClick={() => { navigator.clipboard.writeText(`${appUrl}/${slugPreview || school?.slug}/iscriviti`); toast.success('Link copiato!'); }}>
+              Copia Link
+            </Button>
+          </div>
         </div>
       </div>
 
