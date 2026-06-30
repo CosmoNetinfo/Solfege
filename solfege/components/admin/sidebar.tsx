@@ -73,26 +73,6 @@ export function Sidebar() {
     window.location.href = "/login";
   };
 
-  const PlanBadge = ({ plan, trialEndsAt }: { plan: string | null, trialEndsAt: string | null }) => {
-    if (!plan && plan !== 'free') return null;
-    
-    switch(plan) {
-      case 'free':
-        return <Badge variant="outline" className="text-[9px] h-4 px-1.5 border-stone-300 text-stone-500 uppercase font-bold">Free</Badge>;
-      case 'trial':
-        const days = trialEndsAt ? Math.ceil((new Date(trialEndsAt).getTime() - new Date().getTime()) / (1000 * 3600 * 24)) : 0;
-        return <Badge className="text-[9px] h-4 px-1.5 bg-amber-500 text-white border-none uppercase font-bold">Trial {days > 0 ? `· ${days}gg` : ''}</Badge>;
-      case 'starter':
-        return <Badge className="text-[9px] h-4 px-1.5 bg-blue-500 text-white border-none uppercase font-bold">Starter</Badge>;
-      case 'pro':
-        return <Badge className="text-[9px] h-4 px-1.5 bg-green-600 text-white border-none uppercase font-bold">Pro</Badge>;
-      case 'white_label':
-        return <Badge className="text-[9px] h-4 px-1.5 bg-slate-900 text-white border-none uppercase font-bold text-center">White Label</Badge>;
-      default:
-        return <Badge variant="outline" className="text-[9px] h-4 px-1.5 border-stone-300 text-stone-500 uppercase font-bold">Free</Badge>;
-    }
-  };
-
   return (
     <div className="flex flex-col h-full shrink-0">
       {/* Header Sidebar: Logo & School Name */}
@@ -110,7 +90,6 @@ export function Sidebar() {
             <p className="text-xs font-semibold text-orange uppercase tracking-wider truncate flex-1">
               {schoolInfo.name}
             </p>
-            <PlanBadge plan={schoolInfo.plan} trialEndsAt={schoolInfo.trialEndsAt} />
           </div>
         )}
       </div>

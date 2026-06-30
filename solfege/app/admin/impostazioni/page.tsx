@@ -4,7 +4,6 @@ import { AcademicYearTab } from '@/components/admin/settings/AcademicYearTab';
 import { InstrumentsTab } from '@/components/admin/settings/InstrumentsTab';
 import { RoomsTab } from '@/components/admin/settings/RoomsTab';
 import { UsersTab } from '@/components/admin/settings/UsersTab';
-import { SubscriptionTab } from '@/components/admin/settings/SubscriptionTab';
 import { createClient } from '@/lib/supabase/server';
 import { getProfile, getSchoolData } from '@/lib/supabase/queries';
 import { redirect } from 'next/navigation';
@@ -48,7 +47,24 @@ export default async function ImpostazioniPage({
           <TabsContent value="strumenti" className="m-0"><InstrumentsTab schoolId={school.id} /></TabsContent>
           <TabsContent value="aule" className="m-0"><RoomsTab schoolId={school.id} /></TabsContent>
           <TabsContent value="utenti" className="m-0"><UsersTab schoolId={school.id} schoolName={school.name} /></TabsContent>
-          <TabsContent value="abbonamento" className="m-0"><SubscriptionTab school={school} /></TabsContent>
+          <TabsContent value="abbonamento" className="m-0">
+            <div className="bg-stone-50 border border-stone-200 p-8 rounded-2xl max-w-xl mx-auto text-center space-y-6 shadow-sm">
+              <h3 className="text-2xl font-serif text-[#E8621A] font-bold">Solfège Desktop</h3>
+              <p className="text-sm text-muted-foreground leading-relaxed">
+                Stai usando la versione demo web. Per la versione completa desktop (SQLite locale, funzionamento offline, nessun abbonamento) contattaci su WhatsApp.
+              </p>
+              <div className="pt-2">
+                <a
+                  href="https://wa.me/393517064080"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center justify-center bg-[#E8621A] hover:bg-[#C94E0E] text-white font-bold py-3 px-6 rounded-lg transition-colors text-sm uppercase tracking-wider"
+                >
+                  Contattaci su WhatsApp
+                </a>
+              </div>
+            </div>
+          </TabsContent>
         </div>
       </Tabs>
     </div>

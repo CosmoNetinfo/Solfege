@@ -35,7 +35,6 @@ export default async function proxy(request: NextRequest) {
   if (!user) {
     if (
       request.nextUrl.pathname.startsWith('/admin') ||
-      request.nextUrl.pathname.startsWith('/teacher') ||
       request.nextUrl.pathname.startsWith('/superadmin')
     ) {
       return NextResponse.redirect(new URL('/login', request.url))
@@ -74,13 +73,7 @@ export default async function proxy(request: NextRequest) {
   // 5. RBAC Enforcement for /admin
   if (path.startsWith('/admin')) {
     if (role !== 'admin' && role !== 'segreteria') {
-      return NextResponse.redirect(new URL(role === 'insegnante' ? '/teacher/home' : '/login', request.url))
-    }
-  }
-
-  if (path.startsWith('/teacher')) {
-    if (role !== 'insegnante' && role !== 'admin') {
-      // Non-teacher, non-admin users cannot access teacher routes
+      return NextResponse.redirect(new URL('/login', request.url))
     }
   }
 
@@ -88,6 +81,6 @@ export default async function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/admin/:path*', '/teacher/:path*', '/superadmin/:path*'],
+  matcher: ['/admin/:path*', '/superadmin/:path*'],
 }
 

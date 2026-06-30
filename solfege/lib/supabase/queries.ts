@@ -554,16 +554,6 @@ export async function checkPlanLimits(supabase: SupabaseClient<Database>, school
     const school = await getSchoolData(supabase, schoolId);
     if (!school) return null;
 
-    const plan = (school.plan || 'free') as 'free' | 'trial' | 'starter' | 'pro' | 'white_label';
-
-    const limits = {
-      free:        { students: 20,       teachers: 2  },
-      trial:       { students: Infinity, teachers: Infinity },
-      starter:     { students: 50,       teachers: 5  },
-      pro:         { students: Infinity, teachers: Infinity },
-      white_label: { students: Infinity, teachers: Infinity },
-    };
-
     const [
       { count: studentCount },
       { count: teacherCount }
@@ -572,16 +562,14 @@ export async function checkPlanLimits(supabase: SupabaseClient<Database>, school
       supabase.from('teachers').select('*', { count: 'exact', head: true }).eq('school_id', schoolId).eq('active', true)
     ]);
 
-    const currentLimits = limits[plan] || limits.free;
-
     return {
-      plan,
-      trial_ends_at: school.trial_ends_at,
-      limits: currentLimits,
+      plan: 'pro',
+      trial_ends_at: null,
+      limits: { students: Infinity, teachers: Infinity },
       studentCount: studentCount || 0,
       teacherCount: teacherCount || 0,
-      canAddStudent: (studentCount || 0) < currentLimits.students,
-      canAddTeacher: (teacherCount || 0) < currentLimits.teachers,
+      canAddStudent: true,
+      canAddTeacher: true,
     };
   });
 }
