@@ -10,7 +10,7 @@ interface RoomTimelineProps {
 }
 
 const START_HOUR = 8;
-const END_HOUR = 22;
+const END_HOUR = 23;
 const HOUR_HEIGHT = 80;   // px per ora
 const HALF_HEIGHT = HOUR_HEIGHT / 2; // 40px per mezz'ora
 const HEADER_HEIGHT = 56; // h-14 = 56px — deve coincidere con l'header sticky
