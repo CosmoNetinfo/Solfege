@@ -19,6 +19,8 @@ import {
 import { format } from "date-fns";
 import { it } from "date-fns/locale";
 
+import { isDesktop } from "@/lib/is-desktop";
+
 export default function BachecaAdminPage() {
   const [notices, setNotices] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -29,6 +31,10 @@ export default function BachecaAdminPage() {
 
   // 1. Carica avvisi da SQLite locale
   const fetchNotices = async () => {
+    if (!isDesktop()) {
+      setLoading(false);
+      return;
+    }
     setLoading(true);
     try {
       const db = await Database.load("sqlite:solfege.db");

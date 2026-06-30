@@ -24,6 +24,8 @@ import {
 import { format } from "date-fns";
 import { it } from "date-fns/locale";
 
+import { isDesktop } from "@/lib/is-desktop";
+
 export default function IscrizioniWebPage() {
   const [schoolId, setSchoolId] = useState<string | null>(null);
   const [registrations, setRegistrations] = useState<any[]>([]);
@@ -34,6 +36,7 @@ export default function IscrizioniWebPage() {
   // 1. Carica lo school_id dal DB locale
   useEffect(() => {
     async function loadSchoolId() {
+      if (!isDesktop()) return;
       try {
         const db = await Database.load("sqlite:solfege.db");
         const schools = await db.select<{ id: string }[]>("SELECT id FROM schools LIMIT 1");
