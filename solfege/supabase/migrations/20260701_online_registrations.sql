@@ -51,3 +51,31 @@ CREATE POLICY school_admin_manage_registrations ON online_registrations
 -- Associa la licenza ad una scuola specifica su Supabase
 ALTER TABLE licenses ADD COLUMN IF NOT EXISTS school_id UUID REFERENCES schools(id) ON DELETE SET NULL;
 
+-- Tabella per gli avvisi/comunicazioni della scuola in bacheca
+CREATE TABLE IF NOT EXISTS school_notices (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  school_id UUID NOT NULL REFERENCES schools(id) ON DELETE CASCADE,
+  title TEXT NOT NULL,
+  content TEXT NOT NULL,
+  is_important BOOLEAN DEFAULT false,
+  created_at TIMESTAMPTZ DEFAULT now()
+);
+
+-- Enable RLS
+ALTER TABLE school_notices ENABLE ROW LEVEL SECURITY;
+
+-- Policy 1: Chiunque (anonimo/allievo) può leggere gli avvisi
+CREATE POLICY public_read_notices ON school_notices
+  FOR SELECT TO anon USING (true);
+
+-- Policy 2: Gli amministratori della scuola (admin o segreteria) possono gestire gli avvisi
+CREATE POLICY school_admin_manage_notices ON school_notices
+  FOR ALL TO authenticated
+  USING (
+    EXISTS (
+      SELECT 1 FROM profiles
+      WHERE id = auth.uid() AND (role = 'admin' OR role = 'segreteria') AND school_id = school_notices.school_id
+    )
+  );
+
+

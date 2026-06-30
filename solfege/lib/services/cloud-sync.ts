@@ -26,6 +26,7 @@ export async function syncLocalToCloud(): Promise<{ success: boolean; message: s
     const lessons = await db.select<any[]>('SELECT * FROM lessons');
     const attendance = await db.select<any[]>('SELECT * FROM attendance');
     const payments = await db.select<any[]>('SELECT * FROM payments');
+    const notices = await db.select<any[]>('SELECT * FROM school_notices');
 
     // 4. Invia payload all'endpoint di sincronizzazione
     const payload = {
@@ -37,7 +38,8 @@ export async function syncLocalToCloud(): Promise<{ success: boolean; message: s
       enrollments,
       lessons,
       attendance,
-      payments
+      payments,
+      notices
     };
 
     console.log('[CLOUD-SYNC] Avvio sincronizzazione...', {

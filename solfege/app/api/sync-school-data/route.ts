@@ -13,7 +13,8 @@ export async function POST(request: Request) {
       enrollments = [],
       lessons = [],
       attendance = [],
-      payments = []
+      payments = [],
+      notices = []
     } = body;
 
     if (!license_key || !school || !school.id) {
@@ -208,6 +209,20 @@ export async function POST(request: Request) {
       }));
       const { error } = await adminDb.from('payments' as any).upsert(mappedPayments);
       if (error) console.error('[SYNC ERROR] payments:', error.message);
+    }
+
+    // AVVISI (SCHOOL NOTICES)
+    if (notices.length > 0) {
+      const mappedNotices = notices.map((n: any) => ({
+        id: n.id,
+        school_id: schoolId,
+        title: n.titolo,
+        content: n.contenuto,
+        is_important: n.importante === 1,
+        created_at: n.created_at || new Date().toISOString()
+      }));
+      const { error } = await adminDb.from('school_notices' as any).upsert(mappedNotices);
+      if (error) console.error('[SYNC ERROR] school_notices:', error.message);
     }
 
     return NextResponse.json({ success: true, message: 'Sincronizzazione completata con successo' });

@@ -18,6 +18,15 @@ export default async function PortalDashboard() {
   const { enrollments, upcomingLessons, pendingPayments } = await getStudentDashboardData(supabase, profile.student_id);
   const nextLesson = upcomingLessons[0];
 
+  // Recupera gli avvisi della scuola da Supabase
+  const { data: notices } = await supabase
+    .from("school_notices" as any)
+    .select("*")
+    .eq("school_id", profile.school_id)
+    .order("is_important", { ascending: false })
+    .order("created_at", { ascending: false })
+    .limit(4) as any;
+
   return (
     <div className="p-8 space-y-8 max-w-6xl mx-auto">
       <header className="flex flex-col gap-2">
@@ -58,22 +67,53 @@ export default async function PortalDashboard() {
         </Card>
 
         {/* Notifiche / Avvisi */}
-        <Card className="border-none shadow-sm">
+        <Card className="border-none shadow-sm flex flex-col justify-between">
           <CardHeader>
             <CardTitle className="text-lg font-bold flex items-center gap-2 text-stone-900">
-              <Bell className="h-5 w-5 text-orange" /> Avvisi
+              <Bell className="h-5 w-5 text-orange" /> Avvisi & Comunicazioni
             </CardTitle>
           </CardHeader>
-          <CardContent>
-            {pendingPayments.length > 0 ? (
-              <div className="p-3 bg-red/5 border border-red/10 rounded-lg text-red-700 text-sm flex items-start gap-2">
-                <AlertCircle className="h-4 w-4 mt-0.5" />
-                <span>Hai {pendingPayments.length} pagamento/i in sospeso.</span>
+          <CardContent className="space-y-3 flex-1 overflow-y-auto max-h-[320px]">
+            {pendingPayments.length > 0 && (
+              <div className="p-3 bg-red-50 border border-red-100 rounded-xl text-red-700 text-xs flex items-start gap-2.5">
+                <AlertCircle className="h-4 w-4 mt-0.5 shrink-0" />
+                <span>Hai {pendingPayments.length} quota/e in sospeso. Vai in <strong>Pagamenti</strong>.</span>
+              </div>
+            )}
+            
+            {notices && notices.length > 0 ? (
+              <div className="space-y-3">
+                {notices.map((n: any) => (
+                  <div key={n.id} className={`p-3 rounded-xl border ${
+                    n.is_important 
+                      ? 'bg-red-50/50 border-red-100 text-stone-900' 
+                      : 'bg-stone-50/50 border-stone-100 text-stone-700'
+                  } space-y-1`}>
+                    <div className="flex items-center gap-1.5 flex-wrap">
+                      <span className={`font-bold text-xs ${n.is_important ? 'text-red-700 font-serif' : 'text-stone-800'}`}>
+                        {n.title}
+                      </span>
+                      {n.is_important && (
+                        <span className="bg-red-100 text-red-800 text-[8px] font-bold px-1.5 py-0.25 rounded uppercase">
+                          Importante
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-[11px] text-stone-600 leading-normal whitespace-pre-line">
+                      {n.content}
+                    </p>
+                    <p className="text-[9px] text-stone-400">
+                      {format(new Date(n.created_at), "dd MMM, HH:mm", { locale: it })}
+                    </p>
+                  </div>
+                ))}
               </div>
             ) : (
-              <div className="text-sm text-stone-500 italic">
-                Nessun nuovo avviso dalla segreteria.
-              </div>
+              !pendingPayments.length && (
+                <div className="text-sm text-stone-500 italic py-4">
+                  Nessun nuovo avviso dalla bacheca.
+                </div>
+              )
             )}
           </CardContent>
         </Card>

@@ -1,6 +1,6 @@
 [package]
 name = "solfege"
-version = "1.0.6"
+version = "1.0.7"
 description = "Solfège — Gestionale Scuola di Musica"
 authors = ["Daniele Spalletti <admindany@gmail.com>"]
 edition = "2021"

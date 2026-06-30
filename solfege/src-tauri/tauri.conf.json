@@ -1,6 +1,6 @@
 {
   "productName": "Solfège",
-  "version": "1.0.6",
+  "version": "1.0.7",
   "identifier": "info.cosmonet.solfege",
   "build": {
     "beforeDevCommand": "npm run dev",

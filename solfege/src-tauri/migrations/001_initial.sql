@@ -210,6 +210,14 @@ CREATE TABLE IF NOT EXISTS sessions (
   last_activity_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
 
+CREATE TABLE IF NOT EXISTS school_notices (
+  id TEXT PRIMARY KEY,
+  titolo TEXT NOT NULL,
+  contenuto TEXT NOT NULL,
+  importante INTEGER DEFAULT 0,
+  created_at TEXT DEFAULT (datetime('now'))
+);
+
 -- Inserisce configurazione iniziale
 INSERT OR IGNORE INTO app_config (key, value) VALUES
   ('app_version', '1.0.0'),

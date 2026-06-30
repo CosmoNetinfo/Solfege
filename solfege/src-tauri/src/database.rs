@@ -32,8 +32,7 @@ pub fn initialize(app: &AppHandle) -> Result<(), Box<dyn std::error::Error>> {
         conn.execute_batch(initial_sql)?;
         println!("Migrazione iniziale completata con successo!");
     } else {
-        // Per install esistenti: assicura che la tabella sessions esista
-        // (aggiunta in v1.0.3 — non presente nei DB creati con versioni precedenti)
+        // Per install esistenti: assicura che le tabelle sessions e school_notices esistano
         conn.execute_batch(
             "CREATE TABLE IF NOT EXISTS sessions (
                 id INTEGER PRIMARY KEY CHECK (id = 1),
@@ -44,9 +43,16 @@ pub fn initialize(app: &AppHandle) -> Result<(), Box<dyn std::error::Error>> {
                 cognome TEXT NOT NULL,
                 logged_in_at TEXT NOT NULL DEFAULT (datetime('now')),
                 last_activity_at TEXT NOT NULL DEFAULT (datetime('now'))
+            );
+            CREATE TABLE IF NOT EXISTS school_notices (
+                id TEXT PRIMARY KEY,
+                titolo TEXT NOT NULL,
+                contenuto TEXT NOT NULL,
+                importante INTEGER DEFAULT 0,
+                created_at TEXT DEFAULT (datetime('now'))
             );"
         )?;
-        println!("Database già inizializzato. Tabella sessions verificata.");
+        println!("Database già inizializzato. Tabelle sessions e school_notices verificate.");
     }
 
     Ok(())

@@ -18,7 +18,8 @@ import {
   ShieldCheck,
   Globe,
   RefreshCw,
-  Cloud
+  Cloud,
+  Bell
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { createClient } from "@/lib/supabase/client";
@@ -33,6 +34,7 @@ const navItems = [
   { name: "Sale & Prove", href: "/admin/sale", icon: DoorOpen },
   { name: "Studenti", href: "/admin/students", icon: Users },
   { name: "Iscrizioni Web", href: "/admin/iscrizioni", icon: Globe },
+  { name: "Bacheca", href: "/admin/bacheca", icon: Bell },
   { name: "Insegnanti", href: "/admin/teachers", icon: GraduationCap },
   { name: "Corsi", href: "/admin/courses", icon: BookOpen },
   { name: "Finanze", href: "/admin/finances", icon: Banknote },
