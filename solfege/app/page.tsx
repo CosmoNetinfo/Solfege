@@ -470,7 +470,7 @@ export default function LandingPage() {
           <a href="https://wa.me/393517064080" target="_blank" rel="noopener noreferrer" className="btn-primary bg-[#E8621A] hover:bg-[#C94E0E] text-white py-3 px-6 rounded-xl font-bold uppercase tracking-wider text-sm flex items-center gap-2">
             Acquista ora — €249
           </a>
-          <a href="https://wa.me/393517064080" target="_blank" rel="noopener noreferrer" className="btn-outline border-white text-white hover:bg-white/10 py-3 px-6 rounded-xl font-bold uppercase tracking-wider text-sm">
+          <a href="https://wa.me/393517064080" target="_blank" rel="noopener noreferrer" className="btn-outline border-white hover:bg-white/10 py-3 px-6 rounded-xl font-bold uppercase tracking-wider text-sm" style={{ color: '#ffffff', borderColor: '#ffffff' }}>
             Scrivici su WhatsApp
           </a>
         </div>
