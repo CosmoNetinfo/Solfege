@@ -470,22 +470,22 @@ export default function LandingPage() {
           <a href="https://wa.me/393517064080" target="_blank" rel="noopener noreferrer" className="btn-primary bg-[#E8621A] hover:bg-[#C94E0E] text-white py-3 px-6 rounded-xl font-bold uppercase tracking-wider text-sm flex items-center gap-2">
             Acquista ora — €249
           </a>
-          <a href="https://wa.me/393517064080" target="_blank" rel="noopener noreferrer" className="btn-outline py-3 px-6 rounded-xl font-bold uppercase tracking-wider text-sm">
+          <a href="https://wa.me/393517064080" target="_blank" rel="noopener noreferrer" className="btn-outline border border-stone-800 text-stone-800 hover:bg-stone-100 py-3 px-6 rounded-xl font-bold uppercase tracking-wider text-sm">
             Scrivici su WhatsApp
           </a>
         </div>
       </section>
 
       {/* FOOTER */}
-      <footer className="landing-footer p-12 text-center text-xs text-stone-400 space-y-6 max-w-5xl mx-auto border-t border-stone-200">
-        <div className="flex justify-center gap-6 font-bold uppercase tracking-wider">
-          <a href="#pricing" className="hover:text-stone-600 transition-colors">Acquista</a>
+      <footer className="w-full bg-[#1A1714] py-10 text-center text-xs text-white/60 space-y-6">
+        <div className="flex justify-center gap-6 font-bold uppercase tracking-wider text-white">
+          <a href="#pricing" className="hover:text-[#E8621A] transition-colors">Acquista</a>
           <span>·</span>
-          <a href="https://wa.me/393517064080" target="_blank" rel="noopener noreferrer" className="hover:text-stone-600 transition-colors">Supporto WhatsApp</a>
+          <a href="https://wa.me/393517064080" target="_blank" rel="noopener noreferrer" className="hover:text-[#E8621A] transition-colors">Supporto WhatsApp</a>
           <span>·</span>
-          <a href="mailto:admindany@gmail.com" className="hover:text-stone-600 transition-colors">Email</a>
+          <a href="mailto:admindany@gmail.com" className="hover:text-[#E8621A] transition-colors">Email</a>
         </div>
-        <p>
+        <p className="text-white/60">
           © 2026 Solfège — App Desktop per Scuole di Musica · Made in Italy · Sviluppato da CosmoNet.info
         </p>
       </footer>
