@@ -13,7 +13,10 @@ pub fn get_db_path(app: &AppHandle) -> Result<PathBuf, String> {
 
 pub fn get_connection(app: &AppHandle) -> Result<Connection, String> {
     let path = get_db_path(app)?;
-    Connection::open(path).map_err(|e| e.to_string())
+    let conn = Connection::open(path).map_err(|e| e.to_string())?;
+    // Imposta busy_timeout a 5 secondi per attendere che altri blocchi vengano rilasciati
+    conn.busy_timeout(std::time::Duration::from_millis(5000)).map_err(|e| e.to_string())?;
+    Ok(conn)
 }
 
 pub fn initialize(app: &AppHandle) -> Result<(), Box<dyn std::error::Error>> {
