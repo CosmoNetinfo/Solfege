@@ -39,3 +39,12 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# Tauri
+src-tauri/target/
+src-tauri/WixTools/
+*.exe
+*.dmg
+*.AppImage
+*.deb
+*.msi

@@ -28,6 +28,7 @@ type CalendarEvent = {
     room: string;
     status: string;
     courseName: string;
+    isBooking?: boolean;
   };
 };
 
@@ -115,7 +116,30 @@ export default function CalendarPage() {
       },
     }));
 
-    setEvents(mapped);
+    const { data: bookings } = await supabase
+      .from('room_bookings')
+      .select('*, rooms(name)')
+      .eq('school_id', sId)
+
+    const mappedBookings: CalendarEvent[] = (bookings || []).map((b: any) => ({
+      id: `booking-${b.id}`,
+      title: `${b.titolo}${b.nome_gruppo ? ` — ${b.nome_gruppo}` : ''} (${b.rooms?.name || ''})`,
+      start: new Date(`${b.data}T${b.ora_inizio}`),
+      end: new Date(`${b.data}T${b.ora_fine}`),
+      color: b.colore || '#7C3AED',
+      teacherId: '',
+      courseId: '',
+      roomId: b.room_id || '',
+      resource: {
+        teacher: '',
+        room: b.rooms?.name || '',
+        status: b.tipo,
+        courseName: 'Prenotazione',
+        isBooking: true
+      }
+    }));
+
+    setEvents([...mapped, ...mappedBookings]);
     setLoading(false);
   }
 
@@ -136,18 +160,35 @@ export default function CalendarPage() {
     setList(list.includes(id) ? list.filter(item => item !== id) : [...list, id]);
   };
 
-  const eventStyleGetter = useCallback((event: CalendarEvent) => ({
-    style: {
-      backgroundColor: event.color,
-      borderRadius: "6px",
-      opacity: event.resource?.status === "cancellata" ? 0.4 : 1,
-      color: "#fff",
-      border: "none",
-      padding: "2px 6px",
-      fontSize: "12px",
-      fontWeight: 500,
-    },
-  }), []);
+  const eventStyleGetter = useCallback((event: CalendarEvent) => {
+    if (event.resource?.isBooking) {
+      return {
+        style: {
+          backgroundColor: `${event.color}26`,
+          borderRadius: "6px",
+          borderLeft: `4px solid ${event.color}`,
+          color: event.color,
+          display: "block",
+          padding: "2px 6px",
+          fontSize: "12px",
+          fontWeight: 500,
+        }
+      };
+    }
+    
+    return {
+      style: {
+        backgroundColor: event.color,
+        borderRadius: "6px",
+        opacity: event.resource?.status === "cancellata" ? 0.4 : 1,
+        color: "#fff",
+        border: "none",
+        padding: "2px 6px",
+        fontSize: "12px",
+        fontWeight: 500,
+      },
+    };
+  }, []);
 
   const EventComponent = useCallback(({ event }: { event: CalendarEvent }) => (
     <div className="leading-tight">

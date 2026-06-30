@@ -19,10 +19,14 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { createClient } from "@/lib/supabase/client";
+import { isDesktop } from "@/lib/is-desktop";
+import { invoke } from "@tauri-apps/api/core";
+import Database from "@tauri-apps/plugin-sql";
 
 const navItems = [
   { name: "Dashboard", href: "/admin/dashboard", icon: LayoutDashboard },
   { name: "Calendario", href: "/admin/calendar", icon: Calendar },
+  { name: "Sale & Prove", href: "/admin/sale", icon: DoorOpen },
   { name: "Studenti", href: "/admin/students", icon: Users },
   { name: "Insegnanti", href: "/admin/teachers", icon: GraduationCap },
   { name: "Corsi", href: "/admin/courses", icon: BookOpen },
@@ -46,6 +50,27 @@ export function Sidebar() {
 
   useEffect(() => {
     async function loadSchoolData() {
+      if (isDesktop()) {
+        try {
+          const user = await invoke<{ role: string } | null>("get_current_user");
+          if (user) {
+            setRole(user.role);
+          }
+          const db = await Database.load("sqlite:solfege.db");
+          const schools = await db.select<{ nome: string }[]>("SELECT nome FROM schools LIMIT 1");
+          if (schools && schools.length > 0) {
+            setSchoolInfo({
+              name: schools[0].nome,
+              plan: "pro",
+              trialEndsAt: null
+            });
+          }
+        } catch (err) {
+          console.error("Error loading SQLite school data:", err);
+        }
+        return;
+      }
+
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
       const { data: profile } = await supabase
@@ -69,6 +94,15 @@ export function Sidebar() {
   }, []);
 
   const handleLogout = async () => {
+    if (isDesktop()) {
+      try {
+        await invoke("logout");
+      } catch (err) {
+        console.error("Error during logout:", err);
+      }
+      window.location.href = "/login-desktop";
+      return;
+    }
     await supabase.auth.signOut();
     window.location.href = "/login";
   };

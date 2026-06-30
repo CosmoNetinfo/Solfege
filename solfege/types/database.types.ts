@@ -567,6 +567,75 @@ export type Database = {
           },
         ]
       }
+      room_bookings: {
+        Row: {
+          colore: string | null
+          contatto_email: string | null
+          contatto_nome: string | null
+          contatto_telefono: string | null
+          created_at: string | null
+          data: string
+          id: string
+          nome_gruppo: string | null
+          note: string | null
+          ora_fine: string
+          ora_inizio: string
+          room_id: string | null
+          school_id: string | null
+          tipo: string
+          titolo: string
+        }
+        Insert: {
+          colore?: string | null
+          contatto_email?: string | null
+          contatto_nome?: string | null
+          contatto_telefono?: string | null
+          created_at?: string | null
+          data: string
+          id?: string
+          nome_gruppo?: string | null
+          note?: string | null
+          ora_fine: string
+          ora_inizio: string
+          room_id?: string | null
+          school_id?: string | null
+          tipo?: string
+          titolo: string
+        }
+        Update: {
+          colore?: string | null
+          contatto_email?: string | null
+          contatto_nome?: string | null
+          contatto_telefono?: string | null
+          created_at?: string | null
+          data?: string
+          id?: string
+          nome_gruppo?: string | null
+          note?: string | null
+          ora_fine?: string
+          ora_inizio?: string
+          room_id?: string | null
+          school_id?: string | null
+          tipo?: string
+          titolo?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "room_bookings_room_id_fkey"
+            columns: ["room_id"]
+            isOneToOne: false
+            referencedRelation: "rooms"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "room_bookings_school_id_fkey"
+            columns: ["school_id"]
+            isOneToOne: false
+            referencedRelation: "schools"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       rooms: {
         Row: {
           attrezzature: string[] | null
@@ -576,6 +645,8 @@ export type Database = {
           insonorizzata: boolean | null
           name: string
           school_id: string
+          tipo: string | null
+          colore: string | null
         }
         Insert: {
           attrezzature?: string[] | null
@@ -585,6 +656,8 @@ export type Database = {
           insonorizzata?: boolean | null
           name: string
           school_id: string
+          tipo?: string | null
+          colore?: string | null
         }
         Update: {
           attrezzature?: string[] | null
@@ -594,6 +667,8 @@ export type Database = {
           insonorizzata?: boolean | null
           name?: string
           school_id?: string
+          tipo?: string | null
+          colore?: string | null
         }
         Relationships: [
           {

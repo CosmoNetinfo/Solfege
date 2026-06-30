@@ -1,8 +1,22 @@
 import { createServerClient } from '@supabase/ssr'
-import { cookies } from 'next/headers'
 import { Database } from '@/types/database.types'
 
 export async function createClient() {
+  if (process.env.TAURI_BUILD === 'true') {
+    // Return dummy client during static build to avoid cookies() error
+    return createServerClient<Database>(
+      process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://dummy.supabase.co',
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'dummy',
+      {
+        cookies: {
+          getAll() { return [] },
+          setAll() {}
+        }
+      }
+    );
+  }
+
+  const { cookies } = await import('next/headers')
   const cookieStore = await cookies()
 
   return createServerClient<Database>(

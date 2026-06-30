@@ -8,12 +8,7 @@ import { createClient } from '@/lib/supabase/server';
 import { getProfile, getSchoolData } from '@/lib/supabase/queries';
 import { redirect } from 'next/navigation';
 
-export default async function ImpostazioniPage({
-  searchParams,
-}: {
-  searchParams: Promise<{ tab?: string }>;
-}) {
-  const { tab } = await searchParams;
+export default async function ImpostazioniPage() {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect('/login');
@@ -31,7 +26,7 @@ export default async function ImpostazioniPage({
         <p className="text-muted-foreground">Configura i parametri generali della tua scuola di musica.</p>
       </div>
 
-      <Tabs defaultValue={tab || 'scuola'} className="w-full">
+      <Tabs defaultValue='scuola' className="w-full">
         <TabsList className="mb-8 bg-transparent border-b w-full justify-start rounded-none h-auto p-0 space-x-6 overflow-x-auto">
           <TabsTrigger value="scuola" className="rounded-none border-b-2 border-transparent data-[state=active]:border-[#E8621A] data-[state=active]:text-[#E8621A] data-[state=active]:bg-transparent px-0 py-3">Scuola</TabsTrigger>
           <TabsTrigger value="anno" className="rounded-none border-b-2 border-transparent data-[state=active]:border-[#E8621A] data-[state=active]:text-[#E8621A] data-[state=active]:bg-transparent px-0 py-3">Anno Accademico</TabsTrigger>

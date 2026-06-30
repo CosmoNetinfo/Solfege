@@ -1,8 +1,10 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  output: process.env.TAURI_BUILD === 'true' ? 'export' : undefined,
   serverExternalPackages: ['@react-pdf/renderer'],
   images: {
+    unoptimized: true,
     remotePatterns: [
       {
         protocol: 'https',

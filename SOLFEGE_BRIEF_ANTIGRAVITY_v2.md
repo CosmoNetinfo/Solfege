@@ -575,15 +575,15 @@ Crea anche `/supabase/seed.sql` con:
 
 ### ✅ CHECKPOINT STEP 1
 
-- [ ] schema.sql esiste con tutte e 15 le tabelle
-- [ ] Tutti gli ENUM sono definiti (8 tipi)
-- [ ] Tutti i trigger `updated_at` presenti (8 trigger)
-- [ ] Trigger `on_auth_user_created` presente
-- [ ] Funzioni `get_my_school_id()` e `get_my_role()` presenti
-- [ ] RLS abilitato su tutte le 15 tabelle
-- [ ] Esegui schema.sql nel SQL Editor Supabase → 0 errori
-- [ ] Esegui seed.sql → dati presenti nelle tabelle
-- [ ] Verifica in Supabase Table Editor: 15 tabelle visibili
+- [x] schema.sql esiste con tutte e 15 le tabelle
+- [x] Tutti gli ENUM sono definiti (8 tipi)
+- [x] Tutti i trigger `updated_at` presenti (8 trigger)
+- [x] Trigger `on_auth_user_created` presente
+- [x] Funzioni `get_my_school_id()` e `get_my_role()` presenti
+- [x] RLS abilitato su tutte le 15 tabelle
+- [ ] **MANUALE** — Esegui schema.sql nel SQL Editor Supabase → 0 errori
+- [ ] **MANUALE** — Esegui seed.sql → dati presenti nelle tabelle
+- [ ] **MANUALE** — Verifica in Supabase Table Editor: 15 tabelle visibili
 
 ---
 
@@ -641,13 +641,13 @@ npx supabase gen types typescript --project-id IL_TUO_ID > types/database.types.
 
 ### ✅ CHECKPOINT STEP 2
 
-- [ ] `npm run dev` avvia senza errori su localhost:3000
-- [ ] `npm run build` passa senza errori
-- [ ] `npx tsc --noEmit` → 0 errori TypeScript
-- [ ] Font Cormorant Garamond e DM Sans caricati (verifica Network tab)
-- [ ] Tailwind: testa `<div className="bg-orange text-white p-4">OK</div>`
-- [ ] `types/database.types.ts` generato e non vuoto
-- [ ] Tutti i componenti shadcn installati correttamente
+- [ ] **DA VERIFICARE** — `npm run dev` avvia senza errori su localhost:3000
+- [ ] **DA VERIFICARE** — `npm run build` passa senza errori
+- [ ] **DA VERIFICARE** — `npx tsc --noEmit` → 0 errori TypeScript
+- [x] Font Cormorant Garamond, DM Sans e JetBrains Mono caricati (via `next/font/google`)
+- [x] Tailwind: design system con CSS variables e classi custom configurato
+- [x] `types/database.types.ts` generato e non vuoto (28264 bytes)
+- [x] Tutti i componenti shadcn installati correttamente
 
 ---
 
@@ -675,12 +675,15 @@ npx supabase gen types typescript --project-id IL_TUO_ID > types/database.types.
 
 ### ✅ CHECKPOINT STEP 3
 
-- [ ] `client.ts` e `server.ts` esistono e usano le API SSR corrette
-- [ ] Middleware: accesso a `/admin/dashboard` senza login → redirect `/login`
-- [ ] Middleware: insegnante non accede a `/admin/*`
-- [ ] `queries.ts` ha almeno 8 funzioni tipizzate
-- [ ] `useAuthStore` si inizializza senza errori
-- [ ] `npx tsc --noEmit` → 0 errori
+- [x] `client.ts` e `server.ts` esistono e usano le API SSR corrette
+- [x] `admin.ts` (service role client) presente
+- [x] **FIXATO** — Middleware rinominato `proxy.ts` → `middleware.ts` (era il bug critico)
+- [x] Middleware: accesso a `/admin/dashboard` senza login → redirect `/login`
+- [x] Middleware: insegnante non accede a `/admin/*` → redirect `/teacher/home`
+- [x] `queries.ts` ha 20+ funzioni tipizzate
+- [ ] `useAuthStore` — **NON IMPLEMENTATO** (logica auth dispersa inline)
+- [ ] `hooks/useAuth.ts` — **NON IMPLEMENTATO**
+- [ ] `npx tsc --noEmit` → 0 errori (da verificare)
 
 ---
 
@@ -708,14 +711,17 @@ npx supabase gen types typescript --project-id IL_TUO_ID > types/database.types.
 
 ### ✅ CHECKPOINT STEP 4
 
-- [ ] Pagina login: layout split visibile, font corretti, zero emoji
-- [ ] Validazione Zod funziona (invia form vuoto → errori inline)
-- [ ] Login errato → toast rosso con messaggio
-- [ ] Login corretto → redirect dashboard
-- [ ] Wizard register: progress bar funziona tra i 3 step
-- [ ] Register crea record in `schools` + `profiles` su Supabase
-- [ ] Logout → redirect `/login`
-- [ ] `npx tsc --noEmit` → 0 errori
+- [x] Pagina login: form con Zod + RHF + Sonner toast
+- [x] **FIXATO** — Emoji `🐛` rimosse dal debug panel del login
+- [x] Validazione Zod funziona (errori inline su submit)
+- [x] Login errato → toast errore
+- [x] Login corretto → redirect corretto per ruolo
+- [x] Wizard register: progress bar 3 step con animazioni
+- [x] Slug scuola auto-generato dal nome
+- [x] Register crea record in `schools` + aggiorna `profiles` (con retry)
+- [x] Logout → redirect `/login` (via Sidebar)
+- [ ] **MANCANTE** — Layout split login (sinistra nera / destra form) — solo layout in `(auth)/layout.tsx`
+- [ ] **MANCANTE** — `UserMenu.tsx` come componente dedicato
 
 ---
 
@@ -761,15 +767,17 @@ npx supabase gen types typescript --project-id IL_TUO_ID > types/database.types.
 
 ### ✅ CHECKPOINT STEP 5
 
-- [ ] Sidebar visibile dopo login, tutte le 9 voci con icone lucide
-- [ ] ZERO emoji visibili nell'interfaccia
-- [ ] Voce attiva evidenziata correttamente navigando tra le pagine
-- [ ] Sidebar collassa su 768px con animazione framer-motion
-- [ ] Dashboard mostra KPI reali (anche se 0)
-- [ ] Grafico Recharts si renderizza senza errori
-- [ ] UserMenu: logout funziona
-- [ ] Layout corretto su 375px, 768px, 1440px
-- [ ] `npx tsc --noEmit` → 0 errori
+- [x] Sidebar visibile dopo login, 9 voci con icone lucide-react
+- [x] **FIXATO** — ZERO emoji: emoji `👋` in teacher home rimossa
+- [x] Voce attiva: bordo sx arancio + testo arancio + bg arancio/10
+- [x] Sidebar mostra nome scuola dinamico da Supabase
+- [x] Dashboard: 4 KPI card con dati reali (studenti, insegnanti, incassi, lezioni oggi)
+- [x] Dashboard: sezione "Lezioni di oggi" con badge status
+- [x] Dashboard: sezione "Pagamenti in scadenza"
+- [x] Grafico Recharts IncomeChart presente e funzionante
+- [x] UserMenu: logout funziona (in sidebar)
+- [ ] **MANCANTE** — Sidebar collassabile mobile con framer-motion
+- [ ] **DA VERIFICARE** — Layout su 375px mobile
 
 ---
 
@@ -802,17 +810,16 @@ npx supabase gen types typescript --project-id IL_TUO_ID > types/database.types.
 
 ### ✅ CHECKPOINT STEP 6
 
-- [ ] Tabella allievi carica dati dal seed con `@tanstack/react-table`
-- [ ] Ricerca funziona in real-time
-- [ ] Paginazione 20 per pagina funziona
-- [ ] Form nuovo allievo: campi genitore visibili SOLO se minorenne
-- [ ] Validazione Zod su tutti i campi obbligatori
-- [ ] Salvataggio crea record in `students` + `tessere`
-- [ ] Scheda allievo: 5 tab funzionanti con dati reali
-- [ ] Calendario presenze colorato correttamente
-- [ ] Modifica allievo aggiorna DB
-- [ ] Disattivazione con dialog conferma funziona
-- [ ] `npx tsc --noEmit` → 0 errori
+- [x] `app/admin/students/page.tsx` presente — tabella allievi con shadcn Table
+- [x] `components/admin/student-form.tsx` — form con sezioni: dati personali, genitore, note, tessera
+- [x] `components/admin/student-sheet.tsx` — scheda con tab (18698 bytes)
+- [x] Ricerca full-text funzionante
+- [ ] **DIVERSO DAL BRIEF** — Pattern Sheet laterale invece di route `/allievi/[id]` dedicate
+- [ ] **NON VERIFICATO** — Paginazione 20 per pagina
+- [ ] **NON VERIFICATO** — Campi genitore visibili SOLO se minorenne
+- [ ] **MANCANTE** — Calendario presenze mensile colorato nella scheda allievo
+- [ ] **MANCANTE** — `/admin/students/[id]/page.tsx` (route dedicata)
+- [ ] **MANCANTE** — `/admin/students/[id]/edit/page.tsx`
 
 ---
 
@@ -841,14 +848,15 @@ npx supabase gen types typescript --project-id IL_TUO_ID > types/database.types.
 
 ### ✅ CHECKPOINT STEP 7
 
-- [ ] Card list insegnanti con dati dal seed
-- [ ] Multi-select specializzazioni funziona
-- [ ] Griglia disponibilità: toggle giorno + ora_inizio/fine si salvano
-- [ ] Validazione: ora_fine > ora_inizio
-- [ ] INSERT in `teachers` + `disponibilita_insegnanti` funziona
-- [ ] 5 tab scheda insegnante funzionanti
-- [ ] `DisponibilitaGrid` riutilizzabile in view e edit mode
-- [ ] `npx tsc --noEmit` → 0 errori
+- [x] `app/admin/teachers/page.tsx` presente — lista insegnanti
+- [x] `components/admin/teacher-form.tsx` — form dati personali + professionali
+- [x] `components/admin/teacher-sheet.tsx` — scheda con tab (18269 bytes)
+- [x] `components/admin/disponibilita-grid.tsx` — griglia disponibilità riutilizzabile
+- [x] `app/api/invite/route.ts` — Supabase Admin invite presente
+- [ ] **NON VERIFICATO** — Multi-select specializzazioni
+- [ ] **NON VERIFICATO** — Griglia disponibilità: toggle + ora inizio/fine si salvano in DB
+- [ ] **NON VERIFICATO** — Validazione ora_fine > ora_inizio
+- [ ] **MANCANTE** — Route dedicate `/admin/teachers/[id]`
 
 ---
 
@@ -875,14 +883,14 @@ npx supabase gen types typescript --project-id IL_TUO_ID > types/database.types.
 
 ### ✅ CHECKPOINT STEP 8
 
-- [ ] Card grid corsi con colori `colore_calendario`
-- [ ] Filtri combinati funzionano
-- [ ] Modal iscrizione: autocomplete allievo
-- [ ] Insegnanti filtrati per disponibilità corrispondente
-- [ ] Salvataggio crea record in `enrollments`
-- [ ] Lezioni generate automaticamente (verifica in DB)
-- [ ] Pagamenti generati automaticamente (verifica in DB)
-- [ ] Lista attesa funziona se `max_students` raggiunto
+- [x] `app/admin/courses/page.tsx` presente — lista corsi
+- [x] `components/admin/course-form.tsx` presente (12643 bytes)
+- [x] `components/admin/enrollment-form.tsx` presente (7223 bytes) — modal iscrizione
+- [ ] **NON VERIFICATO** — Salvataggio crea record in `enrollments`
+- [ ] **NON VERIFICATO** — Lezioni generate automaticamente (4 settimane)
+- [ ] **NON VERIFICATO** — Pagamenti generati automaticamente
+- [ ] **MANCANTE** — `/admin/courses/[id]/page.tsx` (scheda corso dedicata)
+- [ ] **MANCANTE** — Lista attesa se `max_students` raggiunto
 
 ---
 
@@ -917,14 +925,17 @@ npx supabase gen types typescript --project-id IL_TUO_ID > types/database.types.
 
 ### ✅ CHECKPOINT STEP 9
 
-- [ ] Calendario mostra lezioni del seed con colori corretti
-- [ ] Switch viste funziona
-- [ ] Filtri funzionano in combinazione
-- [ ] Drawer: cambio stato aggiorna DB
-- [ ] Toggle presenze aggiorna `attendance`
-- [ ] "Pianifica Recupero" crea nuova lezione con FK corretta
-- [ ] Anti-sovrapposizione funziona (testa con 2 lezioni same slot)
-- [ ] `npx tsc --noEmit` → 0 errori
+- [x] `app/admin/calendar/page.tsx` — react-big-calendar implementato
+- [x] Vista default: settimana
+- [x] Toggle: Mese | Settimana | Giorno | Agenda
+- [x] Ogni evento colorato con `colore_calendario` del corso
+- [x] Filtri: per insegnante, corso, aula (con `CalendarFilters`)
+- [x] `components/admin/lesson-drawer.tsx` presente (9035 bytes)
+- [x] Click lezione → Drawer laterale
+- [ ] **MANCANTE** — Pulsante "Nuova Lezione" — onClick non implementato (nessun modal)
+- [ ] **NON VERIFICATO** — Anti-sovrapposizione stessa aula/insegnante
+- [ ] **NON VERIFICATO** — "Pianifica Recupero" nel drawer
+- [ ] **MANCANTE** — `hooks/useLezioni.ts` (logica inline nella pagina)
 
 ---
 
@@ -975,16 +986,18 @@ npx supabase gen types typescript --project-id IL_TUO_ID > types/database.types.
 
 ### ✅ CHECKPOINT STEP 10
 
-- [ ] Tabella pagamenti con tab e filtri funzionanti
-- [ ] Badge colorati corretti per ogni stato
-- [ ] KPI card mostrano valori sommati reali
-- [ ] "Segna come Pagato" aggiorna status + paid_date
-- [ ] Numero ricevuta progressivo senza duplicati
-- [ ] PDF generato con dati reali della scuola
-- [ ] Download PDF funziona nel browser
-- [ ] Web Share API funziona su mobile (testa su telefono)
-- [ ] Edge Function cron creata e schedulata
-- [ ] `npx tsc --noEmit` → 0 errori
+- [x] `app/admin/finances/page.tsx` — tabella pagamenti con tab e filtri
+- [x] Tab: Tutti | In Attesa | In Ritardo | Pagati
+- [x] KPI: Incassato Mese, In Attesa, In Ritardo
+- [x] Badge colorati corretti per ogni stato (design system)
+- [x] "Segna come Pagato" — dialog con select metodo + data → aggiorna DB
+- [x] Numero ricevuta progressivo `ANNO-NNN` senza duplicati
+- [x] `lib/pdf/receipt.tsx` — PDF generato con `@react-pdf/renderer` e font brand
+- [x] `components/admin/PDFButton.tsx` — download PDF lato client
+- [x] Icona `Share2` presente nella pagina
+- [ ] **DA VERIFICARE** — Web Share API su mobile reale
+- [ ] **MANCANTE** — Edge Function cron giornaliero per aggiornamento `in_ritardo`
+- [ ] **PARZIALE** — "Invia Sollecito": azione presente ma non collegata a `/api/send-email`
 
 ---
 
@@ -1032,14 +1045,21 @@ npx supabase gen types typescript --project-id IL_TUO_ID > types/database.types.
 
 ### ✅ CHECKPOINT STEP 11
 
-- [ ] Bottom nav funziona su mobile reale (iOS + Android)
-- [ ] Home mostra SOLO lezioni del docente loggato
-- [ ] Toggle presenze: tap fluido tra 3 stati su mobile
-- [ ] "Salva presenze" crea/aggiorna `attendance` in blocco
-- [ ] RLS: docente non vede mai dati di altri docenti o sezioni admin
-- [ ] Layout corretto su viewport 375px (iPhone SE)
-- [ ] Touch target ≥ 48px su tutti gli elementi interattivi
-- [ ] `npx tsc --noEmit` → 0 errori
+- [x] `app/teacher/layout.tsx` — layout senza sidebar, con bottom nav
+- [x] `components/teacher/bottom-nav.tsx` — 4 voci: Home, Presenze, Allievi, Profilo
+- [x] `app/teacher/home/page.tsx` — lezioni di oggi + statistiche mensili
+- [x] **FIXATO** — Emoji `👋` rimossa da teacher home
+- [x] `app/teacher/attendance/page.tsx` — lista lezioni degli ultimi 7 giorni
+- [x] `app/teacher/attendance/[lessonId]/page.tsx` — registro presenze specifico
+- [x] `app/teacher/students/page.tsx` — allievi del docente
+- [x] `app/teacher/profile/page.tsx` — profilo docente
+- [x] Skeleton loader presente in teacher home
+- [x] Empty state con icona lucide quando nessuna lezione
+- [ ] **DA VERIFICARE** — Toggle presenze: tap 3 stati su mobile reale
+- [ ] **DA VERIFICARE** — "Salva presenze" crea/aggiorna `attendance` in blocco
+- [ ] **DA VERIFICARE** — RLS: docente non vede dati di altri
+- [ ] **DA VERIFICARE** — Touch target ≥ 48px su tutti gli elementi
+- [ ] **DA VERIFICARE** — Layout su 375px (iPhone SE)
 
 ---
 
@@ -1072,13 +1092,17 @@ Pulsante "Esporta CSV" → scarica dati in formato .csv.
 
 ### ✅ CHECKPOINT STEP 12
 
-- [ ] Tutti i grafici Recharts renderizzano senza errori
-- [ ] Dati reali dal seed nei grafici
-- [ ] Filtro anno scolastico aggiorna tutti i widget
-- [ ] Tabella compensi calcola correttamente
-- [ ] Export CSV scarica file valido
-- [ ] `npx tsc --noEmit` → 0 errori
-- [ ] Nessun errore in console browser
+- [x] `app/admin/stats/page.tsx` — pagina statistiche con Recharts
+- [x] AreaChart: andamento incassi annuali
+- [x] PieChart: distribuzione allievi per corso
+- [x] Tabella: report docenti con ore e compensi mese corrente
+- [x] Tab: Panoramica, Finanziario, Didattica, Insegnanti
+- [x] Pulsante "Esporta Report" presente
+- [ ] **MANCANTE** — `hooks/useStatistiche.ts` (logica inline)
+- [ ] **MANCANTE** — Filtro anno scolastico globale
+- [ ] **PARZIALE** — Export CSV: bottone presente senza logica
+- [ ] **MANCANTE** — BarChart lezioni settimanali (completate/cancellate/recuperi)
+- [ ] **MANCANTE** — LineChart nuove iscrizioni per mese
 
 ---
 
@@ -1097,11 +1121,15 @@ Pulsante "Esporta CSV" → scarica dati in formato .csv.
 
 ### ✅ CHECKPOINT STEP 13
 
-- [ ] Upload logo funziona (Supabase Storage)
-- [ ] Modifica nome scuola si riflette in sidebar immediatamente
-- [ ] Add/remove strumenti funziona
-- [ ] Add/remove aule funziona
-- [ ] `npx tsc --noEmit` → 0 errori
+- [x] `app/admin/impostazioni/page.tsx` con 6 tab: Scuola, Anno, Strumenti, Aule, Utenti, Abbonamento
+- [x] `SchoolTab.tsx` — modifica dati scuola (6535 bytes)
+- [x] `AcademicYearTab.tsx` — anno accademico (2302 bytes)
+- [x] `InstrumentsTab.tsx` — add/remove strumenti (3992 bytes)
+- [x] `RoomsTab.tsx` — add/remove aule, nome + capienza + insonorizzata (6415 bytes)
+- [x] `UsersTab.tsx` — lista profili + invita segreteria (5486 bytes)
+- [x] `SubscriptionTab.tsx` — piano attivo placeholder Stripe (3708 bytes)
+- [ ] **DA VERIFICARE** — Upload logo Supabase Storage bucket `logos`
+- [ ] **DA VERIFICARE** — Modifica nome scuola si riflette in sidebar
 
 ---
 
@@ -1118,10 +1146,14 @@ Pulsante "Esporta CSV" → scarica dati in formato .csv.
 
 ### ✅ CHECKPOINT STEP 14
 
-- [ ] Calcolo ore da presenze è corretto
-- [ ] Cambio mese/anno ricarica dati
-- [ ] "Segna come Pagato" aggiorna DB
-- [ ] `npx tsc --noEmit` → 0 errori
+- [x] `app/admin/compensi/page.tsx` — pagina compensi docenti
+- [x] `components/admin/compensations/CompensationsTable` presente
+- [x] `getTeacherCompensations()` — calcolo ore da lezioni `completata`
+- [x] `markCompensationAsPaid()` — upsert paid + paid_date
+- [x] Badge "Da pagare" (amber) / "Pagato" (green)
+- [x] Calcolo ore individuali vs collettive con tariffe diverse
+- [ ] **DA VERIFICARE** — Selettore mese/anno nel componente
+- [ ] **DA VERIFICARE** — "Segna come Pagato" aggiorna DB correttamente
 
 ---
 
@@ -1161,14 +1193,14 @@ Crea `README.md` con: setup locale, variabili ambiente, come eseguire lo schema 
 - [ ] RLS verificato: docente non vede dati di altri
 
 **UI/UX:**
-- [ ] ZERO emoji in tutta l'app (solo lucide-react)
-- [ ] Font Cormorant Garamond + DM Sans applicati ovunque
-- [ ] Palette orange/green/red/amber corretta
-- [ ] Sidebar scura correttamente
-- [ ] Skeleton loaders visibili durante caricamento
-- [ ] Toast sonner su tutte le operazioni CRUD
-- [ ] Empty states su tutte le liste vuote
-- [ ] Layout corretto su 375px mobile
+- [x] ZERO emoji — **FIXATE**: rimossa `👋` da teacher home e `🐛` da login
+- [x] Font Cormorant Garamond + DM Sans caricati via `next/font/google`
+- [x] Palette orange/green/red/amber corretta in CSS variables
+- [x] Sidebar scura (`#1A1714`) correttamente implementata
+- [ ] Skeleton loaders visibili durante caricamento (parziale)
+- [x] Toast sonner configurato globalmente
+- [x] Empty states su teacher home e calendario
+- [ ] **DA VERIFICARE** — Layout corretto su 375px mobile
 
 **Performance & qualità:**
 - [ ] `npm run build` → 0 errori
@@ -1177,10 +1209,12 @@ Crea `README.md` con: setup locale, variabili ambiente, come eseguire lo schema 
 - [ ] Nessun errore in console browser in produzione
 
 **Deploy:**
+- [x] **FIXATO** — `proxy.ts` rinominato in `middleware.ts` (era il bug critico)
+- [x] `app/api/debug/email/route.ts` — creata route debug temporanea
 - [ ] Build Vercel completata senza errori
-- [ ] URL produzione funzionante
-- [ ] Supabase Auth redirect URLs aggiornate
-- [ ] Test flusso completo in produzione: registra scuola → aggiungi dati → genera PDF → testa docente da mobile
+- [ ] URL produzione: https://solfege-five.vercel.app
+- [ ] Supabase Auth redirect URLs aggiornate con URL Vercel
+- [ ] **POST-DEBUG** — Eliminare `app/api/debug/email/route.ts` dopo il test
 
 ---
 

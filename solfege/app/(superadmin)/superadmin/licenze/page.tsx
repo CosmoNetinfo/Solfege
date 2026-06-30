@@ -53,7 +53,9 @@ export default function LicenzePage() {
       .select("*")
       .order("created_at", { ascending: false });
 
-    if (!error && data) {
+    if (error) {
+      console.error("[licenze] Supabase error:", error.message, error.code);
+    } else if (data) {
       setLicenses(data as unknown as License[]);
     }
     setLoading(false);

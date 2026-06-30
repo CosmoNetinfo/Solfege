@@ -24,6 +24,7 @@ import { toast } from "sonner";
 import { createClient } from "@/lib/supabase/client";
 import { getPayments, getFinancesSummary, getSchoolData } from "@/lib/supabase/queries";
 import { sendPaymentReminder } from "@/app/actions/email-actions";
+import { isDesktop } from "@/lib/is-desktop";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -175,6 +176,10 @@ export default function FinancesPage() {
 
   async function handleEmailReminder(payment: any) {
     if (!school) return;
+    if (isDesktop()) {
+      toast.info("L'invio diretto di email non è disponibile in locale. Usa il sollecito WhatsApp!");
+      return;
+    }
     setSendingEmail(payment.id);
     try {
       const result = await sendPaymentReminder(payment, school.name);
