@@ -10,9 +10,20 @@ const actionsDir = path.join(__dirname, '../app/actions');
 
 console.log('Preparing Tauri static export build...');
 
+// Safety check: if a previous build was interrupted, restore the folders first
+if (!fs.existsSync(apiPath) && fs.existsSync(apiTempPath)) {
+  fs.renameSync(apiTempPath, apiPath);
+  console.log('[SAFETY] Restored app/api from interrupted previous build');
+}
+if (!fs.existsSync(superadminPath) && fs.existsSync(superadminTempPath)) {
+  fs.renameSync(superadminTempPath, superadminPath);
+  console.log('[SAFETY] Restored app/(superadmin) from interrupted previous build');
+}
+
 let apiMoved = false;
 let superadminMoved = false;
 let backupContents = {};
+
 
 const mocks = {
   'email-actions.ts': `

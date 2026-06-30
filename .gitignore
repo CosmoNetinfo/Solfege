@@ -43,3 +43,18 @@ solfege/next-env.d.ts
 # project specific
 .snapshots
 .vscode
+
+# ⚠️ SENSITIVE — never commit these
+*CREDENZIALI*
+*credenziali*
+*credentials*
+*secrets*
+*SECRET*
+SOLFEGE_TASK_PROGRESS.md
+ANTIGRAVITY_BRIEF_COMPLETO.md
+ANTIGRAVITY_BRIEF_IMMEDIATO.md
+SOLFEGE_BRIEF_ANTIGRAVITY_v2.md
+*.env
+*.env.local
+*.env.production
+walkthrough.md
