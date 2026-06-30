@@ -13,9 +13,18 @@ export default function LoginDesktopPage() {
   const [showPassword, setShowPassword] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const [debugInfo, setDebugInfo] = useState('')
 
   useEffect(() => {
-    if (!isDesktop()) {
+    // DEBUG: log detection info — rimuovere prima della release finale
+    const hasTauri1 = typeof window !== 'undefined' && '__TAURI__' in window
+    const hasTauri2 = typeof window !== 'undefined' && '__TAURI_INTERNALS__' in window
+    const desktop = isDesktop()
+    const info = `isDesktop=${desktop} | __TAURI__=${hasTauri1} | __TAURI_INTERNALS__=${hasTauri2}`
+    console.log('[BOOT DEBUG]', info)
+    setDebugInfo(info)
+
+    if (!desktop) {
       router.push('/')
       return
     }
@@ -59,6 +68,12 @@ export default function LoginDesktopPage() {
 
   return (
     <div className="min-h-screen bg-[#FAFAF9] flex items-center justify-center p-6 font-sans">
+      {/* DEBUG BANNER — rimuovere prima della release finale */}
+      {debugInfo && (
+        <div className="fixed top-0 left-0 right-0 bg-yellow-400 text-black text-xs font-mono px-4 py-1 z-50 text-center">
+          🔍 {debugInfo}
+        </div>
+      )}
       <div className="bg-white border border-stone-200 p-8 rounded-2xl shadow-sm max-w-sm w-full space-y-6">
         <div className="text-center space-y-2">
           <h1 className="text-4xl font-serif text-stone-900 tracking-wide">Solfège</h1>

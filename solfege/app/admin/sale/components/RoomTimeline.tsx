@@ -55,7 +55,7 @@ export default function RoomTimeline({ rooms, bookings, onSlotClick, onBookingCl
           {hours.filter(h => h.endsWith(':00')).map((hour) => (
             <div 
               key={hour} 
-              className="absolute w-full text-right pr-3 text-xs text-muted-foreground -translate-y-2"
+              className="absolute w-full text-right pr-3 text-xs text-muted-foreground -translate-y-1/2"
               style={{ top: getTopOffset(hour) }}
             >
               {hour}
@@ -79,18 +79,25 @@ export default function RoomTimeline({ rooms, bookings, onSlotClick, onBookingCl
               </div>
 
               <div className="relative flex-shrink-0" style={{ height: (END_HOUR - START_HOUR) * HOUR_HEIGHT }}>
-                {/* Griglia orizzontale per gli slot di 30 min */}
-                {hours.map((hour, idx) => (
-                  <div
-                    key={hour}
-                    onClick={() => onSlotClick({ roomId: room.id, time: hour })}
-                    className={`absolute w-full border-b border-dashed border-slate-200 cursor-pointer hover:bg-slate-50 transition-colors z-0`}
-                    style={{ 
-                      top: getTopOffset(hour), 
-                      height: idx === hours.length - 1 ? 0 : HOUR_HEIGHT / 2 
-                    }}
-                  />
-                ))}
+                {/* Griglia orizzontale — linee ora (solid) e mezzora (dashed) */}
+                {hours.map((hour, idx) => {
+                  const isFullHour = hour.endsWith(':00')
+                  return (
+                    <div
+                      key={hour}
+                      onClick={() => onSlotClick({ roomId: room.id, time: hour })}
+                      className={`absolute w-full cursor-pointer hover:bg-slate-50 transition-colors z-0 ${
+                        isFullHour
+                          ? 'border-t border-slate-200'
+                          : 'border-t border-dashed border-slate-100'
+                      }`}
+                      style={{ 
+                        top: getTopOffset(hour), 
+                        height: idx === hours.length - 1 ? 0 : HOUR_HEIGHT / 2 
+                      }}
+                    />
+                  )
+                })}
 
                 {/* Prenotazioni/Lezioni della sala */}
                 {roomBookings.map((booking) => {
