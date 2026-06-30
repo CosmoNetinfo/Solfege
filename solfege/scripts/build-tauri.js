@@ -8,6 +8,8 @@ const superadminPath = path.join(__dirname, '../app/(superadmin)');
 const superadminTempPath = path.join(__dirname, '../superadmin_temp');
 const authPath = path.join(__dirname, '../app/(auth)');
 const authTempPath = path.join(__dirname, '../auth_temp');
+const slugPath = path.join(__dirname, '../app/[school_slug]');
+const slugTempPath = path.join(__dirname, '../slug_temp');
 const actionsDir = path.join(__dirname, '../app/actions');
 
 console.log('Preparing Tauri static export build...');
@@ -25,10 +27,15 @@ if (!fs.existsSync(authPath) && fs.existsSync(authTempPath)) {
   fs.renameSync(authTempPath, authPath);
   console.log('[SAFETY] Restored app/(auth) from interrupted previous build');
 }
+if (!fs.existsSync(slugPath) && fs.existsSync(slugTempPath)) {
+  fs.renameSync(slugTempPath, slugPath);
+  console.log('[SAFETY] Restored app/[school_slug] from interrupted previous build');
+}
 
 let apiMoved = false;
 let superadminMoved = false;
 let authMoved = false;
+let slugMoved = false;
 let backupContents = {};
 
 const mocks = {
@@ -78,7 +85,14 @@ try {
     console.log('Temporarily moved app/(auth) to root auth_temp');
   }
 
-  // 4. Mock app/actions to remove server-side node dependencies and "use server" directives
+  // 4. Move [school_slug] directory outside app folder (web-only public registration)
+  if (fs.existsSync(slugPath)) {
+    fs.renameSync(slugPath, slugTempPath);
+    slugMoved = true;
+    console.log('Temporarily moved app/[school_slug] to root slug_temp');
+  }
+
+  // 5. Mock app/actions to remove server-side node dependencies and "use server" directives
   if (fs.existsSync(actionsDir)) {
     const files = fs.readdirSync(actionsDir);
     for (const file of files) {
@@ -121,7 +135,13 @@ try {
     console.log('Restored app/(auth) from root auth_temp');
   }
 
-  // 4. Restore actions contents
+  // 4. Restore [school_slug] directory
+  if (slugMoved && fs.existsSync(slugTempPath)) {
+    fs.renameSync(slugTempPath, slugPath);
+    console.log('Restored app/[school_slug] from root slug_temp');
+  }
+
+  // 5. Restore actions contents
   for (const [filePath, content] of Object.entries(backupContents)) {
     if (fs.existsSync(filePath)) {
       fs.writeFileSync(filePath, content, 'utf8');

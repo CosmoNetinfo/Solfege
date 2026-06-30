@@ -15,19 +15,24 @@ import {
   DoorOpen,
   Settings,
   LogOut,
-  ShieldCheck
+  ShieldCheck,
+  Globe,
+  RefreshCw,
+  Cloud
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { createClient } from "@/lib/supabase/client";
 import { isDesktop } from "@/lib/is-desktop";
 import { invoke } from "@tauri-apps/api/core";
 import Database from "@tauri-apps/plugin-sql";
+import { syncLocalToCloud } from "@/lib/services/cloud-sync";
 
 const navItems = [
   { name: "Dashboard", href: "/admin/dashboard", icon: LayoutDashboard },
   { name: "Calendario", href: "/admin/calendar", icon: Calendar },
   { name: "Sale & Prove", href: "/admin/sale", icon: DoorOpen },
   { name: "Studenti", href: "/admin/students", icon: Users },
+  { name: "Iscrizioni Web", href: "/admin/iscrizioni", icon: Globe },
   { name: "Insegnanti", href: "/admin/teachers", icon: GraduationCap },
   { name: "Corsi", href: "/admin/courses", icon: BookOpen },
   { name: "Finanze", href: "/admin/finances", icon: Banknote },
@@ -37,6 +42,7 @@ const navItems = [
 ];
 
 import { Badge } from "@/components/ui/badge";
+import { toast } from "sonner";
 
 export function Sidebar() {
   const [role, setRole] = useState<string | null>(null);
@@ -45,8 +51,26 @@ export function Sidebar() {
     plan: null,
     trialEndsAt: null
   });
+  const [syncing, setSyncing] = useState(false);
+  const [lastSync, setLastSync] = useState<string | null>(null);
   const pathname = usePathname();
   const supabase = createClient();
+
+  useEffect(() => {
+    async function loadLastSync() {
+      if (isDesktop()) {
+        try {
+          const val = await invoke<string | null>("get_config", { key: "last_cloud_sync_at" });
+          if (val) {
+            setLastSync(new Date(val).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }));
+          }
+        } catch (e) {
+          console.error("Errore recupero ultimo sync:", e);
+        }
+      }
+    }
+    loadLastSync();
+  }, [syncing]);
 
   useEffect(() => {
     async function loadSchoolData() {
@@ -169,6 +193,35 @@ export function Sidebar() {
 
       {/* Footer Sidebar: Logout & Credits */}
       <div className="mt-auto border-t border-sidebar-border">
+        {isDesktop() && (
+          <div className="px-4 pt-4 pb-2 border-b border-sidebar-border/30">
+            <button
+              onClick={async () => {
+                setSyncing(true);
+                const toastId = toast.loading("Sincronizzazione in corso...");
+                const res = await syncLocalToCloud();
+                setSyncing(false);
+                if (res.success) {
+                  toast.success(res.message, { id: toastId });
+                } else {
+                  toast.error(res.message, { id: toastId });
+                }
+              }}
+              disabled={syncing}
+              className="flex w-full items-center justify-between px-3 py-2 text-xs font-semibold text-sidebar-foreground/80 hover:bg-sidebar-accent hover:text-sidebar-foreground rounded-md transition-colors disabled:opacity-50"
+            >
+              <div className="flex items-center gap-2">
+                <RefreshCw className={cn("h-4 w-4 text-orange", syncing && "animate-spin")} />
+                <span>Sincronizza Cloud</span>
+              </div>
+              {lastSync && (
+                <span className="text-[10px] text-stone-500 font-normal">
+                  Sync: {lastSync}
+                </span>
+              )}
+            </button>
+          </div>
+        )}
         <div className="p-4">
           <button
             onClick={handleLogout}

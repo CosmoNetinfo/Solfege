@@ -157,6 +157,26 @@ export function SchoolTab({ school }: { school: any }) {
         </div>
       </div>
 
+      {/* Link iscrizioni pubblico */}
+      <div className="p-6 border rounded-xl bg-orange/5 border-orange/10 space-y-4">
+        <div>
+          <h3 className="font-bold text-orange flex items-center gap-2">
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+            Link Iscrizioni Pubblico
+          </h3>
+          <p className="text-sm text-stone-600 mt-1">Condividi questo link per permettere ai nuovi allievi di iscriversi autonomamente.</p>
+        </div>
+        <div className="flex items-center gap-2">
+          <div className="flex-1 bg-white border border-orange/20 rounded-lg px-4 py-2 text-sm font-mono text-stone-700 truncate">
+            {appUrl}/{slugPreview || school?.slug}/iscriviti
+          </div>
+          <Button variant="outline" className="border-orange/20 text-orange hover:bg-orange hover:text-white shrink-0"
+            onClick={() => { navigator.clipboard.writeText(`${appUrl}/${slugPreview || school?.slug}/iscriviti`); toast.success('Link copiato!'); }}>
+            Copia Link
+          </Button>
+        </div>
+      </div>
+
       {/* Form */}
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 max-w-2xl">
@@ -171,6 +191,45 @@ export function SchoolTab({ school }: { school: any }) {
                 <FormControl>
                   <Input {...field} onChange={(e) => onNameChange(e.target.value)} />
                 </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          {/* Slug URL */}
+          <FormField
+            control={form.control}
+            name="slug"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Slug URL</FormLabel>
+                <FormControl>
+                  <Input
+                    {...field}
+                    placeholder="accademia-verdi"
+                    onChange={(e) => {
+                      const val = e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '');
+                      field.onChange(val);
+                      setSlugPreview(val);
+                      setSlugError('');
+                    }}
+                  />
+                </FormControl>
+                <div className="text-xs text-muted-foreground mt-1">
+                  Anteprima: <span className="font-mono text-orange">{appUrl}/{slugPreview || '...'}/iscriviti</span>
+                </div>
+                {slugError && (
+                  <div className="flex items-center gap-1.5 text-xs text-red-600 mt-1">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-3.5 h-3.5"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                    {slugError}
+                  </div>
+                )}
+                {field.value !== school?.slug && !slugError && (
+                  <div className="flex items-center gap-1.5 text-xs text-amber-600 mt-1">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-3.5 h-3.5"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                    Cambiare lo slug modifica il link pubblico — aggiorna i link già condivisi.
+                  </div>
+                )}
                 <FormMessage />
               </FormItem>
             )}

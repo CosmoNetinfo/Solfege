@@ -46,15 +46,17 @@ pub fn load_session_from_db(app: &AppHandle, state: &AuthState) {
     }
 }
 
-fn save_session(app: &AppHandle, user: &LocalUser) {
-    if let Ok(conn) = database::get_connection(app) {
-        let _ = conn.execute(
-            "INSERT OR REPLACE INTO sessions
-                (id, user_id, username, role, nome, cognome, logged_in_at, last_activity_at)
-             VALUES (1, ?, ?, ?, ?, ?, datetime('now'), datetime('now'))",
-            [&user.id, &user.username, &user.role, &user.nome, &user.cognome],
-        );
-    }
+fn save_session(app: &AppHandle, user: &LocalUser) -> Result<(), String> {
+    let conn = database::get_connection(app).map_err(|e| e.to_string())?;
+    conn.execute(
+        "INSERT OR REPLACE INTO sessions
+            (id, user_id, username, role, nome, cognome, logged_in_at, last_activity_at)
+         VALUES (1, ?, ?, ?, ?, ?, datetime('now'), datetime('now'))",
+        [&user.id, &user.username, &user.role, &user.nome, &user.cognome],
+    )
+    .map_err(|e| format!("Errore scrittura DB sessione: {}", e))?;
+    println!("[SESSION] Sessione SQLite salvata con successo per: {}", user.username);
+    Ok(())
 }
 
 fn update_last_activity(app: &AppHandle) {
@@ -102,7 +104,8 @@ pub async fn login(
         if matches {
             let user = LocalUser { id, username: db_username, role, nome, cognome };
             // Persisti su DB (sopravvive a navigate/reload) e in memoria
-            save_session(&app, &user);
+            println!("[SESSION] Password corretta. Salvo la sessione...");
+            save_session(&app, &user)?;
             let mut session = state.0.lock().map_err(|_| "Failed to lock session")?;
             *session = Some(user.clone());
             Ok(user)
@@ -135,7 +138,7 @@ pub async fn get_current_user(
     {
         let session = state.0.lock().map_err(|_| "Failed to lock session")?;
         if session.is_some() {
-            // Aggiorna last_activity_at in background (non blocca la risposta)
+            println!("[SESSION] get_current_user: trovata sessione in memoria");
             drop(session);
             update_last_activity(&app);
             let session = state.0.lock().map_err(|_| "Failed to lock session")?;
@@ -144,6 +147,7 @@ pub async fn get_current_user(
     }
 
     // 2. Fallback: ricarica dal DB (caso di navigate che azzera lo stato in-memory)
+    println!("[SESSION] get_current_user: sessione in memoria vuota. Cerco nel DB...");
     let conn = database::get_connection(&app).map_err(|e| e.to_string())?;
     let result = conn.query_row(
         "SELECT user_id, username, role, nome, cognome FROM sessions WHERE id = 1",
@@ -165,11 +169,17 @@ pub async fn get_current_user(
             update_last_activity(&app);
             let mut session = state.0.lock().map_err(|_| "Failed to lock session")?;
             *session = Some(user.clone());
-            println!("[SESSION] Sessione ripristinata da DB per: {}", user.username);
+            println!("[SESSION] get_current_user: sessione ripristinata da DB per: {}", user.username);
             Ok(Some(user))
         }
-        Err(rusqlite::Error::QueryReturnedNoRows) => Ok(None),
-        Err(e) => Err(e.to_string()),
+        Err(rusqlite::Error::QueryReturnedNoRows) => {
+            println!("[SESSION] get_current_user: nessuna sessione attiva trovata nel DB");
+            Ok(None)
+        }
+        Err(e) => {
+            eprintln!("[SESSION ERROR] get_current_user: errore query: {}", e);
+            Err(e.to_string())
+        }
     }
 }
 
