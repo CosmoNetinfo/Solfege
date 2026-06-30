@@ -55,15 +55,17 @@ export default function AdminLayout({
           console.log("[AUTH] get_current_user:", user);
           if (!user) {
             console.warn("[AUTH] Nessun utente in sessione, redirect /login-desktop");
+            setAuthError(`SESSIONE VUOTA: get_current_user ha restituito null | user: ${JSON.stringify(user)}`);
+            await new Promise(r => setTimeout(r, 5000));
             router.push("/login-desktop");
           } else {
             setAuthenticated(true);
           }
         } catch (err) {
           console.error("[AUTH] checkAuth failed:", err);
-          setAuthError(String(err));
-          // Aspetta 3 secondi prima di redirect così l'errore è leggibile
-          setTimeout(() => router.push("/login-desktop"), 3000);
+          setAuthError(`ERRORE DI SISTEMA: ${String(err)}`);
+          await new Promise(r => setTimeout(r, 5000));
+          router.push("/login-desktop");
         } finally {
           setLoading(false);
         }

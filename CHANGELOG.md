@@ -1,5 +1,10 @@
 # Changelog
 
+## v1.0.4
+- Abilitati i DevTools anche nelle build di produzione Tauri attivando la feature `devtools` nel file Cargo.toml
+- Aumentato a 5 secondi il tempo di visualizzazione dei dettagli degli errori di autenticazione a schermo per consentire la diagnosi visiva del "flash" al login
+- Aggiunti dettagli informativi aggiuntivi nella schermata di errore in caso di sessione vuota (get_current_user nullo)
+
 ## v1.0.3
 - Implementata sessione utente persistente su tabella SQLite dedicata (`sessions`) per risolvere la disconnessione automatica al refresh/cambio pagina nel webview desktop
 - Aggiunta schermata di errore di autenticazione visibile nel layout admin per facilitare la diagnosi di eventuali futuri bug di sessione
