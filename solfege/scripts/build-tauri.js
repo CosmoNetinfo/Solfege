@@ -6,6 +6,8 @@ const apiPath = path.join(__dirname, '../app/api');
 const apiTempPath = path.join(__dirname, '../api_temp');
 const superadminPath = path.join(__dirname, '../app/(superadmin)');
 const superadminTempPath = path.join(__dirname, '../superadmin_temp');
+const invitePath = path.join(__dirname, '../app/(auth)/accept-invite');
+const inviteTempPath = path.join(__dirname, '../accept-invite_temp');
 const actionsDir = path.join(__dirname, '../app/actions');
 
 console.log('Preparing Tauri static export build...');
@@ -19,9 +21,14 @@ if (!fs.existsSync(superadminPath) && fs.existsSync(superadminTempPath)) {
   fs.renameSync(superadminTempPath, superadminPath);
   console.log('[SAFETY] Restored app/(superadmin) from interrupted previous build');
 }
+if (!fs.existsSync(invitePath) && fs.existsSync(inviteTempPath)) {
+  fs.renameSync(inviteTempPath, invitePath);
+  console.log('[SAFETY] Restored app/(auth)/accept-invite from interrupted previous build');
+}
 
 let apiMoved = false;
 let superadminMoved = false;
+let inviteMoved = false;
 let backupContents = {};
 
 
@@ -65,7 +72,14 @@ try {
     console.log('Temporarily moved app/(superadmin) to root superadmin_temp');
   }
 
-  // 3. Mock app/actions to remove server-side node dependencies and "use server" directives
+  // 3. Move accept-invite page outside app folder (not used in desktop, avoids Supabase client init crash during static build)
+  if (fs.existsSync(invitePath)) {
+    fs.renameSync(invitePath, inviteTempPath);
+    inviteMoved = true;
+    console.log('Temporarily moved app/(auth)/accept-invite to root accept-invite_temp');
+  }
+
+  // 4. Mock app/actions to remove server-side node dependencies and "use server" directives
   if (fs.existsSync(actionsDir)) {
     const files = fs.readdirSync(actionsDir);
     for (const file of files) {
@@ -102,7 +116,13 @@ try {
     console.log('Restored app/(superadmin) from root superadmin_temp');
   }
 
-  // 3. Restore actions contents
+  // 3. Restore accept-invite page
+  if (inviteMoved && fs.existsSync(inviteTempPath)) {
+    fs.renameSync(inviteTempPath, invitePath);
+    console.log('Restored app/(auth)/accept-invite from root accept-invite_temp');
+  }
+
+  // 4. Restore actions contents
   for (const [filePath, content] of Object.entries(backupContents)) {
     if (fs.existsSync(filePath)) {
       fs.writeFileSync(filePath, content, 'utf8');
