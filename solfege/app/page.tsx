@@ -1,6 +1,7 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
 import { 
@@ -23,9 +24,18 @@ import {
   MessageSquare
 } from 'lucide-react';
 import './landing.css';
+import { isDesktop } from '@/lib/is-desktop';
 
 export default function LandingPage() {
+  const router = useRouter()
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
+
+  // Guard: se l'app gira in ambiente desktop Tauri, reindirizza sempre a /login-desktop
+  useEffect(() => {
+    if (isDesktop()) {
+      router.replace('/login-desktop')
+    }
+  }, [router])
 
   return (
     <div className="landing-body">
