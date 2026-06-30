@@ -2,6 +2,15 @@
 
 In questo documento sono raccolti i dettagli degli aggiornamenti, dei bugfix e delle nuove funzionalità introdotte nelle ultime versioni di Solfège.
 
+## 🚀 Versione 1.1.2 - Risoluzione Definitiva Blocco Database (WAL Mode)
+
+Questa release introduce la modalità WAL su SQLite per eliminare in modo definitivo gli errori di concorrenza.
+
+### 🛠️ Correzioni e Ottimizzazioni (Bugfix)
+* **SQLite Journal Mode = WAL (Write-Ahead Logging)**: Configurato il database locale per operare in modalità WAL.
+  - *Problema risolto*: In alcune installazioni di Windows, anche configurando il `busy_timeout` di 5 secondi (introdotto nella 1.1.1), SQLite continuava a lanciare l'errore `database is locked` in fase di login perché il driver del frontend (`tauri-plugin-sql`) manteneva un blocco di lettura attivo prolungato. 
+  - *Comportamento attuale*: La modalità WAL consente a più connessioni di leggere e scrivere contemporaneamente sul database senza bloccarsi a vicenda. I lettori non bloccano i scrittori e i scrittori non bloccano i lettori, garantendo stabilità assoluta.
+
 ---
 
 ## 🚀 Versione 1.1.1 - Bugfix Blocco Database
