@@ -16,6 +16,8 @@ pub fn get_connection(app: &AppHandle) -> Result<Connection, String> {
     let conn = Connection::open(path).map_err(|e| e.to_string())?;
     // Imposta busy_timeout a 5 secondi per attendere che altri blocchi vengano rilasciati
     conn.busy_timeout(std::time::Duration::from_millis(5000)).map_err(|e| e.to_string())?;
+    // Abilita la modalità WAL (Write-Ahead Logging) per consentire letture e scritture concorrenti senza lock
+    let _ = conn.execute("PRAGMA journal_mode=WAL;", []);
     Ok(conn)
 }
 
