@@ -23,7 +23,7 @@ export default function SetupPage() {
   const [userData, setUserData] = useState({
     nome: '',
     cognome: '',
-    username: '',
+    email: '',
     password: '',
     confirmPassword: ''
   })
@@ -120,9 +120,13 @@ export default function SetupPage() {
   // Submit Step 3 - Crea account
   const handleCreateAccount = async (e: React.FormEvent) => {
     e.preventDefault()
-    const { nome, cognome, username, password, confirmPassword } = userData
-    if (!nome || !cognome || !username || !password) {
+    const { nome, cognome, email, password, confirmPassword } = userData
+    if (!nome || !cognome || !email || !password) {
       setError('Tutti i campi contrassegnati con * sono obbligatori.')
+      return
+    }
+    if (!email.includes('@')) {
+      setError('Inserisci un indirizzo email valido (es. mario@tuascuola.it).')
       return
     }
     if (password.length < 8) {
@@ -137,28 +141,24 @@ export default function SetupPage() {
     setLoading(true)
     setError('')
     try {
-      await invoke('create_first_user', { username, password, nome, cognome })
+      // 1. Crea utente locale SQLite (usa email come username)
+      await invoke('create_first_user', { username: email, password, nome, cognome })
       
-      // Crea anche l'account corrispondente su Supabase
+      // 2. Registra su Supabase via Admin API (nessuna conferma email richiesta)
       try {
-        const { error: signUpError } = await supabase.auth.signUp({
-          email: username,
-          password: password,
-          options: {
-            data: {
-              role: 'admin',
-              nome: nome,
-              cognome: cognome
-            }
-          }
+        const res = await fetch('https://solfege-five.vercel.app/api/register-desktop-user', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, password, nome, cognome, license_key: licenseKey })
         })
-        if (signUpError) {
-          console.error('[AUTH] Supabase signUp error:', signUpError.message)
+        const result = await res.json()
+        if (!res.ok) {
+          console.error('[AUTH] Registrazione Supabase fallita:', result.error)
         } else {
-          console.log('[AUTH] Supabase signUp OK')
+          console.log('[AUTH] Utente Supabase creato con successo:', result.user_id)
         }
-      } catch (supabaseCatch) {
-        console.error('[AUTH] Fallimento client Supabase durante setup:', supabaseCatch)
+      } catch (fetchErr) {
+        console.error('[AUTH] Impossibile contattare il server di registrazione:', fetchErr)
       }
 
       setSuccess('Account amministratore creato!')
@@ -342,20 +342,22 @@ export default function SetupPage() {
             </div>
 
             <div>
-              <label className="block text-xs font-bold text-stone-500 uppercase mb-1">Username *</label>
+              <label className="block text-xs font-bold text-stone-500 uppercase mb-1">Email *</label>
               <div className="relative">
                 <span className="absolute left-3 top-1/2 -translate-y-1/2 text-stone-400">
                   <User className="h-4 w-4" />
                 </span>
                 <input
-                  type="text"
-                  value={userData.username}
-                  onChange={(e) => setUserData({ ...userData, username: e.target.value.toLowerCase().trim() })}
+                  type="email"
+                  value={userData.email}
+                  onChange={(e) => setUserData({ ...userData, email: e.target.value.toLowerCase().trim() })}
+                  placeholder="mario@tuascuola.it"
                   className="w-full pl-9 pr-4 py-2 bg-stone-50 border border-stone-200 rounded-xl text-sm focus:outline-none focus:ring-1 focus:ring-[#E8621A] focus:border-[#E8621A]"
                   required
                   disabled={loading}
                 />
               </div>
+              <p className="text-[10px] text-stone-400 mt-1">Sarà usata anche come username per il login</p>
             </div>
 
             <div className="grid grid-cols-2 gap-4">

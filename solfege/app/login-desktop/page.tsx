@@ -96,16 +96,16 @@ export default function LoginDesktopPage() {
 
         <form onSubmit={handleLogin} className="space-y-4">
           <div>
-            <label className="block text-xs font-bold text-stone-500 uppercase mb-1.5">Username</label>
+            <label className="block text-xs font-bold text-stone-500 uppercase mb-1.5">Email</label>
             <div className="relative">
               <span className="absolute left-3 top-1/2 -translate-y-1/2 text-stone-400">
                 <User className="h-4 w-4" />
               </span>
               <input
-                type="text"
+                type="email"
                 value={username}
                 onChange={(e) => setUsername(e.target.value.toLowerCase().trim())}
-                placeholder="Inserisci il tuo username"
+                placeholder="mario@tuascuola.it"
                 className="w-full pl-9 pr-4 py-2.5 bg-stone-50 border border-stone-200 rounded-xl text-sm focus:outline-none focus:ring-1 focus:ring-[#E8621A] focus:border-[#E8621A] transition-all"
                 required
                 disabled={loading}
