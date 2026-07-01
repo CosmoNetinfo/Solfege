@@ -22,19 +22,27 @@ export default function LoginDesktopPage() {
       return
     }
 
-    // Controlla se il setup è stato completato, altrimenti forza setup
-    const checkSetup = async () => {
+    // Controlla se il setup è stato completato e se esiste già una sessione attiva
+    const checkSetupAndSession = async () => {
       try {
         const completed = await invoke<string | null>('get_config', { key: 'setup_completed' })
         if (completed !== 'true') {
           router.push('/setup')
+          return
+        }
+
+        // Se l'utente è già loggato localmente, vai direttamente in dashboard
+        const currentUser = await invoke('get_current_user')
+        if (currentUser) {
+          console.log('[AUTH] Sessione attiva trovata, redirect a dashboard')
+          router.push('/admin/dashboard')
         }
       } catch (err) {
         console.error('Error checking setup status, redirecting to setup:', err)
         router.push('/setup')
       }
     }
-    checkSetup()
+    checkSetupAndSession()
   }, [router])
 
   const handleLogin = async (e: React.FormEvent) => {

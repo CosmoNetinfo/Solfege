@@ -119,7 +119,7 @@ export default function AdminLayout({
       {isDesktop() && <TrialBanner />}
       {isDesktop() && <UpdateChecker />}
       <div className="flex flex-1">
-        <aside className="w-64 bg-sidebar sticky top-0 h-screen overflow-y-auto shrink-0 border-r border-sidebar-border">
+        <aside className="w-64 bg-sidebar sticky top-0 h-screen overflow-y-auto no-scrollbar shrink-0 border-r border-sidebar-border">
           <Sidebar />
         </aside>
         <main className="flex-1 min-h-screen">

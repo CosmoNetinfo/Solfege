@@ -176,7 +176,7 @@ export function Sidebar() {
       )}
 
       {/* Navigazione */}
-      <nav className="flex-1 space-y-1 px-3 py-4 overflow-y-auto">
+      <nav className="flex-1 space-y-1 px-3 py-4 overflow-y-auto no-scrollbar">
         {navItems.map((item) => {
           const isActive = pathname.startsWith(item.href);
           return (
