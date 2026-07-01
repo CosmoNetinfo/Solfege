@@ -14,6 +14,18 @@ export default function CompensiPage() {
   useEffect(() => {
     async function loadData() {
       try {
+        const { isDesktop } = await import("@/lib/is-desktop");
+        if (isDesktop()) {
+          const Database = (await import("@tauri-apps/plugin-sql")).default;
+          const db = await Database.load("sqlite:solfege.db");
+          const schools = await db.select<any[]>("SELECT id FROM schools LIMIT 1");
+          if (schools && schools.length > 0) {
+            setSchoolId(schools[0].id);
+          }
+          return;
+        }
+
+        // Web Flow (Supabase)
         const { data: { user } } = await supabase.auth.getUser();
         if (!user) return;
 

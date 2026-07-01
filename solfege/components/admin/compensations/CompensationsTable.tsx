@@ -40,9 +40,93 @@ export function CompensationsTable({ schoolId }: { schoolId: string }) {
   async function loadData() {
     setLoading(true);
     try {
+      const { isDesktop } = await import("@/lib/is-desktop");
+      if (isDesktop()) {
+        const Database = (await import("@tauri-apps/plugin-sql")).default;
+        const db = await Database.load("sqlite:solfege.db");
+
+        // 1. Carica Docenti locali
+        const teachers = await db.select<any[]>(
+          "SELECT id, nome, cognome, tariffa_individuale as rate_individual, tariffa_collettiva as rate_group FROM teachers ORDER BY cognome ASC"
+        );
+
+        if (!teachers || teachers.length === 0) {
+          setData([]);
+          setLoading(false);
+          return;
+        }
+
+        // 2. Carica lezioni completate del mese/anno
+        // Le date in SQLite sono salvate in formato YYYY-MM-DD
+        const monthStr = month < 10 ? `0${month}` : `${month}`;
+        const datePrefix = `${year}-${monthStr}-%`;
+
+        const lessons = await db.select<any[]>(
+          `SELECT l.id, l.ora_inizio, l.ora_fine, l.stato, c.teacher_id, c.tipo as course_type
+           FROM lessons l
+           JOIN courses c ON l.course_id = c.id
+           WHERE l.stato = 'completata' AND l.data LIKE ?`,
+          [datePrefix]
+        );
+
+        // 3. Carica i compensi pagati
+        const compensations = await db.select<any[]>(
+          "SELECT * FROM teacher_compensations WHERE month = ? AND year = ?",
+          [month, year]
+        );
+
+        // 4. Mappa ed elabora i dati per ciascun insegnante
+        const results = teachers.map(t => {
+          let hoursIndividual = 0;
+          let hoursGroup = 0;
+
+          const teacherLessons = lessons.filter(l => l.teacher_id === t.id);
+          teacherLessons.forEach(l => {
+            // Calcolo ore basato su HH:MM di inizio e fine
+            const [sh, sm] = l.ora_inizio.split(':').map(Number);
+            const [eh, em] = l.ora_fine.split(':').map(Number);
+            const duration = (eh * 60 + em - (sh * 60 + sm)) / 60; // in ore decimale
+
+            if (l.course_type === 'individuale') {
+              hoursIndividual += duration;
+            } else {
+              hoursGroup += duration;
+            }
+          });
+
+          const totalAmount = (hoursIndividual * Number(t.rate_individual || 0)) +
+                              (hoursGroup * Number(t.rate_group || 0));
+
+          const existingComp = compensations.find(c => c.teacher_id === t.id);
+
+          return {
+            teacher: {
+              id: t.id,
+              first_name: t.nome,
+              last_name: t.cognome,
+              rate_individual: t.rate_individual,
+              rate_group: t.rate_group
+            },
+            month,
+            year,
+            hours_individual: hoursIndividual,
+            hours_group: hoursGroup,
+            total_amount: totalAmount,
+            paid: existingComp ? (existingComp.paid === 1 || existingComp.paid === true) : false,
+            paid_date: existingComp?.paid_date || null
+          };
+        });
+
+        setData(results);
+        setLoading(false);
+        return;
+      }
+
+      // Web Flow
       const compensations = await getTeacherCompensations(supabase, schoolId, month, year);
       setData(compensations);
     } catch (error: any) {
+      console.error(error);
       toast.error("Errore nel caricamento dei compensi");
     } finally {
       setLoading(false);
@@ -52,6 +136,35 @@ export function CompensationsTable({ schoolId }: { schoolId: string }) {
   const handleTogglePaid = async (comp: any) => {
     try {
       const newPaidStatus = !comp.paid;
+
+      const { isDesktop } = await import("@/lib/is-desktop");
+      if (isDesktop()) {
+        const Database = (await import("@tauri-apps/plugin-sql")).default;
+        const db = await Database.load("sqlite:solfege.db");
+
+        // Salvataggio su database locale SQLite
+        await db.execute(
+          `INSERT OR REPLACE INTO teacher_compensations 
+             (id, school_id, teacher_id, month, year, hours_individual, hours_group, total_amount, paid, paid_date)
+           VALUES 
+             (
+               COALESCE((SELECT id FROM teacher_compensations WHERE teacher_id = ? AND month = ? AND year = ?), lower(hex(randomblob(16)))),
+               ?, ?, ?, ?, ?, ?, ?, ?, ?
+             )`,
+          [
+            comp.teacher.id, month, year,
+            schoolId, comp.teacher.id, month, year,
+            comp.hours_individual, comp.hours_group, comp.total_amount,
+            newPaidStatus ? 1 : 0, newPaidStatus ? new Date().toISOString() : null
+          ]
+        );
+
+        toast.success(newPaidStatus ? "Compenso segnato come pagato" : "Pagamento annullato");
+        loadData();
+        return;
+      }
+
+      // Web Flow
       await markCompensationAsPaid(
         supabase, 
         schoolId, 
@@ -67,6 +180,7 @@ export function CompensationsTable({ schoolId }: { schoolId: string }) {
       toast.success(newPaidStatus ? "Compenso segnato come pagato" : "Pagamento annullato");
       loadData();
     } catch (error: any) {
+      console.error(error);
       toast.error("Errore durante l'aggiornamento");
     }
   };
