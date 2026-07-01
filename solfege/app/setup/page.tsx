@@ -6,6 +6,7 @@ import { invoke } from '@tauri-apps/api/core'
 import Database from '@tauri-apps/plugin-sql'
 import { Key, User, Landmark, Sparkles, AlertCircle, CheckCircle2, Eye, EyeOff, Loader2 } from 'lucide-react'
 import { isDesktop } from '@/lib/is-desktop'
+import { createClient } from '@/lib/supabase/client'
 
 export default function SetupPage() {
   const router = useRouter()
@@ -13,7 +14,8 @@ export default function SetupPage() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
-
+  const supabase = createClient()
+  
   // Step 2 state
   const [licenseKey, setLicenseKey] = useState('')
   
@@ -136,6 +138,29 @@ export default function SetupPage() {
     setError('')
     try {
       await invoke('create_first_user', { username, password, nome, cognome })
+      
+      // Crea anche l'account corrispondente su Supabase
+      try {
+        const { error: signUpError } = await supabase.auth.signUp({
+          email: username,
+          password: password,
+          options: {
+            data: {
+              role: 'admin',
+              nome: nome,
+              cognome: cognome
+            }
+          }
+        })
+        if (signUpError) {
+          console.error('[AUTH] Supabase signUp error:', signUpError.message)
+        } else {
+          console.log('[AUTH] Supabase signUp OK')
+        }
+      } catch (supabaseCatch) {
+        console.error('[AUTH] Fallimento client Supabase durante setup:', supabaseCatch)
+      }
+
       setSuccess('Account amministratore creato!')
       setTimeout(() => {
         setSuccess('')
