@@ -60,15 +60,15 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        include:
-          - os: windows-latest
-            target: x86_64-pc-windows-msvc
-          - os: macos-latest
-            target: x86_64-apple-darwin
-          - os: macos-latest
-            target: aarch64-apple-darwin
-          - os: ubuntu-22.04
-            target: x86_64-unknown-linux-gnu
+         include:
+           - os: windows-latest
+             target: x86_64-pc-windows-msvc
+           - os: macos-latest
+             target: x86_64-apple-darwin
+           - os: macos-latest
+             target: aarch64-apple-darwin
+           - os: ubuntu-22.04
+             target: x86_64-unknown-linux-gnu
 
     runs-on: ${{ matrix.os }}
 
@@ -121,6 +121,56 @@ jobs:
           releaseId: ${{ needs.create-release.outputs.release_id }}
           args: --target ${{ matrix.target }}
 
-  # La release rimane in DRAFT fino a pubblicazione manuale.
-  # Per pubblicarla: vai su GitHub → Releases → Edit → "Publish release"
-  # In questo modo puoi rivedere le note e i file allegati prima che i clienti li vedano.
+  publish-release:
+    needs: [create-release, build-tauri]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Publish GitHub Release
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const releaseId = "${{ needs.create-release.outputs.release_id }}"
+            await github.rest.repos.updateRelease({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              release_id: releaseId,
+              draft: false
+            })
+
+      - name: Notify Vercel API and Update Supabase
+        run: |
+          TAG="${{ github.ref_name }}"
+          # Rimuove la "v" iniziale se presente (es. v1.1.4 -> 1.1.4)
+          VERSION="${TAG#v}"
+          
+          # Costruisce note di rilascio
+          NOTES="Aggiornamento automatico della versione $VERSION."
+          if [ -f CHANGELOG.md ]; then
+            NOTES=$(awk "/^## ${TAG}$/,/^## /" CHANGELOG.md | grep -v "^## ${TAG}$" | grep -v "^## " | sed '/^[[:space:]]*$/d' | head -30)
+            if [ -z "$NOTES" ]; then
+              NOTES="Miglioramenti generali e ottimizzazioni in $TAG."
+            fi
+          fi
+          
+          # Costruisce URL dei download usando gli asset ufficiali di release di GitHub
+          # Sostituisci owner/repo con il nome effettivo se necessario
+          WIN_URL="https://github.com/${{ github.repository }}/releases/download/${TAG}/Solfege_${VERSION}_x64-setup.exe"
+          MAC_URL="https://github.com/${{ github.repository }}/releases/download/${TAG}/Solfege_${VERSION}_x64.dmg"
+          LIN_URL="https://github.com/${{ github.repository }}/releases/download/${TAG}/Solfege_${VERSION}_amd64.AppImage"
+          
+          # Esegue chiamata API sicura per impostare la versione corrente
+          curl -X POST https://solfege-five.vercel.app/api/superadmin/publish-release \
+            -H "Content-Type: application/json" \
+            -H "Authorization: Bearer ${{ secrets.API_PUBLISH_SECRET }}" \
+            -d "{
+              \"version\": \"$VERSION\",
+              \"release_notes\": \"$NOTES\",
+              \"windows_url\": \"$WIN_URL\",
+              \"mac_url\": \"$MAC_URL\",
+              \"linux_url\": \"$LIN_URL\",
+              \"is_current\": true
+            }"
+

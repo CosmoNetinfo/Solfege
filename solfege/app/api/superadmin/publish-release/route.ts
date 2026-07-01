@@ -4,20 +4,32 @@ import { createAdminClient } from '@/lib/supabase/admin'
 
 export async function POST(request: Request) {
   try {
-    const supabase = await createClient()
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) {
-      return NextResponse.json({ error: 'Non autenticato' }, { status: 401 })
+    const authHeader = request.headers.get('Authorization')
+    const secret = process.env.API_PUBLISH_SECRET
+
+    let isAuthorized = false
+
+    // Check if authorized via API secret (GitHub Action webhook)
+    if (secret && authHeader === `Bearer ${secret}`) {
+      isAuthorized = true
+    } else {
+      // Fallback to normal superadmin session check
+      const supabase = await createClient()
+      const { data: { user } } = await supabase.auth.getUser()
+      if (user) {
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('role')
+          .eq('id', user.id)
+          .maybeSingle()
+        if (profile?.role === 'superadmin') {
+          isAuthorized = true
+        }
+      }
     }
 
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('role')
-      .eq('id', user.id)
-      .maybeSingle()
-
-    if ((profile?.role as string) !== 'superadmin') {
-      return NextResponse.json({ error: 'Non autorizzato' }, { status: 403 })
+    if (!isAuthorized) {
+      return NextResponse.json({ error: 'Non autorizzato o token mancante' }, { status: 403 })
     }
 
     const body = await request.json()
