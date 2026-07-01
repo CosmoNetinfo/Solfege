@@ -55,23 +55,32 @@ export function Sidebar() {
   });
   const [syncing, setSyncing] = useState(false);
   const [lastSync, setLastSync] = useState<string | null>(null);
+  const [appVersion, setAppVersion] = useState("1.1.4");
   const pathname = usePathname();
   const supabase = createClient();
 
   useEffect(() => {
-    async function loadLastSync() {
+    async function loadLastSyncAndVersion() {
       if (isDesktop()) {
         try {
           const val = await invoke<string | null>("get_config", { key: "last_cloud_sync_at" });
           if (val) {
             setLastSync(new Date(val).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }));
           }
+          // Legge la versione corretta da tauri (se disponibile)
+          try {
+            const { getVersion } = await import('@tauri-apps/api/app');
+            const version = await getVersion();
+            setAppVersion(version);
+          } catch (verErr) {
+            console.warn("Impossibile recuperare versione da Tauri:", verErr);
+          }
         } catch (e) {
           console.error("Errore recupero ultimo sync:", e);
         }
       }
     }
-    loadLastSync();
+    loadLastSyncAndVersion();
   }, [syncing]);
 
   useEffect(() => {
@@ -259,7 +268,7 @@ export function Sidebar() {
             </a>
           </p>
           <p style={{ fontSize: '0.65rem', color: '#3D3830', marginTop: '0.25rem' }}>
-            Solfège v2.0
+            Solfège v{appVersion}
           </p>
         </div>
       </div>
