@@ -92,9 +92,11 @@ export default function ImpostazioniPage() {
           <TabsTrigger value="scuola" className="rounded-none border-b-2 border-transparent data-[state=active]:border-[#E8621A] data-[state=active]:text-[#E8621A] data-[state=active]:bg-transparent px-0 py-3">Scuola</TabsTrigger>
           <TabsTrigger value="anno" className="rounded-none border-b-2 border-transparent data-[state=active]:border-[#E8621A] data-[state=active]:text-[#E8621A] data-[state=active]:bg-transparent px-0 py-3">Anno Accademico</TabsTrigger>
           <TabsTrigger value="strumenti" className="rounded-none border-b-2 border-transparent data-[state=active]:border-[#E8621A] data-[state=active]:text-[#E8621A] data-[state=active]:bg-transparent px-0 py-3">Strumenti</TabsTrigger>
-          <TabsTrigger value="aule" className="rounded-none border-b-2 border-transparent data-[state=active]:border-[#E8621A] data-[state=active]:text-[#E8621A] data-[state=active]:bg-transparent px-0 py-3">Aule</TabsTrigger>
           <TabsTrigger value="utenti" className="rounded-none border-b-2 border-transparent data-[state=active]:border-[#E8621A] data-[state=active]:text-[#E8621A] data-[state=active]:bg-transparent px-0 py-3">Utenti</TabsTrigger>
           <TabsTrigger value="abbonamento" className="rounded-none border-b-2 border-transparent data-[state=active]:border-[#E8621A] data-[state=active]:text-[#E8621A] data-[state=active]:bg-transparent px-0 py-3">Abbonamento</TabsTrigger>
+          {isDesktop() && (
+            <TabsTrigger value="aggiornamenti" className="rounded-none border-b-2 border-transparent data-[state=active]:border-[#E8621A] data-[state=active]:text-[#E8621A] data-[state=active]:bg-transparent px-0 py-3">Aggiornamenti</TabsTrigger>
+          )}
         </TabsList>
 
         <div className="mt-6">
@@ -121,8 +123,157 @@ export default function ImpostazioniPage() {
               </div>
             </div>
           </TabsContent>
+          {isDesktop() && (
+            <TabsContent value="aggiornamenti" className="m-0">
+              <UpdateSettingsPanel />
+            </TabsContent>
+          )}
         </div>
       </Tabs>
+    </div>
+  );
+}
+
+// Sottocomponente per la gestione aggiornamenti manuale
+function UpdateSettingsPanel() {
+  const [currentVersion, setCurrentVersion] = useState('1.1.8');
+  const [checking, setChecking] = useState(false);
+  const [updateAvailable, setUpdateAvailable] = useState<any>(null);
+  const [statusText, setStatusText] = useState('');
+  const [downloadProgress, setDownloadProgress] = useState(0);
+  const [status, setStatus] = useState<'idle' | 'downloading' | 'completed' | 'error'>('idle');
+
+  useEffect(() => {
+    async function loadVersion() {
+      try {
+        const { getVersion } = await import('@tauri-apps/api/app');
+        const v = await getVersion();
+        setCurrentVersion(v);
+      } catch (e) {
+        console.warn("Impossibile caricare versione Tauri:", e);
+      }
+    }
+    loadVersion();
+  }, []);
+
+  const handleCheck = async () => {
+    setChecking(true);
+    setStatusText('Ricerca aggiornamenti in corso...');
+    setUpdateAvailable(null);
+    setStatus('idle');
+    try {
+      const { check } = await import('@tauri-apps/plugin-updater');
+      const update = await check();
+      if (update) {
+        setUpdateAvailable(update);
+        setStatusText(`Nuova versione disponibile: v${update.version}`);
+      } else {
+        setStatusText('Solfège è aggiornato all\'ultima versione.');
+      }
+    } catch (err: any) {
+      console.error(err);
+      setStatusText(`Errore di connessione: ${err.message || err}`);
+    } finally {
+      setChecking(false);
+    }
+  };
+
+  const handleInstall = async () => {
+    if (!updateAvailable) return;
+    try {
+      setStatus('downloading');
+      setDownloadProgress(0);
+      let downloadedLength = 0;
+      let totalSize: number | undefined = undefined;
+
+      await updateAvailable.downloadAndInstall((event: any) => {
+        switch (event.event) {
+          case 'Started':
+            setDownloadProgress(0);
+            totalSize = event.data.contentLength;
+            break;
+          case 'Progress':
+            downloadedLength += event.data.chunkLength;
+            if (totalSize) {
+              setDownloadProgress(Math.round((downloadedLength / totalSize) * 100));
+            }
+            break;
+          case 'Finished':
+            setDownloadProgress(100);
+            break;
+        }
+      });
+
+      setStatus('completed');
+      const { relaunch } = await import('@tauri-apps/plugin-process');
+      await relaunch();
+    } catch (err: any) {
+      console.error(err);
+      setStatus('error');
+      setStatusText(`Errore durante l'installazione: ${err.message || err}`);
+    }
+  };
+
+  return (
+    <div className="bg-white border border-stone-200 p-8 rounded-2xl max-w-xl mx-auto space-y-6 shadow-sm">
+      <div className="space-y-1">
+        <h3 className="text-xl font-serif text-[#E8621A] font-bold">Aggiornamenti Software</h3>
+        <p className="text-sm text-muted-foreground">
+          Gestisci le versioni dell'applicazione Solfège installate su questo PC.
+        </p>
+      </div>
+
+      <div className="border border-stone-100 rounded-xl bg-stone-50 p-4 flex justify-between items-center">
+        <div>
+          <p className="text-xs font-bold text-stone-400 uppercase">Versione Installata</p>
+          <p className="text-lg font-mono font-bold text-stone-800">v{currentVersion}</p>
+        </div>
+        
+        {status === 'idle' && (
+          <button
+            onClick={handleCheck}
+            disabled={checking}
+            className="bg-[#E8621A] hover:bg-[#C94E0E] disabled:opacity-50 text-white font-bold py-2.5 px-5 rounded-lg text-xs uppercase tracking-wider transition-colors inline-flex items-center gap-2"
+          >
+            {checking && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
+            {checking ? 'Verifica...' : 'Verifica Aggiornamenti'}
+          </button>
+        )}
+      </div>
+
+      {statusText && (
+        <div className="p-4 bg-stone-50 border border-stone-200 rounded-xl text-sm text-stone-700 flex flex-col gap-3">
+          <p>{statusText}</p>
+          
+          {updateAvailable && status === 'idle' && (
+            <button
+              onClick={handleInstall}
+              className="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-lg text-xs uppercase tracking-wider transition-colors self-start"
+            >
+              Scarica ed Installa v{updateAvailable.version}
+            </button>
+          )}
+
+          {status === 'downloading' && (
+            <div className="space-y-2 w-full pt-1">
+              <div className="w-full bg-stone-200 rounded-full h-2 overflow-hidden">
+                <div 
+                  className="bg-[#E8621A] h-2 rounded-full transition-all duration-300"
+                  style={{ width: `${downloadProgress}%` }}
+                />
+              </div>
+              <div className="flex justify-between text-xs font-bold text-stone-500">
+                <span>DOWNLOAD IN CORSO...</span>
+                <span>{downloadProgress}%</span>
+              </div>
+            </div>
+          )}
+
+          {status === 'completed' && (
+            <p className="text-xs text-green-600 font-bold">Download completato. Riavvio dell'applicazione in corso...</p>
+          )}
+        </div>
+      )}
     </div>
   );
 }
