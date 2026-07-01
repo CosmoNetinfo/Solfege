@@ -330,7 +330,7 @@ export default function CalendarPage() {
   }), [EventComponent]);
 
   return (
-    <div className="flex h-screen overflow-hidden">
+    <div className="flex h-screen overflow-hidden bg-white">
       <CalendarFilters 
         teachers={teachers}
         courses={courses}
@@ -343,39 +343,44 @@ export default function CalendarPage() {
         onRoomChange={(id) => toggleFilter(selectedRooms, setSelectedRooms, id)}
       />
 
-      <div className="flex-1 flex flex-col min-w-0 bg-stone-50">
-        <div className="p-8 pt-6 pb-0 flex items-center justify-between">
+      <div className="flex-1 flex flex-col min-w-0 bg-white">
+        {/* Header superiore con titolo e bottone */}
+        <div className="p-8 pb-4 flex items-center justify-between border-b border-stone-100 bg-white">
           <div>
-            <h2 className="font-serif text-4xl font-bold tracking-tight text-foreground">Calendario</h2>
-            <p className="text-stone-500 mt-1">Gestisci le lezioni e le presenze della tua scuola</p>
+            <h2 className="font-serif text-3xl font-bold tracking-tight text-stone-900">Calendario</h2>
+            <p className="text-stone-500 text-sm mt-0.5">Gestisci le lezioni e le presenze della tua scuola</p>
           </div>
-          <Button className="bg-orange hover:bg-orange-dark text-white shadow-lg shadow-orange/20 h-11 px-6">
-            <Plus className="mr-2 h-5 w-5" /> Nuova Lezione
+          <Button className="bg-[#E8621A] hover:bg-[#C94E0E] text-white shadow-md shadow-orange/10 h-10 px-5 rounded-xl font-bold uppercase tracking-wider text-xs">
+            <Plus className="mr-2 h-4 w-4" /> Nuova Lezione
           </Button>
         </div>
 
         <style jsx global>{`
           .rbc-calendar { font-family: var(--font-dm-sans), sans-serif; background: white; }
-          .rbc-toolbar { margin-bottom: 24px !important; padding: 0 8px; }
-          .rbc-toolbar button { color: #7A736C; border: 1px solid #E8E4E0; border-radius: 8px; padding: 8px 16px; font-size: 13px; font-weight: 500; transition: all 0.2s; }
-          .rbc-toolbar button:hover { background: #FDF5F0; border-color: #E8621A; color: #E8621A; }
-          .rbc-toolbar button.rbc-active { background: #E8621A; color: #fff; border-color: #E8621A; box-shadow: 0 4px 12px rgba(232, 98, 26, 0.2); }
-          .rbc-toolbar .rbc-toolbar-label { font-size: 18px; font-weight: 700; color: #1A1714; text-transform: capitalize; }
-          .rbc-header { padding: 12px 4px; font-weight: 700; font-size: 11px; text-transform: uppercase; color: #7A736C; border-bottom: 2px solid #F4F4F5; letter-spacing: 0.05em; }
-          .rbc-today { background-color: #FDF5F0 !important; }
-          .rbc-time-slot { border-top: 1px solid #F4F4F5; }
-          .rbc-time-gutter .rbc-label { font-size: 11px; color: #7A736C; font-weight: 500; }
+          .rbc-toolbar { margin-bottom: 20px !important; padding: 0 4px; display: flex; align-items: center; justify-content: space-between; }
+          .rbc-toolbar button { color: #57534E; border: 1px solid #E7E5E4; border-radius: 8px; padding: 6px 12px; font-size: 13px; font-weight: 600; transition: all 0.15s; background: white; cursor: pointer; }
+          .rbc-toolbar button:hover { background: #FAF8F5; border-color: #E8621A; color: #E8621A; }
+          .rbc-toolbar button.rbc-active { background: #E8621A !important; color: #fff !important; border-color: #E8621A !important; }
+          .rbc-toolbar .rbc-toolbar-label { font-size: 16px; font-weight: 700; color: #1C1917; text-transform: capitalize; font-family: var(--font-dm-sans), sans-serif; }
+          .rbc-header { padding: 10px 4px; font-weight: 700; font-size: 11px; text-transform: uppercase; color: #78716C; border-bottom: 2px solid #F5F5F4; letter-spacing: 0.05em; border-left: 1px solid #E7E5E4; }
+          .rbc-header:first-child { border-left: none; }
+          .rbc-today { background-color: #FDF6F0 !important; }
+          .rbc-time-slot { border-top: 1px solid #F5F5F4; }
+          .rbc-time-gutter .rbc-label { font-size: 11px; color: #78716C; font-weight: 500; padding-right: 8px; }
           .rbc-current-time-indicator { background-color: #E8621A; height: 2px; }
-          .rbc-event { border: none !important; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
-          .rbc-off-range-bg { background-color: #FAFAF9; }
-          .rbc-month-view, .rbc-time-view { border: 1px solid #E8E4E0; border-radius: 12px; overflow: hidden; background: white; box-shadow: 0 1px 3px rgba(0,0,0,0.02); }
+          .rbc-event { border: none !important; box-shadow: 0 1px 3px rgba(0,0,0,0.06); }
+          .rbc-off-range-bg { background-color: #FAF9F6; }
+          .rbc-month-view, .rbc-time-view { border: 1px solid #E7E5E4; border-radius: 12px; overflow: hidden; background: white; }
           .rbc-time-header.rbc-overflowing { border-right: none !important; }
+          .rbc-time-content { border-top: 1px solid #E7E5E4; }
+          .rbc-timeslot-group { border-bottom: 1px solid #F5F5F4; }
         `}</style>
 
-        <div className="flex-1 p-8">
-          <div className="h-full">
+        {/* Contenitore Griglia Calendario */}
+        <div className="flex-1 p-8 pt-6 bg-white overflow-hidden">
+          <div className="h-full pb-4">
             {loading ? (
-              <div className="flex items-center justify-center h-full bg-white rounded-xl border border-border">
+              <div className="flex items-center justify-center h-full bg-white rounded-xl border border-stone-200">
                 <div className="flex flex-col items-center gap-4">
                   <div className="h-8 w-8 border-4 border-orange border-t-transparent rounded-full animate-spin" />
                   <p className="text-stone-400 font-medium">Caricamento calendario...</p>
