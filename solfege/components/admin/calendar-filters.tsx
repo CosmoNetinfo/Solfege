@@ -42,63 +42,75 @@ export function CalendarFilters({
         <div className="space-y-6">
           {/* Teachers */}
           <div className="space-y-3">
-            <h3 className="text-sm font-semibold text-stone-500 uppercase tracking-wider">Insegnanti</h3>
+            <h3 className="text-xs font-bold text-stone-400 uppercase tracking-wider">Insegnanti</h3>
             <div className="space-y-2">
-              {teachers.map((t) => (
-                <div key={t.id} className="flex items-center space-x-2">
-                  <Checkbox 
-                    id={`t-${t.id}`} 
-                    checked={selectedTeachers.includes(t.id)}
-                    onCheckedChange={() => onTeacherChange(t.id)}
-                  />
-                  <Label htmlFor={`t-${t.id}`} className="text-sm font-medium cursor-pointer">
-                    {t.name}
-                  </Label>
-                </div>
-              ))}
+              {teachers.length === 0 ? (
+                <p className="text-xs text-stone-400 italic">Nessun insegnante</p>
+              ) : (
+                teachers.map((t) => (
+                  <div key={t.id} className="flex items-center space-x-2">
+                    <Checkbox 
+                      id={`t-${t.id}`} 
+                      checked={selectedTeachers.includes(t.id)}
+                      onCheckedChange={() => onTeacherChange(t.id)}
+                    />
+                    <Label htmlFor={`t-${t.id}`} className="text-sm font-medium cursor-pointer text-stone-700">
+                      {t.name}
+                    </Label>
+                  </div>
+                ))
+              )}
             </div>
           </div>
 
-          <Separator />
+          <Separator className="bg-stone-100" />
 
           {/* Courses */}
           <div className="space-y-3">
-            <h3 className="text-sm font-semibold text-stone-500 uppercase tracking-wider">Corsi</h3>
+            <h3 className="text-xs font-bold text-stone-400 uppercase tracking-wider">Corsi</h3>
             <div className="space-y-2">
-              {courses.map((c) => (
-                <div key={c.id} className="flex items-center space-x-2">
-                  <Checkbox 
-                    id={`c-${c.id}`} 
-                    checked={selectedCourses.includes(c.id)}
-                    onCheckedChange={() => onCourseChange(c.id)}
-                  />
-                  <div className="w-2 h-2 rounded-full" style={{ backgroundColor: c.color || "#E8621A" }} />
-                  <Label htmlFor={`c-${c.id}`} className="text-sm font-medium cursor-pointer truncate max-w-[160px]">
-                    {c.name}
-                  </Label>
-                </div>
-              ))}
+              {courses.length === 0 ? (
+                <p className="text-xs text-stone-400 italic">Nessun corso</p>
+              ) : (
+                courses.map((c) => (
+                  <div key={c.id} className="flex items-center space-x-2">
+                    <Checkbox 
+                      id={`c-${c.id}`} 
+                      checked={selectedCourses.includes(c.id)}
+                      onCheckedChange={() => onCourseChange(c.id)}
+                    />
+                    <div className="w-2.5 h-2.5 rounded-full border border-stone-200" style={{ backgroundColor: c.color || "#E8621A" }} />
+                    <Label htmlFor={`c-${c.id}`} className="text-sm font-medium cursor-pointer text-stone-700 truncate max-w-[160px]">
+                      {c.name}
+                    </Label>
+                  </div>
+                ))
+              )}
             </div>
           </div>
 
-          <Separator />
+          <Separator className="bg-stone-100" />
 
           {/* Rooms */}
           <div className="space-y-3">
-            <h3 className="text-sm font-semibold text-stone-500 uppercase tracking-wider">Aule</h3>
+            <h3 className="text-xs font-bold text-stone-400 uppercase tracking-wider">Aule</h3>
             <div className="space-y-2">
-              {rooms.map((r) => (
-                <div key={r.id} className="flex items-center space-x-2">
-                  <Checkbox 
-                    id={`r-${r.id}`} 
-                    checked={selectedRooms.includes(r.id)}
-                    onCheckedChange={() => onRoomChange(r.id)}
-                  />
-                  <Label htmlFor={`r-${r.id}`} className="text-sm font-medium cursor-pointer">
-                    {r.name}
-                  </Label>
-                </div>
-              ))}
+              {rooms.length === 0 ? (
+                <p className="text-xs text-stone-400 italic">Nessuna aula</p>
+              ) : (
+                rooms.map((r) => (
+                  <div key={r.id} className="flex items-center space-x-2">
+                    <Checkbox 
+                      id={`r-${r.id}`} 
+                      checked={selectedRooms.includes(r.id)}
+                      onCheckedChange={() => onRoomChange(r.id)}
+                    />
+                    <Label htmlFor={`r-${r.id}`} className="text-sm font-medium cursor-pointer text-stone-700">
+                      {r.name}
+                    </Label>
+                  </div>
+                ))
+              )}
             </div>
           </div>
         </div>
