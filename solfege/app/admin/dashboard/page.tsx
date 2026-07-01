@@ -41,12 +41,12 @@ export default function AdminDashboardPage() {
           const Database = (await import("@tauri-apps/plugin-sql")).default;
           const db = await Database.load("sqlite:solfege.db");
 
-          // 1. Conta Studenti Attivi
-          const students = await db.select<any[]>("SELECT COUNT(*) as count FROM students WHERE active = 1");
+          // 1. Conta Studenti
+          const students = await db.select<any[]>("SELECT COUNT(*) as count FROM students");
           const totalStudents = students[0]?.count || 0;
 
-          // 2. Conta Insegnanti Attivi
-          const teachers = await db.select<any[]>("SELECT COUNT(*) as count FROM teachers WHERE active = 1");
+          // 2. Conta Insegnanti
+          const teachers = await db.select<any[]>("SELECT COUNT(*) as count FROM teachers");
           const totalTeachers = teachers[0]?.count || 0;
 
           // 3. Calcola Incassi Mensili (mese corrente)
@@ -61,8 +61,8 @@ export default function AdminDashboardPage() {
           // 4. Conta Lezioni Oggi
           const todayStr = now.toISOString().split('T')[0];
           const lessonsTodayCount = await db.select<any[]>(
-            "SELECT COUNT(*) as count FROM lessons WHERE data_ora_inizio >= ? AND data_ora_inizio <= ?",
-            [todayStr + 'T00:00:00', todayStr + 'T23:59:59']
+            "SELECT COUNT(*) as count FROM lessons WHERE data = ?",
+            [todayStr]
           );
           const lessonsToday = lessonsTodayCount[0]?.count || 0;
 
@@ -75,19 +75,19 @@ export default function AdminDashboardPage() {
 
           // 5. Lezioni di oggi dettagliate (JOIN)
           const lessonsRes = await db.select<any[]>(
-            `SELECT l.id, l.data_ora_inizio, l.data_ora_fine, l.stato as status, 
+            `SELECT l.id, l.data, l.ora_inizio, l.ora_fine, l.stato as status, 
                     c.nome as course_name, t.nome as teacher_first_name, t.cognome as teacher_last_name
              FROM lessons l
              LEFT JOIN courses c ON l.course_id = c.id
-             LEFT JOIN teachers t ON l.teacher_id = t.id
-             WHERE l.data_ora_inizio >= ? AND l.data_ora_inizio <= ?
-             ORDER BY l.data_ora_inizio ASC LIMIT 10`,
-            [todayStr + 'T00:00:00', todayStr + 'T23:59:59']
+             LEFT JOIN teachers t ON c.teacher_id = t.id
+             WHERE l.data = ?
+             ORDER BY l.ora_inizio ASC LIMIT 10`,
+            [todayStr]
           );
           setTodayLessons(lessonsRes.map(l => ({
             id: l.id,
-            data_ora_inizio: l.data_ora_inizio,
-            data_ora_fine: l.data_ora_fine,
+            data_ora_inizio: `${l.data}T${l.ora_inizio}:00`,
+            data_ora_fine: `${l.data}T${l.ora_fine}:00`,
             status: l.status,
             courses: { name: l.course_name },
             teachers: { first_name: l.teacher_first_name, last_name: l.teacher_last_name }
@@ -116,7 +116,7 @@ export default function AdminDashboardPage() {
             `SELECT strftime('%m', data_pagamento) as month, SUM(importo) as total 
              FROM payments 
              WHERE stato = 'pagato' AND data_pagamento >= date('now', '-6 month')
-             GROUP BY month ORDER BY data_pagamento ASC`
+             GROUP BY month`
           );
           const monthsMap: Record<string, string> = {
             "01": "Gen", "02": "Feb", "03": "Mar", "04": "Apr", "05": "Mag", "06": "Giu",
