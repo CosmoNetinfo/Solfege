@@ -9,7 +9,7 @@ export async function GET() {
 
     const { data: releaseRes, error } = await adminDb
       .from('app_releases' as any)
-      .select('version, release_notes, windows_url, mac_url, linux_url, created_at')
+      .select('version, release_notes, windows_url, mac_url, linux_url, published_at')
       .eq('is_current', true)
       .maybeSingle()
 
@@ -58,7 +58,7 @@ export async function GET() {
     const tauriResponse: any = {
       version: version,
       notes: release.release_notes,
-      pub_date: release.created_at || new Date().toISOString(),
+      pub_date: release.published_at || new Date().toISOString(),
       platforms: {}
     };
 
