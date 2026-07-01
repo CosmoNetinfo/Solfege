@@ -78,7 +78,25 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Errore sync scuola: ' + schoolUpsertError.message }, { status: 500 });
     }
 
-    // 4. Upsert delle tabelle collegate in blocco (se presenti nel payload)
+    // 4. Collega school_id al profilo admin (dal campo customer_email della licenza)
+    if (license.customer_email) {
+      // Cerca l'utente Supabase con quella email
+      const { data: usersData } = await adminDb.auth.admin.listUsers();
+      const adminUser = usersData?.users?.find(
+        (u: any) => u.email?.toLowerCase() === license.customer_email?.toLowerCase()
+      );
+      if (adminUser) {
+        await adminDb
+          .from('profiles' as any)
+          .upsert({
+            id: adminUser.id,
+            email: adminUser.email,
+            school_id: schoolId,
+            role: 'admin',
+          });
+      }
+    }
+
 
     // STUDENTI
     if (students.length > 0) {

@@ -9,6 +9,7 @@ import { RoomsTab } from '@/components/admin/settings/RoomsTab';
 import { UsersTab } from '@/components/admin/settings/UsersTab';
 import { createClient } from '@/lib/supabase/client';
 import { getProfile, getSchoolData } from '@/lib/supabase/queries';
+import { isDesktop } from '@/lib/is-desktop';
 import { Loader2 } from 'lucide-react';
 
 export default function ImpostazioniPage() {
@@ -19,15 +20,37 @@ export default function ImpostazioniPage() {
   useEffect(() => {
     async function loadData() {
       try {
-        const { data: { user } } = await supabase.auth.getUser();
-        if (!user) return;
+        if (isDesktop()) {
+          // Su desktop: legge dati scuola direttamente da SQLite locale
+          const Database = (await import('@tauri-apps/plugin-sql')).default;
+          const db = await Database.load('sqlite:solfege.db');
+          const rows = await db.select<any[]>('SELECT * FROM schools LIMIT 1');
+          if (rows.length > 0) {
+            const s = rows[0];
+            // Mappa i campi SQLite al formato atteso dai componenti
+            setSchool({
+              id: s.id,
+              name: s.nome,
+              address: s.indirizzo || null,
+              phone: s.telefono || null,
+              email: s.email || null,
+              website: s.sito_web || null,
+              slug: s.slug || null,
+              current_academic_year: s.anno_accademico_corrente || '2026/2027',
+            });
+          }
+        } else {
+          // Su web: usa Supabase normalmente
+          const { data: { user } } = await supabase.auth.getUser();
+          if (!user) return;
 
-        const profile = await getProfile(supabase, user.id);
-        if (!profile || !profile.school_id) return;
+          const profile = await getProfile(supabase, user.id);
+          if (!profile || !profile.school_id) return;
 
-        const schoolData = await getSchoolData(supabase, profile.school_id);
-        if (schoolData) {
-          setSchool(schoolData);
+          const schoolData = await getSchoolData(supabase, profile.school_id);
+          if (schoolData) {
+            setSchool(schoolData);
+          }
         }
       } catch (err) {
         console.error("Errore caricamento impostazioni:", err);
