@@ -56,6 +56,39 @@ export default function CalendarPage() {
   }, []);
 
   async function loadInitialData() {
+    try {
+      const { isDesktop } = await import("@/lib/is-desktop");
+      if (isDesktop()) {
+        const Database = (await import("@tauri-apps/plugin-sql")).default;
+        const db = await Database.load("sqlite:solfege.db");
+
+        // 1. Carica Insegnanti
+        const tList = await db.select<any[]>("SELECT id, nome, cognome FROM teachers");
+        const formattedTeachers = tList.map(t => ({ id: t.id, name: `${t.nome} ${t.cognome}` }));
+        setTeachers(formattedTeachers);
+        setSelectedTeachers(formattedTeachers.map(t => t.id));
+
+        // 2. Carica Corsi
+        const cList = await db.select<any[]>("SELECT id, nome, colore_calendario FROM courses");
+        const formattedCourses = cList.map(c => ({ id: c.id, name: c.nome, color: c.colore_calendario }));
+        setCourses(formattedCourses);
+        setSelectedCourses(formattedCourses.map(c => c.id));
+
+        // 3. Carica Aule
+        const rList = await db.select<any[]>("SELECT id, nome FROM rooms");
+        const formattedRooms = rList.map(r => ({ id: r.id, name: r.nome }));
+        setRooms(formattedRooms);
+        setSelectedRooms(formattedRooms.map(r => r.id));
+
+        // 4. Carica eventi
+        loadEvents();
+        return;
+      }
+    } catch (err) {
+      console.error("Error loading SQLite initial calendar filters:", err);
+    }
+
+    // Web flow (Supabase)
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return;
     const { data: profile } = await supabase.from("profiles").select("school_id").eq("id", user.id).single();
@@ -71,7 +104,6 @@ export default function CalendarPage() {
     setCourses((cRes.data || []).map(c => ({ id: c.id, name: c.name, color: c.colore_calendario })));
     setRooms((rRes.data || []).map(r => ({ id: r.id, name: r.name })));
     
-    // Default: select all
     setSelectedTeachers((tRes.data || []).map(t => t.id));
     setSelectedCourses((cRes.data || []).map(c => c.id));
     setSelectedRooms((rRes.data || []).map(r => r.id));
@@ -81,6 +113,84 @@ export default function CalendarPage() {
 
   async function loadEvents(schoolId?: string) {
     setLoading(true);
+    try {
+      const { isDesktop } = await import("@/lib/is-desktop");
+      if (isDesktop()) {
+        const Database = (await import("@tauri-apps/plugin-sql")).default;
+        const db = await Database.load("sqlite:solfege.db");
+
+        // 1. Carica lezioni da SQLite
+        const lessons = await db.select<any[]>(
+          `SELECT l.id, l.data, l.ora_inizio, l.ora_fine, l.stato as status, l.course_id,
+                  c.nome as course_name, c.colore_calendario as course_color,
+                  t.nome as teacher_first_name, t.cognome as teacher_last_name, t.id as teacher_id,
+                  r.nome as room_name, r.id as room_id
+           FROM lessons l
+           LEFT JOIN courses c ON l.course_id = c.id
+           LEFT JOIN teachers t ON c.teacher_id = t.id
+           LEFT JOIN rooms r ON c.room_id = r.id`
+        );
+
+        const mapped: CalendarEvent[] = lessons.map(l => {
+          const startDate = new Date(`${l.data}T${l.ora_inizio}:00`);
+          const endDate = new Date(`${l.data}T${l.ora_fine}:00`);
+          return {
+            id: l.id,
+            title: l.course_name || "Lezione",
+            start: isNaN(startDate.getTime()) ? new Date() : startDate,
+            end: isNaN(endDate.getTime()) ? new Date() : endDate,
+            color: l.course_color || "#E8621A",
+            teacherId: l.teacher_id || "",
+            courseId: l.course_id || "",
+            roomId: l.room_id || "",
+            resource: {
+              teacher: l.teacher_first_name ? `${l.teacher_first_name} ${l.teacher_last_name}` : "",
+              room: l.room_name || "",
+              status: l.status || "programmata",
+              courseName: l.course_name || "",
+            }
+          };
+        });
+
+        // 2. Carica prenotazioni da SQLite
+        const bookings = await db.select<any[]>(
+          `SELECT b.id, b.room_id, b.tipo, b.titolo, b.nome_gruppo, b.data, b.ora_inizio, b.ora_fine, b.colore,
+                  r.nome as room_name
+           FROM room_bookings b
+           LEFT JOIN rooms r ON b.room_id = r.id`
+        );
+
+        const mappedBookings: CalendarEvent[] = bookings.map(b => {
+          const startDate = new Date(`${b.data}T${b.ora_inizio}:00`);
+          const endDate = new Date(`${b.data}T${b.ora_fine}:00`);
+          return {
+            id: `booking-${b.id}`,
+            title: `${b.titolo}${b.nome_gruppo ? ` — ${b.nome_gruppo}` : ''} (${b.room_name || ''})`,
+            start: isNaN(startDate.getTime()) ? new Date() : startDate,
+            end: isNaN(endDate.getTime()) ? new Date() : endDate,
+            color: b.colore || '#7C3AED',
+            teacherId: '',
+            courseId: '',
+            roomId: b.room_id || '',
+            resource: {
+              teacher: '',
+              room: b.room_name || '',
+              status: b.tipo,
+              courseName: 'Prenotazione',
+              isBooking: true
+            }
+          };
+        });
+
+        setEvents([...mapped, ...mappedBookings]);
+        setLoading(false);
+        return;
+      }
+    } catch (err) {
+      console.error("Error loading SQLite calendar events:", err);
+    }
+
+    // Web flow (Supabase)
     let sId = schoolId;
     if (!sId) {
       const { data: { user } } = await supabase.auth.getUser();
@@ -91,7 +201,10 @@ export default function CalendarPage() {
       const { data: profile } = await supabase.from("profiles").select("school_id").eq("id", user.id).maybeSingle();
       sId = profile?.school_id || undefined;
     }
-    if (!sId) return;
+    if (!sId) {
+      setLoading(false);
+      return;
+    }
 
     const { data: lessons } = await supabase
       .from("lessons")

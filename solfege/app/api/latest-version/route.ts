@@ -80,7 +80,12 @@ export async function GET() {
       };
     }
 
-    // Se non ci sono firme per la versione corrente, Tauri ignorerà l'update per sicurezza
+    // Se non ci sono piattaforme firmate disponibili per questa versione,
+    // Tauri v2 si aspetta uno status 204 No Content per indicare che non ci sono aggiornamenti.
+    if (Object.keys(tauriResponse.platforms).length === 0) {
+      return new NextResponse(null, { status: 204 });
+    }
+
     return NextResponse.json(tauriResponse);
 
   } catch (err: any) {
