@@ -1,6 +1,8 @@
-import { redirect } from "next/navigation";
-import { Users, GraduationCap, Banknote, CalendarCheck, Clock, AlertCircle } from "lucide-react";
-import { createClient } from "@/lib/supabase/server";
+"use client";
+
+import { useState, useEffect } from "react";
+import { Users, GraduationCap, Banknote, CalendarCheck, Clock, AlertCircle, Loader2 } from "lucide-react";
+import { createClient } from "@/lib/supabase/client";
 import { getProfile, getKpiDashboard, getTodayLessons, getUpcomingPayments, getMonthlyIncomeData } from "@/lib/supabase/queries";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -21,26 +23,61 @@ function getStatusBadge(status: string) {
   }
 }
 
-export default async function AdminDashboardPage() {
-  const supabase = await createClient();
-  
-  const { data: { user }, error: authError } = await supabase.auth.getUser();
-  if (authError || !user) {
-    redirect("/login");
+export default function AdminDashboardPage() {
+  const supabase = createClient();
+  const [loading, setLoading] = useState(true);
+  const [kpis, setKpis] = useState<any>(null);
+  const [todayLessons, setTodayLessons] = useState<any[]>([]);
+  const [upcomingPayments, setUpcomingPayments] = useState<any[]>([]);
+  const [chartData, setChartData] = useState<any[]>([]);
+
+  useEffect(() => {
+    async function loadDashboardData() {
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return;
+
+        const profile = await getProfile(supabase, user.id);
+        if (!profile || !profile.school_id) return;
+
+        const [kpiRes, lessonsRes, paymentsRes, incomeRes] = await Promise.all([
+          getKpiDashboard(supabase, profile.school_id),
+          getTodayLessons(supabase, profile.school_id),
+          getUpcomingPayments(supabase, profile.school_id),
+          getMonthlyIncomeData(supabase, profile.school_id),
+        ]);
+
+        setKpis(kpiRes);
+        setTodayLessons(lessonsRes || []);
+        setUpcomingPayments(paymentsRes || []);
+        setChartData(incomeRes || []);
+      } catch (err) {
+        console.error("Errore caricamento dashboard:", err);
+      } finally {
+        setLoading(false);
+      }
+    }
+    loadDashboardData();
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="flex-1 min-h-screen flex items-center justify-center bg-[#FAFAF9]">
+        <div className="text-stone-400 font-serif text-lg flex items-center gap-2">
+          <Loader2 className="h-5 w-5 animate-spin text-orange" />
+          Caricamento dashboard...
+        </div>
+      </div>
+    );
   }
 
-  const profile = await getProfile(supabase, user.id);
-  if (!profile || !profile.school_id) {
-    redirect("/");
+  if (!kpis) {
+    return (
+      <div className="flex-1 p-8 text-center text-muted-foreground">
+        Nessun dato disponibile. Assicurati che l'account sia configurato correttamente.
+      </div>
+    );
   }
-
-  // Tutte le query in parallelo per performance
-  const [kpis, todayLessons, upcomingPayments, chartData] = await Promise.all([
-    getKpiDashboard(supabase, profile.school_id),
-    getTodayLessons(supabase, profile.school_id),
-    getUpcomingPayments(supabase, profile.school_id),
-    getMonthlyIncomeData(supabase, profile.school_id),
-  ]);
 
   return (
     <div className="flex-1 space-y-6 p-8 pt-6">

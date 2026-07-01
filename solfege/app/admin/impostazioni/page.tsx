@@ -1,23 +1,61 @@
+"use client";
+
+import { useState, useEffect } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { SchoolTab } from '@/components/admin/settings/SchoolTab';
 import { AcademicYearTab } from '@/components/admin/settings/AcademicYearTab';
 import { InstrumentsTab } from '@/components/admin/settings/InstrumentsTab';
 import { RoomsTab } from '@/components/admin/settings/RoomsTab';
 import { UsersTab } from '@/components/admin/settings/UsersTab';
-import { createClient } from '@/lib/supabase/server';
+import { createClient } from '@/lib/supabase/client';
 import { getProfile, getSchoolData } from '@/lib/supabase/queries';
-import { redirect } from 'next/navigation';
+import { Loader2 } from 'lucide-react';
 
-export default async function ImpostazioniPage() {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) redirect('/login');
-  
-  const profile = await getProfile(supabase, user.id);
-  if (!profile || !profile.school_id) redirect('/');
-  
-  const school = await getSchoolData(supabase, profile.school_id);
-  if (!school) return <div className="p-8">Nessuna scuola trovata.</div>;
+export default function ImpostazioniPage() {
+  const supabase = createClient();
+  const [loading, setLoading] = useState(true);
+  const [school, setSchool] = useState<any>(null);
+
+  useEffect(() => {
+    async function loadData() {
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return;
+
+        const profile = await getProfile(supabase, user.id);
+        if (!profile || !profile.school_id) return;
+
+        const schoolData = await getSchoolData(supabase, profile.school_id);
+        if (schoolData) {
+          setSchool(schoolData);
+        }
+      } catch (err) {
+        console.error("Errore caricamento impostazioni:", err);
+      } finally {
+        setLoading(false);
+      }
+    }
+    loadData();
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="flex-1 min-h-screen flex items-center justify-center bg-[#FAFAF9]">
+        <div className="text-stone-400 font-serif text-lg flex items-center gap-2">
+          <Loader2 className="h-5 w-5 animate-spin text-orange" />
+          Caricamento...
+        </div>
+      </div>
+    );
+  }
+
+  if (!school) {
+    return (
+      <div className="flex-1 p-8 text-center text-muted-foreground">
+        Nessuna scuola configurata trovata.
+      </div>
+    );
+  }
 
   return (
     <div className="p-8 max-w-6xl mx-auto">

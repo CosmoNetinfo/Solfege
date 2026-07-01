@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { invoke } from '@tauri-apps/api/core'
 import { User, Key, Eye, EyeOff, AlertCircle, Loader2 } from 'lucide-react'
 import { isDesktop } from '@/lib/is-desktop'
+import { createClient } from '@/lib/supabase/client'
 
 export default function LoginDesktopPage() {
   const router = useRouter()
@@ -13,6 +14,7 @@ export default function LoginDesktopPage() {
   const [showPassword, setShowPassword] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const supabase = createClient()
 
   useEffect(() => {
     if (!isDesktop()) {
@@ -47,6 +49,21 @@ export default function LoginDesktopPage() {
     try {
       const user = await invoke('login', { username, password })
       if (user) {
+        // Accedi anche su Supabase per sincronizzare la sessione cloud
+        try {
+          const { error: supabaseErr } = await supabase.auth.signInWithPassword({
+            email: username,
+            password: password,
+          })
+          if (supabaseErr) {
+            console.error('[AUTH] Supabase login error:', supabaseErr.message)
+          } else {
+            console.log('[AUTH] Supabase login OK')
+          }
+        } catch (supabaseCatch) {
+          console.error('[AUTH] Fallimento client Supabase:', supabaseCatch)
+        }
+
         router.push('/admin/dashboard')
       } else {
         setError('Credenziali non valide.')
