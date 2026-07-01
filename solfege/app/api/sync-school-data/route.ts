@@ -1,6 +1,17 @@
 import { NextResponse } from 'next/server';
 import { createAdminClient } from '@/lib/supabase/admin';
 
+const CORS_HEADERS = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Methods': 'POST, OPTIONS',
+  'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+};
+
+// Handle CORS preflight
+export async function OPTIONS() {
+  return new NextResponse(null, { status: 204, headers: CORS_HEADERS });
+}
+
 export async function POST(request: Request) {
   try {
     const body = await request.json();
@@ -19,7 +30,7 @@ export async function POST(request: Request) {
     } = body;
 
     if (!license_key || !school || !school.id) {
-      return NextResponse.json({ error: 'Chiave licenza o dati scuola mancanti' }, { status: 400 });
+      return NextResponse.json({ error: 'Chiave licenza o dati scuola mancanti' }, { status: 400, headers: CORS_HEADERS });
     }
 
     const adminDb = createAdminClient();
@@ -34,11 +45,11 @@ export async function POST(request: Request) {
     const license = licenseRes as any;
 
     if (licenseError || !license) {
-      return NextResponse.json({ error: 'Licenza non valida o non trovata' }, { status: 403 });
+      return NextResponse.json({ error: 'Licenza non valida o non trovata' }, { status: 403, headers: CORS_HEADERS });
     }
 
     if (license.status === 'revoked') {
-      return NextResponse.json({ error: 'Licenza revocata' }, { status: 403 });
+      return NextResponse.json({ error: 'Licenza revocata' }, { status: 403, headers: CORS_HEADERS });
     }
 
     // 2. Associazione / verifica school_id
@@ -50,11 +61,11 @@ export async function POST(request: Request) {
         .eq('license_key', license_key);
       
       if (assocError) {
-        return NextResponse.json({ error: 'Impossibile associare la scuola alla licenza: ' + assocError.message }, { status: 500 });
+        return NextResponse.json({ error: 'Impossibile associare la scuola alla licenza: ' + assocError.message }, { status: 500, headers: CORS_HEADERS });
       }
     } else if (license.school_id !== school.id) {
       // Controllo di sicurezza: lo school_id deve corrispondere a quello associato alla licenza
-      return NextResponse.json({ error: 'Questa licenza è già associata a un altro database scolastico.' }, { status: 403 });
+      return NextResponse.json({ error: 'Questa licenza è già associata a un altro database scolastico.' }, { status: 403, headers: CORS_HEADERS });
     }
 
     const schoolId = school.id;
@@ -76,7 +87,7 @@ export async function POST(request: Request) {
       .upsert(mappedSchool);
 
     if (schoolUpsertError) {
-      return NextResponse.json({ error: 'Errore sync scuola: ' + schoolUpsertError.message }, { status: 500 });
+      return NextResponse.json({ error: 'Errore sync scuola: ' + schoolUpsertError.message }, { status: 500, headers: CORS_HEADERS });
     }
 
     // 4. Collega school_id al profilo admin
@@ -245,9 +256,9 @@ export async function POST(request: Request) {
       if (error) console.error('[SYNC ERROR] school_notices:', error.message);
     }
 
-    return NextResponse.json({ success: true, message: 'Sincronizzazione completata con successo' });
+    return NextResponse.json({ success: true, message: 'Sincronizzazione completata con successo' }, { headers: CORS_HEADERS });
   } catch (err: any) {
     console.error('[SYNC API ERROR]:', err);
-    return NextResponse.json({ error: err.message || 'Errore interno del server' }, { status: 500 });
+    return NextResponse.json({ error: err.message || 'Errore interno del server' }, { status: 500, headers: CORS_HEADERS });
   }
 }
