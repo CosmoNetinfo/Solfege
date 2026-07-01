@@ -16,7 +16,7 @@ export async function GET(request: Request) {
     const adminDb = createAdminClient()
 
     const { data, error } = await adminDb
-      .from('online_registrations')
+      .from('online_registrations' as any)
       .select('*')
       .eq('school_id', schoolId)
       .eq('status', 'pending')
@@ -54,7 +54,7 @@ export async function POST(request: Request) {
     const adminDb = createAdminClient()
 
     const { data, error } = await adminDb
-      .from('online_registrations')
+      .from('online_registrations' as any)
       .update({ status: status })
       .eq('id', registration_id)
       .select()
