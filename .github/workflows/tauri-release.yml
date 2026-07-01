@@ -113,9 +113,9 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
-          NEXT_PUBLIC_SUPABASE_URL: https://placeholder.supabase.co
-          NEXT_PUBLIC_SUPABASE_ANON_KEY: placeholder-key-for-build-only
-          SUPABASE_SERVICE_ROLE_KEY: placeholder-service-key-for-build-only
+          NEXT_PUBLIC_SUPABASE_URL: https://tqpcoeahucwvtpkihgqi.supabase.co
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRxcGNvZWFodWN3dnRwa2loZ3FpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg2MTQ5MjgsImV4cCI6MjA5NDE5MDkyOH0.yRPK9wmy0YUK_ivxILFsUf9uzA3JZUn5yo3DpnRxjL8
+          SUPABASE_SERVICE_ROLE_KEY: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRxcGNvZWFodWN3dnRwa2loZ3FpIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3ODYxNDkyOCwiZXhwIjoyMDk0MTkwOTI4fQ.llehwjzPHAkuS9X2njKYIt5LfkHCExClDgYMbRGnpEw
         with:
           projectPath: solfege
           releaseId: ${{ needs.create-release.outputs.release_id }}
