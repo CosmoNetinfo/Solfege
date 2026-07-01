@@ -34,23 +34,119 @@ export default function AdminDashboardPage() {
   useEffect(() => {
     async function loadDashboardData() {
       try {
-        const { data: { user } } = await supabase.auth.getUser();
-        if (!user) return;
+        const { isDesktop } = await import("@/lib/is-desktop");
+        
+        if (isDesktop()) {
+          // Carica dati direttamente da SQLite locale
+          const Database = (await import("@tauri-apps/plugin-sql")).default;
+          const db = await Database.load("sqlite:solfege.db");
 
-        const profile = await getProfile(supabase, user.id);
-        if (!profile || !profile.school_id) return;
+          // 1. Conta Studenti Attivi
+          const students = await db.select<any[]>("SELECT COUNT(*) as count FROM students WHERE active = 1");
+          const totalStudents = students[0]?.count || 0;
 
-        const [kpiRes, lessonsRes, paymentsRes, incomeRes] = await Promise.all([
-          getKpiDashboard(supabase, profile.school_id),
-          getTodayLessons(supabase, profile.school_id),
-          getUpcomingPayments(supabase, profile.school_id),
-          getMonthlyIncomeData(supabase, profile.school_id),
-        ]);
+          // 2. Conta Insegnanti Attivi
+          const teachers = await db.select<any[]>("SELECT COUNT(*) as count FROM teachers WHERE active = 1");
+          const totalTeachers = teachers[0]?.count || 0;
 
-        setKpis(kpiRes);
-        setTodayLessons(lessonsRes || []);
-        setUpcomingPayments(paymentsRes || []);
-        setChartData(incomeRes || []);
+          // 3. Calcola Incassi Mensili (mese corrente)
+          const now = new Date();
+          const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split('T')[0];
+          const payments = await db.select<any[]>(
+            "SELECT SUM(importo) as sum FROM payments WHERE stato = 'pagato' AND data_pagamento >= ?",
+            [firstDayOfMonth]
+          );
+          const monthlyIncome = payments[0]?.sum || 0;
+
+          // 4. Conta Lezioni Oggi
+          const todayStr = now.toISOString().split('T')[0];
+          const lessonsTodayCount = await db.select<any[]>(
+            "SELECT COUNT(*) as count FROM lessons WHERE data_ora_inizio >= ? AND data_ora_inizio <= ?",
+            [todayStr + 'T00:00:00', todayStr + 'T23:59:59']
+          );
+          const lessonsToday = lessonsTodayCount[0]?.count || 0;
+
+          setKpis({
+            totalStudents,
+            totalTeachers,
+            monthlyIncome,
+            lessonsToday
+          });
+
+          // 5. Lezioni di oggi dettagliate (JOIN)
+          const lessonsRes = await db.select<any[]>(
+            `SELECT l.id, l.data_ora_inizio, l.data_ora_fine, l.stato as status, 
+                    c.nome as course_name, t.nome as teacher_first_name, t.cognome as teacher_last_name
+             FROM lessons l
+             LEFT JOIN courses c ON l.course_id = c.id
+             LEFT JOIN teachers t ON l.teacher_id = t.id
+             WHERE l.data_ora_inizio >= ? AND l.data_ora_inizio <= ?
+             ORDER BY l.data_ora_inizio ASC LIMIT 10`,
+            [todayStr + 'T00:00:00', todayStr + 'T23:59:59']
+          );
+          setTodayLessons(lessonsRes.map(l => ({
+            id: l.id,
+            data_ora_inizio: l.data_ora_inizio,
+            data_ora_fine: l.data_ora_fine,
+            status: l.status,
+            courses: { name: l.course_name },
+            teachers: { first_name: l.teacher_first_name, last_name: l.teacher_last_name }
+          })));
+
+          // 6. Pagamenti in scadenza dettagliati (JOIN)
+          const paymentsRes = await db.select<any[]>(
+            `SELECT p.id, p.importo as amount, p.data_scadenza as due_date, p.stato as status, p.note as description,
+                    s.nome as student_first_name, s.cognome as student_last_name
+             FROM payments p
+             LEFT JOIN students s ON p.student_id = s.id
+             WHERE p.stato IN ('in_attesa', 'in_ritardo')
+             ORDER BY p.data_scadenza ASC LIMIT 8`
+          );
+          setUpcomingPayments(paymentsRes.map(p => ({
+            id: p.id,
+            amount: p.amount,
+            due_date: p.due_date,
+            status: p.status,
+            description: p.description,
+            students: { first_name: p.student_first_name, last_name: p.student_last_name }
+          })));
+
+          // 7. Dati Grafico Mensile (Ultimi 6 mesi)
+          const chartRes = await db.select<any[]>(
+            `SELECT strftime('%m', data_pagamento) as month, SUM(importo) as total 
+             FROM payments 
+             WHERE stato = 'pagato' AND data_pagamento >= date('now', '-6 month')
+             GROUP BY month ORDER BY data_pagamento ASC`
+          );
+          const monthsMap: Record<string, string> = {
+            "01": "Gen", "02": "Feb", "03": "Mar", "04": "Apr", "05": "Mag", "06": "Giu",
+            "07": "Lug", "08": "Ago", "09": "Set", "10": "Ott", "11": "Nov", "12": "Dic"
+          };
+          setChartData(chartRes.map(c => ({
+            name: monthsMap[c.month] || c.month,
+            totale: c.total || 0
+          })));
+
+        } else {
+          // Web flow (Supabase)
+          const { data: { user } } = await supabase.auth.getUser();
+          if (!user) return;
+
+          const profile = await getProfile(supabase, user.id);
+          if (!profile || !profile.school_id) return;
+
+          const [kpiRes, lessonsRes, paymentsRes, incomeRes] = await Promise.all([
+            getKpiDashboard(supabase, profile.school_id),
+            getTodayLessons(supabase, profile.school_id),
+            getUpcomingPayments(supabase, profile.school_id),
+            getMonthlyIncomeData(supabase, profile.school_id),
+          ]);
+
+          setKpis(kpiRes);
+          setTodayLessons(lessonsRes || []);
+          setUpcomingPayments(paymentsRes || []);
+          setChartData(incomeRes || []);
+        }
       } catch (err) {
         console.error("Errore caricamento dashboard:", err);
       } finally {
