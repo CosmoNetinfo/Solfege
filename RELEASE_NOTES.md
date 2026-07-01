@@ -7,6 +7,7 @@ In questo documento sono raccolti i dettagli degli aggiornamenti, dei bugfix e d
 Questa release risolve definitivamente il problema di reindirizzamento (loop) che rispediva l'utente alla pagina di login subito dopo aver effettuato l'accesso sulla versione desktop.
 
 ### 🛠️ Correzioni e Ottimizzazioni (Bugfix)
+* **Creazione Account Supabase in Setup**: Nel passaggio 3 del wizard di configurazione iniziale (creazione account), l'app esegue la registrazione dell'amministratore su Supabase Auth in background. Questo assicura che anche i nuovi acquirenti che attivano la licenza via canali privati ottengano istantaneamente le credenziali cloud necessarie per le query ed il sync online.
 * **Allineamento Sessione Cloud (Supabase Auth)**: Modificato il login desktop (`LoginDesktopPage`) per eseguire contestualmente l'autenticazione sia sul database SQLite locale sia su Supabase via client JS.
   - *Problema risolto*: Le pagine dell'area amministrativa (Dashboard, Studenti, ecc.) necessitano del token Supabase per leggere/scrivere dati. Mancando questo token sul desktop (poiché l'utente accedeva solo localmente), le chiamate fallivano o forzavano un reindirizzamento.
 * **Rimozione Redirect Compile-Time (Client Components)**: Convertite le pagine `dashboard`, `compensi` e `impostazioni` in *Client Components* (`"use client"`).
