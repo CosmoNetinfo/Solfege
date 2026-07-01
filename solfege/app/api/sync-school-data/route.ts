@@ -6,6 +6,7 @@ export async function POST(request: Request) {
     const body = await request.json();
     const {
       license_key,
+      admin_email,
       school,
       students = [],
       teachers = [],
@@ -78,12 +79,13 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Errore sync scuola: ' + schoolUpsertError.message }, { status: 500 });
     }
 
-    // 4. Collega school_id al profilo admin (dal campo customer_email della licenza)
-    if (license.customer_email) {
-      // Cerca l'utente Supabase con quella email
+    // 4. Collega school_id al profilo admin
+    // Usa admin_email dal payload (email registrata nell'app) con fallback su customer_email della licenza
+    const emailToLink = admin_email || license.customer_email;
+    if (emailToLink) {
       const { data: usersData } = await adminDb.auth.admin.listUsers();
       const adminUser = usersData?.users?.find(
-        (u: any) => u.email?.toLowerCase() === license.customer_email?.toLowerCase()
+        (u: any) => u.email?.toLowerCase() === emailToLink.toLowerCase()
       );
       if (adminUser) {
         await adminDb

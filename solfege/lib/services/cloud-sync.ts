@@ -18,7 +18,11 @@ export async function syncLocalToCloud(): Promise<{ success: boolean; message: s
     }
     const school = schools[0];
 
-    // 3. Estrai tutte le tabelle locali
+    // 3. Estrai email admin locale
+    const adminUsers = await db.select<any[]>("SELECT username FROM users WHERE role='admin' LIMIT 1");
+    const adminEmail = adminUsers.length > 0 ? adminUsers[0].username : null;
+
+    // 4. Estrai tutte le tabelle locali
     const students = await db.select<any[]>('SELECT * FROM students');
     const teachers = await db.select<any[]>('SELECT * FROM teachers');
     const courses = await db.select<any[]>('SELECT * FROM courses');
@@ -28,9 +32,10 @@ export async function syncLocalToCloud(): Promise<{ success: boolean; message: s
     const payments = await db.select<any[]>('SELECT * FROM payments');
     const notices = await db.select<any[]>('SELECT * FROM school_notices');
 
-    // 4. Invia payload all'endpoint di sincronizzazione
+    // 5. Invia payload all'endpoint di sincronizzazione
     const payload = {
       license_key: licenseKey,
+      admin_email: adminEmail,
       school,
       students,
       teachers,
@@ -56,10 +61,17 @@ export async function syncLocalToCloud(): Promise<{ success: boolean; message: s
       body: JSON.stringify(payload)
     });
 
-    const result = await response.json();
+    let result: any;
+    const contentType = response.headers.get('content-type') || '';
+    if (contentType.includes('application/json')) {
+      result = await response.json();
+    } else {
+      const text = await response.text();
+      throw new Error(`Risposta non valida dal server (${response.status}): ${text.substring(0, 200)}`);
+    }
 
     if (!response.ok) {
-      throw new Error(result.error || 'Errore durante la sincronizzazione cloud');
+      throw new Error(result.error || `Errore ${response.status} durante la sincronizzazione cloud`);
     }
 
     // Aggiorna data ultimo sync in config locale
