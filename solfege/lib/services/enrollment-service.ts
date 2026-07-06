@@ -10,20 +10,6 @@ export interface EnrollmentData {
   start_date: string;
   discount_pct: number;
 }
-
-import { SupabaseClient } from "@supabase/supabase-js";
-import { addWeeks, setHours, setMinutes, startOfDay, parseISO, addMinutes, format } from "date-fns";
-import { it } from "date-fns/locale";
-
-export interface EnrollmentData {
-  school_id: string;
-  student_id: string;
-  course_id: string;
-  teacher_id: string | null;
-  start_date: string;
-  discount_pct: number;
-}
-
 export async function enrollStudent(supabase: SupabaseClient, data: EnrollmentData) {
   const { isDesktop } = await import("@/lib/is-desktop");
 
