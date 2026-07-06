@@ -365,7 +365,7 @@ export default function StatoAulePage() {
                   type="time" 
                   value={referenceTime} 
                   onChange={(e) => setReferenceTime(e.target.value)}
-                  className="bg-transparent text-sm font-bold text-stone-800 outline-none w-16"
+                  className="bg-transparent text-sm font-bold text-stone-800 outline-none w-20 [&::-webkit-calendar-picker-indicator]:hidden"
                 />
               </div>
             )}
