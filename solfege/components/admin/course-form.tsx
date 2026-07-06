@@ -353,7 +353,7 @@ export function CourseFormDialog({ open, onOpenChange, schoolId, course, instrum
                 </Button>
               </div>
             ) : (
-              <div className="grid grid-cols-3 gap-4">
+              <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label>Giorno</Label>
                   <Select defaultValue={String(course?.day_of_week ?? "")} onValueChange={(v) => setValue("day_of_week", v)}>
@@ -365,17 +365,17 @@ export function CourseFormDialog({ open, onOpenChange, schoolId, course, instrum
                   <Label>Ora Inizio</Label>
                   <Input type="time" {...register("start_time")} />
                 </div>
-                <div className="space-y-2">
-                  <Label>Durata (min)</Label>
-                  <Input type="number" {...register("duration_min")} />
-                </div>
               </div>
             )}
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-3 gap-4">
               <div className="space-y-2">
                 <Label>Max Studenti</Label>
                 <Input type="number" {...register("max_students")} />
+              </div>
+              <div className="space-y-2">
+                <Label>Durata (min)</Label>
+                <Input type="number" {...register("duration_min")} />
               </div>
               <div className="space-y-2">
                 <Label>Aula</Label>
