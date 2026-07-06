@@ -34,13 +34,65 @@ export async function enrollStudent(supabase: SupabaseClient, data: EnrollmentDa
     );
 
     // 3. Generate Lessons (next 12 weeks)
-    if (course.giorno_settimana !== null && course.giorno_settimana !== undefined && course.ora_inizio) {
+    let multiSchedules: { day_of_week: string; start_time: string }[] | null = null;
+    try {
+      const descText = course.descrizione || "";
+      if (descText.startsWith("{")) {
+        const parsed = JSON.parse(descText);
+        if (parsed && Array.isArray(parsed.multiScheduling)) {
+          multiSchedules = parsed.multiScheduling;
+        }
+      }
+    } catch (e) {}
+
+    if (multiSchedules && multiSchedules.length > 0) {
+      // Flusso Programmazione Multipla
+      const duration = course.durata_minuti || 60;
+      
+      for (const sched of multiSchedules) {
+        if (!sched.day_of_week || !sched.start_time) continue;
+        const dayOfWeekNum = parseInt(sched.day_of_week);
+        const [hours, minutes] = sched.start_time.split(":").map(Number);
+        
+        let currentDate = startOfDay(parseISO(data.start_date));
+        while (currentDate.getDay() !== dayOfWeekNum) {
+          currentDate.setDate(currentDate.getDate() + 1);
+        }
+
+        for (let i = 0; i < 12; i++) {
+          const lessonStart = setMinutes(setHours(currentDate, hours), minutes);
+          const lessonEnd = addMinutes(lessonStart, duration);
+
+          const lessonId = crypto.randomUUID();
+          const dateStr = format(currentDate, "yyyy-MM-dd");
+          const startStr = format(lessonStart, "HH:mm");
+          const endStr = format(lessonEnd, "HH:mm");
+
+          await db.execute(
+            `INSERT INTO lessons (id, school_id, course_id, teacher_id, room_id, data, ora_inizio, ora_fine, stato)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+            [
+              lessonId, data.school_id, data.course_id, data.teacher_id,
+              course.room_id, dateStr, startStr, endStr, "programmata"
+            ]
+          );
+
+          await db.execute(
+            `INSERT INTO attendances (id, lesson_id, student_id, stato)
+             VALUES (lower(hex(randomblob(16))), ?, ?, 'assente')`,
+            [lessonId, data.student_id]
+          );
+
+          currentDate = addWeeks(currentDate, 1);
+        }
+      }
+    } else if (course.giorno_settimana !== null && course.giorno_settimana !== undefined && course.ora_inizio) {
+      // Flusso Singolo standard
       const [hours, minutes] = course.ora_inizio.split(":").map(Number);
       const duration = course.durata_minuti || 60;
 
       let currentDate = startOfDay(parseISO(data.start_date));
       
-      // Trova la prima occorrenza del giorno della settimana
       while (currentDate.getDay() !== course.giorno_settimana) {
         currentDate.setDate(currentDate.getDate() + 1);
       }
@@ -63,7 +115,6 @@ export async function enrollStudent(supabase: SupabaseClient, data: EnrollmentDa
           ]
         );
 
-        // Genera presenze (attendance) per l'allievo iscritto per questa lezione
         await db.execute(
           `INSERT INTO attendances (id, lesson_id, student_id, stato)
            VALUES (lower(hex(randomblob(16))), ?, ?, 'assente')`,
@@ -120,14 +171,60 @@ export async function enrollStudent(supabase: SupabaseClient, data: EnrollmentDa
   if (enrollError) throw enrollError;
 
   // 3. Generate Lessons (next 12 weeks)
-  if (course.day_of_week !== null && course.day_of_week !== undefined && course.start_time) {
+  let onlineSchedules: { day_of_week: string; start_time: string }[] | null = null;
+  try {
+    const descText = course.descrizione || "";
+    if (descText.startsWith("{")) {
+      const parsed = JSON.parse(descText);
+      if (parsed && Array.isArray(parsed.multiScheduling)) {
+        onlineSchedules = parsed.multiScheduling;
+      }
+    }
+  } catch (e) {}
+
+  if (onlineSchedules && onlineSchedules.length > 0) {
+    const lessonsToInsert = [];
+    const duration = course.duration_min || 60;
+
+    for (const sched of onlineSchedules) {
+      if (!sched.day_of_week || !sched.start_time) continue;
+      const dayOfWeekNum = parseInt(sched.day_of_week);
+      const [hours, minutes] = sched.start_time.split(":").map(Number);
+
+      let currentDate = startOfDay(parseISO(data.start_date));
+      while (currentDate.getDay() !== dayOfWeekNum) {
+        currentDate.setDate(currentDate.getDate() + 1);
+      }
+
+      for (let i = 0; i < 12; i++) {
+        const lessonStart = setMinutes(setHours(currentDate, hours), minutes);
+        const lessonEnd = addMinutes(lessonStart, duration);
+
+        lessonsToInsert.push({
+          school_id: data.school_id,
+          course_id: data.course_id,
+          teacher_id: data.teacher_id,
+          room_id: course.room_id,
+          data_ora_inizio: lessonStart.toISOString(),
+          data_ora_fine: lessonEnd.toISOString(),
+          status: "pianificata",
+        });
+
+        currentDate = addWeeks(currentDate, 1);
+      }
+    }
+
+    if (lessonsToInsert.length > 0) {
+      const { error: lessonError } = await supabase.from("lessons").insert(lessonsToInsert);
+      if (lessonError) console.error("Errore generazione lezioni:", lessonError);
+    }
+  } else if (course.day_of_week !== null && course.day_of_week !== undefined && course.start_time) {
     const lessonsToInsert = [];
     const [hours, minutes] = course.start_time.split(":").map(Number);
     const duration = course.duration_min || 60;
 
     let currentDate = startOfDay(parseISO(data.start_date));
     
-    // Find the first occurrence of the day_of_week
     while (currentDate.getDay() !== course.day_of_week) {
       currentDate.setDate(currentDate.getDate() + 1);
     }

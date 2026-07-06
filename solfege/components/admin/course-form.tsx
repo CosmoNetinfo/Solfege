@@ -240,7 +240,7 @@ export function CourseFormDialog({ open, onOpenChange, schoolId, course, instrum
         price: data.price ? parseFloat(data.price) : 0,
         colore_calendario: selectedColor,
         anno_scolastico: data.anno_scolastico || "2024-2025",
-        description: descPayload
+        descrizione: descPayload
       };
 
       if (isEdit) {
