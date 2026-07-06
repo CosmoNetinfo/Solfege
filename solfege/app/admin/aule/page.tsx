@@ -14,6 +14,7 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 export default function StatoAulePage() {
+  const [courses, setCourses] = useState<any[]>([]);
   const supabase = createClient();
   const [loading, setLoading] = useState(true);
   const [rooms, setRooms] = useState<any[]>([]);
@@ -139,16 +140,24 @@ export default function StatoAulePage() {
           colore: l.colore_calendario || '#E8621A'
         })));
 
+        // 4. Carica corsi
+        const coursesData = await db.select<any[]>(
+          "SELECT id, nome, giorno_settimana, ora_inizio, ora_fine, durata_minuti, colore_calendario, anno_accademico, room_id FROM courses"
+        );
+        setCourses(coursesData);
+
+      } else {
         // Web Flow (Supabase)
         if (!schoolId) throw new Error("Scuola non impostata");
         const sid = schoolId as string;
-        const [rRes, bRes, lRes] = await Promise.all([
+        const [rRes, bRes, lRes, cRes] = await Promise.all([
           supabase.from("rooms").select("*").eq("school_id", sid).order("name"),
           supabase.from("room_bookings").select("*").eq("school_id", sid).gte("data", startDateStr).lte("data", endDateStr),
           supabase.from("lessons").select("id, data_ora_inizio, data_ora_fine, room_id, courses(name, colore_calendario), teachers(first_name, last_name)")
             .eq("school_id", sid)
             .gte("data_ora_inizio", `${startDateStr}T00:00:00`)
-            .lte("data_ora_inizio", `${endDateStr}T23:59:59`)
+            .lte("data_ora_inizio", `${endDateStr}T23:59:59`),
+          supabase.from("courses").select("*").eq("school_id", sid)
         ]);
 
         setRooms(rRes.data || []);
@@ -179,6 +188,17 @@ export default function StatoAulePage() {
             colore: l.courses?.colore_calendario || '#E8621A'
           };
         }));
+
+        setCourses((cRes.data || []).map(c => ({
+          id: c.id,
+          nome: c.name,
+          giorno_settimana: c.day_of_week,
+          ora_inizio: c.start_time,
+          durata_minuti: c.duration_min,
+          colore_calendario: c.colore_calendario,
+          anno_accademico: c.anno_scolastico,
+          room_id: c.room_id
+        })));
       }
     } catch (err) {
       console.error("Error loading classroom control data:", err);
@@ -188,7 +208,82 @@ export default function StatoAulePage() {
     }
   }
 
-  const allEvents = [...bookings, ...lessons];
+  // Genera eventi teorici basati sulla pianificazione settimanale dei corsi
+  const courseEvents: any[] = [];
+  try {
+    let startD = parseISO(format(selectedDate, "yyyy-MM-dd"));
+    let endD = startD;
+
+    if (viewType === "settimanale") {
+      startD = startOfWeek(selectedDate, { weekStartsOn: 1 });
+      endD = endOfWeek(selectedDate, { weekStartsOn: 1 });
+    } else if (viewType === "mensile") {
+      startD = startOfMonth(selectedDate);
+      endD = endOfMonth(selectedDate);
+    }
+
+    const days = eachDayOfInterval({ start: startD, end: endD });
+
+    for (const day of days) {
+      const dayStr = format(day, "yyyy-MM-dd");
+      const dayOfWeekNum = day.getDay();
+
+      for (const c of courses) {
+        if (!c.room_id) continue;
+
+        let schedulesList: { day_of_week: string; start_time: string }[] = [];
+        const rawAnno = c.anno_accademico || "";
+
+        // Prova ad estrarre la programmazione multipla JSON
+        if (rawAnno.includes("|")) {
+          try {
+            const parts = rawAnno.split("|");
+            const parsed = JSON.parse(parts[1]);
+            if (parsed && Array.isArray(parsed.multiScheduling)) {
+              schedulesList = parsed.multiScheduling;
+            }
+          } catch (e) {}
+        }
+
+        // Se non c'è programmazione multipla, usa quella classica
+        if (schedulesList.length === 0 && c.giorno_settimana !== null && c.giorno_settimana !== undefined && c.ora_inizio) {
+          schedulesList = [{
+            day_of_week: String(c.giorno_settimana),
+            start_time: c.ora_inizio
+          }];
+        }
+
+        for (const sched of schedulesList) {
+          if (parseInt(sched.day_of_week) === dayOfWeekNum && sched.start_time) {
+            // Calcola ora di fine teorica basata sulla durata
+            const [h, m] = sched.start_time.split(":").map(Number);
+            const duration = c.durata_minuti || 60;
+            const totalMin = h * 60 + m + duration;
+            const endH = Math.floor(totalMin / 60) % 24;
+            const endM = totalMin % 60;
+            const endStr = `${endH < 10 ? '0' : ''}${endH}:${endM < 10 ? '0' : ''}${endM}`;
+
+            courseEvents.push({
+              id: `course-sched-${c.id}-${dayStr}-${sched.start_time}`,
+              room_id: c.room_id,
+              tipo: 'lezione',
+              titolo: c.nome,
+              nome_gruppo: 'Orario programmato corso',
+              data: dayStr,
+              ora_inizio: sched.start_time.slice(0, 5),
+              ora_fine: endStr,
+              colore: c.colore_calendario || '#E8621A'
+            });
+          }
+        }
+      }
+    }
+  } catch (err) {
+    console.error("Errore generazione eventi teorici corsi:", err);
+  }
+
+  // Combina prenotazioni reali, lezioni reali ed eventi teorici dei corsi
+  const allEvents = [...bookings, ...lessons, ...courseEvents];
 
   const timeToMinutes = (t: string) => {
     if (!t) return 0;

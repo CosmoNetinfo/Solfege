@@ -213,14 +213,42 @@ export default function CoursesPage() {
                 </div>
 
                 <div className="flex items-center gap-4 text-sm text-muted-foreground mb-3">
-                  {c.day_of_week !== null && (
-                    <div className="flex items-center gap-1">
-                      <Clock className="h-3.5 w-3.5" />
-                      <span className="text-foreground font-medium">{DAYS[c.day_of_week]}</span>
-                      {c.start_time && <span>{c.start_time.slice(0, 5)}</span>}
-                      <span>· {c.duration_min}min</span>
-                    </div>
-                  )}
+                  {(() => {
+                    const DAYS_SHORT = ["Dom", "Lun", "Mar", "Mer", "Gio", "Ven", "Sab"];
+                    const rawAnno = c.anno_accademico || c.anno_scolastico || "";
+                    let scheduleText = "";
+                    
+                    if (rawAnno.includes("|")) {
+                      try {
+                        const parts = rawAnno.split("|");
+                        const parsed = JSON.parse(parts[1]);
+                        if (parsed && Array.isArray(parsed.multiScheduling) && parsed.multiScheduling.length > 0) {
+                          scheduleText = parsed.multiScheduling.map((s: any) => {
+                            const dayName = DAYS_SHORT[parseInt(s.day_of_week)] || "";
+                            const time = s.start_time ? s.start_time.slice(0, 5) : "";
+                            return `${dayName} ${time}`;
+                          }).join(", ");
+                        }
+                      } catch (err) {}
+                    }
+                    
+                    if (!scheduleText && c.day_of_week !== null && c.day_of_week !== undefined) {
+                      const dayName = DAYS_SHORT[c.day_of_week] || "";
+                      const time = c.start_time ? c.start_time.slice(0, 5) : "";
+                      scheduleText = `${dayName} ${time}`;
+                    }
+
+                    if (scheduleText) {
+                      return (
+                        <div className="flex items-center gap-1">
+                          <Clock className="h-3.5 w-3.5 text-stone-400" />
+                          <span className="text-foreground font-semibold">{scheduleText}</span>
+                          <span>· {c.duration_min}min</span>
+                        </div>
+                      );
+                    }
+                    return null;
+                  })()}
                 </div>
 
                 <div className="flex items-center justify-between pt-3 border-t border-border">
