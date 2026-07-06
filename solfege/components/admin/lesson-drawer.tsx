@@ -187,7 +187,7 @@ export function LessonDrawer({ lessonId, isOpen, onClose, onRefresh }: LessonDra
         
         // Cerca il nome dell'aula aggiornata per rinfrescare lo stato locale
         const selectedRoom = rooms.find(r => r.id === newRoomId);
-        setLesson(prev => ({
+        setLesson((prev: any) => ({
           ...prev,
           room_id: newRoomId,
           rooms: { name: selectedRoom ? selectedRoom.name : prev.rooms?.name }
@@ -211,7 +211,7 @@ export function LessonDrawer({ lessonId, isOpen, onClose, onRefresh }: LessonDra
     } else {
       toast.success("Aula aggiornata per questa lezione");
       const selectedRoom = rooms.find(r => r.id === newRoomId);
-      setLesson(prev => ({
+      setLesson((prev: any) => ({
         ...prev,
         room_id: newRoomId,
         rooms: { name: selectedRoom ? selectedRoom.name : prev.rooms?.name }

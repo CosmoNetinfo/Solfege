@@ -44,14 +44,13 @@ export function RoomsTab({ schoolId }: { schoolId: string }) {
       if (isDesktop()) {
         const Database = (await import("@tauri-apps/plugin-sql")).default;
         const db = await Database.load("sqlite:solfege.db");
-        // Mappiamo le colonne locali SQLite a quelle del frontend
+        // Mappiamo le colonne locali SQLite a quelle del frontend (SQLite mono-scuola non ha school_id e insonorizzata)
         const data = await db.select<any[]>(
-          "SELECT id, nome as name, capacita as capacity, insonorizzata FROM rooms ORDER BY nome ASC"
+          "SELECT id, nome as name, capacita as capacity FROM rooms ORDER BY nome ASC"
         );
         setRooms(data.map(r => ({
           ...r,
-          // SQLite memorizza i booleani come 0/1
-          insonorizzata: r.insonorizzata === 1 || r.insonorizzata === true
+          insonorizzata: false
         })));
         setLoading(false);
         return;
@@ -76,16 +75,16 @@ export function RoomsTab({ schoolId }: { schoolId: string }) {
         const newRoomId = crypto.randomUUID();
 
         await db.execute(
-          `INSERT INTO rooms (id, school_id, nome, capacita, insonorizzata)
-           VALUES (?, ?, ?, ?, ?)`,
-          [newRoomId, schoolId, values.name, values.capacity, values.insonorizzata ? 1 : 0]
+          `INSERT INTO rooms (id, nome, capacita)
+           VALUES (?, ?, ?)`,
+          [newRoomId, values.name, values.capacity]
         );
 
         const newRoom = {
           id: newRoomId,
           name: values.name,
           capacity: values.capacity,
-          insonorizzata: values.insonorizzata
+          insonorizzata: false
         };
 
         setRooms([...rooms, newRoom].sort((a, b) => a.name.localeCompare(b.name)));
