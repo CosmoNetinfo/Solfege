@@ -139,13 +139,14 @@ export default function StatoAulePage() {
           colore: l.colore_calendario || '#E8621A'
         })));
 
-      } else {
         // Web Flow (Supabase)
+        if (!schoolId) throw new Error("Scuola non impostata");
+        const sid = schoolId as string;
         const [rRes, bRes, lRes] = await Promise.all([
-          supabase.from("rooms").select("*").eq("school_id", schoolId).order("name"),
-          supabase.from("room_bookings").select("*").eq("school_id", schoolId).gte("data", startDateStr).lte("data", endDateStr),
+          supabase.from("rooms").select("*").eq("school_id", sid).order("name"),
+          supabase.from("room_bookings").select("*").eq("school_id", sid).gte("data", startDateStr).lte("data", endDateStr),
           supabase.from("lessons").select("id, data_ora_inizio, data_ora_fine, room_id, courses(name, colore_calendario), teachers(first_name, last_name)")
-            .eq("school_id", schoolId)
+            .eq("school_id", sid)
             .gte("data_ora_inizio", `${startDateStr}T00:00:00`)
             .lte("data_ora_inizio", `${endDateStr}T23:59:59`)
         ]);
