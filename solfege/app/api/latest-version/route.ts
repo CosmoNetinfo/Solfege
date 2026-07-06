@@ -27,8 +27,8 @@ export async function GET() {
 
     // Costruisce i link degli update compressi .zip/tar.gz che Tauri richiede per l'updater
     // Tauri per Windows richiede il file .nsis.zip
-    const winZipUrl = `https://github.com/CosmoNetinfo/Solfege/releases/download/${tag}/Solfege_${version}_x64-setup.nsis.zip`;
-    const macTarUrl = `https://github.com/CosmoNetinfo/Solfege/releases/download/${tag}/Solfege_${version}_x64.app.tar.gz`;
+    const winZipUrl = `https://github.com/CosmoNetinfo/Solfege/releases/download/${tag}/Solfège_${version}_x64-setup.nsis.zip`;
+    const macTarUrl = `https://github.com/CosmoNetinfo/Solfege/releases/download/${tag}/Solfège_${version}_x64.app.tar.gz`;
 
     // Recupera la firma digitale (.sig) da GitHub Releases
     let winSignature = '';
