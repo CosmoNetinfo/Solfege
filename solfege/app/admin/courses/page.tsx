@@ -80,8 +80,7 @@ export default function CoursesPage() {
            FROM courses c
            LEFT JOIN instruments i ON c.instrument_id = i.id
            LEFT JOIN rooms r ON c.room_id = r.id
-           WHERE c.school_id = ? ORDER BY c.nome ASC`,
-          [id]
+           ORDER BY c.nome ASC`
         );
 
         // Fetch conteggio iscritti (enrollments)

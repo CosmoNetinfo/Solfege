@@ -120,18 +120,46 @@ export function CourseFormDialog({ open, onOpenChange, schoolId, course, instrum
         setSchedules(multiSchedulesList);
         setMultiDay(isMulti);
       } else {
-        reset({
-          type: "individuale",
-          price_model: "mensile",
-          duration_min: "60",
-          max_students: "1",
-          anno_scolastico: "2024-2025",
-          name: "",
-          level: "principiante",
-          day_of_week: "",
-          start_time: "",
-          price: "",
-        });
+        const loadDefaultYear = async () => {
+          let defaultYear = "2024-2025";
+          try {
+            const { isDesktop } = await import("@/lib/is-desktop");
+            if (isDesktop()) {
+              const Database = (await import("@tauri-apps/plugin-sql")).default;
+              const db = await Database.load("sqlite:solfege.db");
+              const res = await db.select<any[]>("SELECT anno_accademico_corrente FROM schools LIMIT 1");
+              if (res && res.length > 0 && res[0].anno_accademico_corrente) {
+                defaultYear = res[0].anno_accademico_corrente;
+              }
+            } else {
+              const { data: { user } } = await supabase.auth.getUser();
+              if (user) {
+                const { data: profile } = await supabase.from("profiles").select("school_id").eq("id", user.id).single();
+                if (profile?.school_id) {
+                  const { data: school } = await supabase.from("schools").select("anno_scolastico_corrente").eq("id", profile.school_id).maybeSingle();
+                  if (school?.anno_scolastico_corrente) {
+                    defaultYear = school.anno_scolastico_corrente;
+                  }
+                }
+              }
+            }
+          } catch (e) {}
+
+          reset({
+            type: "individuale",
+            price_model: "mensile",
+            duration_min: "60",
+            max_students: "1",
+            anno_scolastico: defaultYear,
+            name: "",
+            level: "principiante",
+            day_of_week: "",
+            start_time: "",
+            price: "",
+          });
+        };
+
+        loadDefaultYear();
         setSelectedColor("#E8621A");
         setInstrumentId("");
         setRoomId("");
