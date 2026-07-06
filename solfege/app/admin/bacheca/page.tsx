@@ -67,7 +67,7 @@ export default function BachecaAdminPage() {
     setLoading(true);
     try {
       const { data, error } = await supabase
-        .from("school_notices")
+        .from("school_notices" as any)
         .select("*")
         .eq("school_id", schoolId)
         .order("created_at", { ascending: false });
@@ -99,7 +99,7 @@ export default function BachecaAdminPage() {
     setSubmitting(true);
     try {
       const { error } = await supabase
-        .from("school_notices")
+        .from("school_notices" as any)
         .insert({
           school_id: schoolId,
           titolo: title.trim(),
@@ -129,7 +129,7 @@ export default function BachecaAdminPage() {
 
     try {
       const { error } = await supabase
-        .from("school_notices")
+        .from("school_notices" as any)
         .delete()
         .eq("id", id);
       if (error) throw error;
