@@ -299,7 +299,7 @@ export default function StatoAulePage() {
             <CardContent className="p-6 flex items-center justify-between">
               <div>
                 <p className="text-xs font-bold uppercase tracking-wider text-stone-400">Aule Totali</p>
-                <h3 className="text-3xl font-serif font-bold text-stone-800 mt-1">{rooms.length}</h3>
+                <h3 className="text-3xl font-bold tracking-tight text-stone-800 mt-1">{rooms.length}</h3>
               </div>
               <div className="h-12 w-12 rounded-xl bg-stone-100 flex items-center justify-center">
                 <DoorOpen className="h-6 w-6 text-stone-600" />
@@ -311,7 +311,7 @@ export default function StatoAulePage() {
             <CardContent className="p-6 flex items-center justify-between">
               <div>
                 <p className="text-xs font-bold uppercase tracking-wider text-green-600">Libere Ora</p>
-                <h3 className="text-3xl font-serif font-bold text-green-600 mt-1">{freeCount}</h3>
+                <h3 className="text-3xl font-bold tracking-tight text-green-600 mt-1">{freeCount}</h3>
               </div>
               <div className="h-12 w-12 rounded-xl bg-green-50 flex items-center justify-center">
                 <CheckCircle className="h-6 w-6 text-green-600" />
@@ -323,7 +323,7 @@ export default function StatoAulePage() {
             <CardContent className="p-6 flex items-center justify-between">
               <div>
                 <p className="text-xs font-bold uppercase tracking-wider text-red-500">Occupate Ora</p>
-                <h3 className="text-3xl font-serif font-bold text-red-500 mt-1">{occupiedCount}</h3>
+                <h3 className="text-3xl font-bold tracking-tight text-red-500 mt-1">{occupiedCount}</h3>
               </div>
               <div className="h-12 w-12 rounded-xl bg-red-50 flex items-center justify-center">
                 <XCircle className="h-6 w-6 text-red-500" />

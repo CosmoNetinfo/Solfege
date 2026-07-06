@@ -23,6 +23,7 @@ const formSchema = z.object({
 export function RoomsTab({ schoolId }: { schoolId: string }) {
   const [rooms, setRooms] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [isDesk, setIsDesk] = useState(false);
   const supabase = createClient();
 
   const form = useForm<z.infer<typeof formSchema>>({
@@ -44,6 +45,7 @@ export function RoomsTab({ schoolId }: { schoolId: string }) {
     try {
       const { isDesktop } = await import("@/lib/is-desktop");
       if (isDesktop()) {
+        setIsDesk(true);
         const Database = (await import("@tauri-apps/plugin-sql")).default;
         const db = await Database.load("sqlite:solfege.db");
         // Mappiamo le colonne locali SQLite a quelle del frontend (SQLite mono-scuola non ha school_id e insonorizzata)
@@ -235,20 +237,22 @@ export function RoomsTab({ schoolId }: { schoolId: string }) {
               </FormItem>
             )}
           />
-          <FormField
-            control={form.control}
-            name="insonorizzata"
-            render={({ field }) => (
-              <FormItem className="flex flex-col items-center justify-end pb-3">
-                <div className="flex items-center gap-2">
-                  <FormControl>
-                    <Checkbox checked={field.value} onCheckedChange={field.onChange} />
-                  </FormControl>
-                  <FormLabel className="!mt-0 cursor-pointer text-xs">Insonorizzata</FormLabel>
-                </div>
-              </FormItem>
-            )}
-          />
+          {!isDesk && (
+            <FormField
+              control={form.control}
+              name="insonorizzata"
+              render={({ field }) => (
+                <FormItem className="flex flex-col items-center justify-end pb-3">
+                  <div className="flex items-center gap-2">
+                    <FormControl>
+                      <Checkbox checked={field.value} onCheckedChange={field.onChange} />
+                    </FormControl>
+                    <FormLabel className="!mt-0 cursor-pointer text-xs">Insonorizzata</FormLabel>
+                  </div>
+                </FormItem>
+              )}
+            />
+          )}
           <div className="flex gap-2">
             {editingRoomId && (
               <Button type="button" onClick={cancelEdit} variant="outline" className="border-stone-200 text-stone-500">
@@ -279,27 +283,29 @@ export function RoomsTab({ schoolId }: { schoolId: string }) {
             <tr>
               <th className="px-4 py-3 font-medium">Nome Aula</th>
               <th className="px-4 py-3 font-medium text-center">Capienza</th>
-              <th className="px-4 py-3 font-medium text-center">Insonorizzata</th>
+              {!isDesk && <th className="px-4 py-3 font-medium text-center">Insonorizzata</th>}
               <th className="px-4 py-3 w-28 text-right">Azioni</th>
             </tr>
           </thead>
           <tbody className="divide-y">
             {rooms.length === 0 ? (
               <tr>
-                <td colSpan={4} className="px-4 py-8 text-center text-muted-foreground">Nessuna aula presente.</td>
+                <td colSpan={isDesk ? 3 : 4} className="px-4 py-8 text-center text-muted-foreground">Nessuna aula presente.</td>
               </tr>
             ) : (
               rooms.map(room => (
                 <tr key={room.id} className="hover:bg-muted/50 transition-colors">
                   <td className="px-4 py-3 font-medium">{room.name}</td>
                   <td className="px-4 py-3 text-center">{room.capacity} persone</td>
-                  <td className="px-4 py-3 text-center">
-                    {room.insonorizzata ? (
-                      <span className="inline-flex items-center justify-center px-2 py-1 text-xs font-medium rounded-full bg-green-100 text-green-700">Sì</span>
-                    ) : (
-                      <span className="inline-flex items-center justify-center px-2 py-1 text-xs font-medium rounded-full bg-stone-100 text-stone-700">No</span>
-                    )}
-                  </td>
+                  {!isDesk && (
+                    <td className="px-4 py-3 text-center">
+                      {room.insonorizzata ? (
+                        <span className="inline-flex items-center justify-center px-2 py-1 text-xs font-medium rounded-full bg-green-100 text-green-700">Sì</span>
+                      ) : (
+                        <span className="inline-flex items-center justify-center px-2 py-1 text-xs font-medium rounded-full bg-stone-100 text-stone-700">No</span>
+                      )}
+                    </td>
+                  )}
                   <td className="px-4 py-3 text-right space-x-1">
                     <Button variant="ghost" size="icon" onClick={() => startEdit(room)} className="h-8 w-8 text-stone-500 hover:text-stone-700 hover:bg-stone-100">
                       <Pencil className="w-4 h-4" />
