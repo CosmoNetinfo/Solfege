@@ -35,6 +35,7 @@ export function LessonDrawer({ lessonId, isOpen, onClose, onRefresh }: LessonDra
   const [loading, setLoading] = useState(false);
   const [lesson, setLesson] = useState<any>(null);
   const [attendance, setAttendance] = useState<any[]>([]);
+  const [rooms, setRooms] = useState<any[]>([]);
   const [updating, setUpdating] = useState(false);
 
   useEffect(() => {
@@ -52,6 +53,10 @@ export function LessonDrawer({ lessonId, isOpen, onClose, onRefresh }: LessonDra
       if (isDesktop()) {
         const Database = (await import("@tauri-apps/plugin-sql")).default;
         const db = await Database.load("sqlite:solfege.db");
+
+        // Carica la lista di tutte le aule disponibili offline
+        const offlineRooms = await db.select<any[]>("SELECT id, nome as name FROM rooms ORDER BY nome ASC");
+        setRooms(offlineRooms);
 
         // 1. Carica Lezione Locale con JOIN
         const lessonsData = await db.select<any[]>(
@@ -126,7 +131,7 @@ export function LessonDrawer({ lessonId, isOpen, onClose, onRefresh }: LessonDra
       .from("lessons")
       .select(`
         *,
-        courses(name, colore_calendario),
+        courses(name, colore_calendario, school_id),
         teachers(first_name, last_name),
         rooms(name)
       `)
@@ -141,6 +146,16 @@ export function LessonDrawer({ lessonId, isOpen, onClose, onRefresh }: LessonDra
 
     setLesson(data);
 
+    // Carica la lista di tutte le aule disponibili online
+    if (data.courses?.school_id) {
+      const { data: onlineRooms } = await supabase
+        .from("rooms")
+        .select("id, name")
+        .eq("school_id", data.courses.school_id)
+        .order("name");
+      setRooms(onlineRooms || []);
+    }
+
     const { data: attendanceData } = await supabase
       .from("attendance")
       .select(`
@@ -151,6 +166,59 @@ export function LessonDrawer({ lessonId, isOpen, onClose, onRefresh }: LessonDra
 
     setAttendance(attendanceData || []);
     setLoading(false);
+  }
+
+  async function updateRoom(newRoomId: string) {
+    if (!lessonId) return;
+    setUpdating(true);
+
+    try {
+      const { isDesktop } = await import("@/lib/is-desktop");
+      if (isDesktop()) {
+        const Database = (await import("@tauri-apps/plugin-sql")).default;
+        const db = await Database.load("sqlite:solfege.db");
+
+        await db.execute(
+          "UPDATE lessons SET room_id = ? WHERE id = ?",
+          [newRoomId, lessonId]
+        );
+
+        toast.success("Aula aggiornata per questa lezione");
+        
+        // Cerca il nome dell'aula aggiornata per rinfrescare lo stato locale
+        const selectedRoom = rooms.find(r => r.id === newRoomId);
+        setLesson(prev => ({
+          ...prev,
+          room_id: newRoomId,
+          rooms: { name: selectedRoom ? selectedRoom.name : prev.rooms?.name }
+        }));
+        
+        onRefresh();
+        setUpdating(false);
+        return;
+      }
+    } catch (e) {
+      console.error("Errore spostamento aula SQLite:", e);
+    }
+
+    const { error } = await supabase
+      .from("lessons")
+      .update({ room_id: newRoomId })
+      .eq("id", lessonId);
+
+    if (error) {
+      toast.error("Errore spostamento aula");
+    } else {
+      toast.success("Aula aggiornata per questa lezione");
+      const selectedRoom = rooms.find(r => r.id === newRoomId);
+      setLesson(prev => ({
+        ...prev,
+        room_id: newRoomId,
+        rooms: { name: selectedRoom ? selectedRoom.name : prev.rooms?.name }
+      }));
+      onRefresh();
+    }
+    setUpdating(false);
   }
 
   async function updateStatus(newStatus: string) {
@@ -338,6 +406,23 @@ export function LessonDrawer({ lessonId, isOpen, onClose, onRefresh }: LessonDra
                     <SelectItem value="completata">Completata</SelectItem>
                     <SelectItem value="cancellata">Cancellata</SelectItem>
                     <SelectItem value="recupero">Da Recuperare</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="flex items-center justify-between pt-2">
+                <h3 className="text-sm font-bold uppercase tracking-tight text-stone-500">Sposta Aula</h3>
+                <Select value={lesson.room_id || "none"} onValueChange={(val) => updateRoom(val === "none" ? "" : val)} disabled={updating}>
+                  <SelectTrigger className="w-[180px]">
+                    <SelectValue placeholder="Seleziona aula" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">Nessuna aula</SelectItem>
+                    {rooms.map((r) => (
+                      <SelectItem key={r.id} value={r.id}>
+                        {r.name || r.nome}
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>
