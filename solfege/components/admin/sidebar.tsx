@@ -31,7 +31,8 @@ import { syncLocalToCloud } from "@/lib/services/cloud-sync";
 const navItems = [
   { name: "Dashboard", href: "/admin/dashboard", icon: LayoutDashboard },
   { name: "Calendario", href: "/admin/calendar", icon: Calendar },
-  { name: "Sale & Prove", href: "/admin/sale", icon: DoorOpen },
+  { name: "Stato Aule", href: "/admin/aule", icon: DoorOpen },
+  { name: "Sale & Prove", href: "/admin/sale", icon: Calendar },
   { name: "Studenti", href: "/admin/students", icon: Users },
   { name: "Iscrizioni Web", href: "/admin/iscrizioni", icon: Globe },
   { name: "Bacheca", href: "/admin/bacheca", icon: Bell },
