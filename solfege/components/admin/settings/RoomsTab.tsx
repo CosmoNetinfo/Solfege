@@ -40,6 +40,24 @@ export function RoomsTab({ schoolId }: { schoolId: string }) {
 
   const loadRooms = async () => {
     try {
+      const { isDesktop } = await import("@/lib/is-desktop");
+      if (isDesktop()) {
+        const Database = (await import("@tauri-apps/plugin-sql")).default;
+        const db = await Database.load("sqlite:solfege.db");
+        // Mappiamo le colonne locali SQLite a quelle del frontend
+        const data = await db.select<any[]>(
+          "SELECT id, nome as name, capacita as capacity, insonorizzata FROM rooms ORDER BY nome ASC"
+        );
+        setRooms(data.map(r => ({
+          ...r,
+          // SQLite memorizza i booleani come 0/1
+          insonorizzata: r.insonorizzata === 1 || r.insonorizzata === true
+        })));
+        setLoading(false);
+        return;
+      }
+
+      // Web Flow
       const data = await getRooms(supabase, schoolId);
       setRooms(data);
     } catch (e) {
@@ -51,6 +69,32 @@ export function RoomsTab({ schoolId }: { schoolId: string }) {
 
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     try {
+      const { isDesktop } = await import("@/lib/is-desktop");
+      if (isDesktop()) {
+        const Database = (await import("@tauri-apps/plugin-sql")).default;
+        const db = await Database.load("sqlite:solfege.db");
+        const newRoomId = crypto.randomUUID();
+
+        await db.execute(
+          `INSERT INTO rooms (id, school_id, nome, capacita, insonorizzata)
+           VALUES (?, ?, ?, ?, ?)`,
+          [newRoomId, schoolId, values.name, values.capacity, values.insonorizzata ? 1 : 0]
+        );
+
+        const newRoom = {
+          id: newRoomId,
+          name: values.name,
+          capacity: values.capacity,
+          insonorizzata: values.insonorizzata
+        };
+
+        setRooms([...rooms, newRoom].sort((a, b) => a.name.localeCompare(b.name)));
+        form.reset();
+        toast.success('Aula aggiunta');
+        return;
+      }
+
+      // Web Flow
       const newRoom = await addRoom(supabase, schoolId, values.name, values.capacity, values.insonorizzata);
       setRooms([...rooms, newRoom].sort((a, b) => a.name.localeCompare(b.name)));
       form.reset();
@@ -62,11 +106,33 @@ export function RoomsTab({ schoolId }: { schoolId: string }) {
 
   const handleDelete = async (id: string) => {
     try {
+      const { isDesktop } = await import("@/lib/is-desktop");
+      if (isDesktop()) {
+        const Database = (await import("@tauri-apps/plugin-sql")).default;
+        const db = await Database.load("sqlite:solfege.db");
+
+        // Controlla se l'aula è usata in qualche lezione
+        const inUse = await db.select<any[]>("SELECT id FROM lessons WHERE room_id = ? LIMIT 1", [id]);
+        if (inUse && inUse.length > 0) {
+          throw new Error("in_use");
+        }
+
+        await db.execute("DELETE FROM rooms WHERE id = ?", [id]);
+        setRooms(rooms.filter(r => r.id !== id));
+        toast.success('Aula eliminata');
+        return;
+      }
+
+      // Web Flow
       await deleteRoom(supabase, id);
       setRooms(rooms.filter(r => r.id !== id));
       toast.success('Aula eliminata');
-    } catch (e) {
-      toast.error('Impossibile eliminare: aula in uso');
+    } catch (e: any) {
+      if (e.message === "in_use") {
+        toast.error('Impossibile eliminare: aula in uso');
+      } else {
+        toast.error('Impossibile eliminare: aula in uso');
+      }
     }
   };
 

@@ -51,6 +51,19 @@ export default function TeachersPage() {
 
   useEffect(() => {
     async function load() {
+      const { isDesktop } = await import("@/lib/is-desktop");
+      if (isDesktop()) {
+        const Database = (await import("@tauri-apps/plugin-sql")).default;
+        const db = await Database.load("sqlite:solfege.db");
+        const schools = await db.select<any[]>("SELECT id FROM schools LIMIT 1");
+        if (schools && schools.length > 0) {
+          setSchoolId(schools[0].id);
+          await fetchTeachers(schools[0].id);
+        }
+        return;
+      }
+
+      // Web Flow
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
       const { data: profile } = await supabase.from("profiles").select("school_id").eq("id", user.id).maybeSingle();
@@ -65,6 +78,73 @@ export default function TeachersPage() {
     setLoading(true);
     const id = sid || schoolId;
     if (!id) return;
+
+    try {
+      const { isDesktop } = await import("@/lib/is-desktop");
+      if (isDesktop()) {
+        const Database = (await import("@tauri-apps/plugin-sql")).default;
+        const db = await Database.load("sqlite:solfege.db");
+
+        // Fetch teachers
+        const teacherData = await db.select<any[]>(
+          `SELECT id, nome as first_name, cognome as last_name, email, telefono as phone, 
+                  strumento_principale as specializzazioni, tariffa_oraria_individuale as rate_individual, 
+                  tariffa_oraria_collettivo as rate_group, active
+           FROM teachers ORDER BY cognome, nome`
+        );
+
+        if (!teacherData || teacherData.length === 0) {
+          setTeachers([]);
+          setLoading(false);
+          return;
+        }
+
+        const teacherIds = teacherData.map((t) => t.id);
+        
+        // Fetch disponibilità per tutti gli insegnanti
+        const dispData = await db.select<any[]>(
+          "SELECT teacher_id, giorno, ora_inizio, ora_fine FROM disponibilita_insegnanti WHERE teacher_id IN (" + 
+          teacherIds.map(() => '?').join(',') + ")",
+          teacherIds
+        );
+
+        // Fetch conteggio allievi attivi per insegnante (via enrollments)
+        const enrollData = await db.select<any[]>(
+          "SELECT teacher_id, student_id FROM enrollments WHERE status = 'active' AND teacher_id IN (" + 
+          teacherIds.map(() => '?').join(',') + ")",
+          teacherIds
+        );
+
+        // Componi i dati
+        const enriched = teacherData.map((t) => {
+          // specializzazioni salvate come stringa separata da virgola
+          const specs = t.specializzazioni 
+            ? t.specializzazioni.split(",").map((s: string) => s.trim()).filter(Boolean)
+            : [];
+
+          return {
+            ...t,
+            specializzazioni: specs,
+            disponibilita: (dispData || [])
+              .filter((d) => d.teacher_id === t.id)
+              .map((d) => ({ 
+                giorno: d.giorno, 
+                ora_inizio: d.ora_inizio.substring(0, 5), 
+                ora_fine: d.ora_fine.substring(0, 5) 
+              })),
+            active_students: new Set(
+              (enrollData || []).filter((e) => e.teacher_id === t.id).map((e) => e.student_id)
+            ).size,
+          };
+        });
+
+        setTeachers(enriched);
+        setLoading(false);
+        return;
+      }
+    } catch (e) {
+      console.error("Errore recupero docenti SQLite:", e);
+    }
 
     // Fetch teachers
     const { data: teacherData, error } = await supabase
@@ -119,9 +199,26 @@ export default function TeachersPage() {
 
   async function handleDelete() {
     if (!deleteId) return;
-    const { error } = await supabase.from("teachers").delete().eq("id", deleteId);
-    if (error) toast.error("Errore durante l'eliminazione");
-    else { toast.success("Insegnante eliminato"); fetchTeachers(); }
+    try {
+      const { isDesktop } = await import("@/lib/is-desktop");
+      if (isDesktop()) {
+        const Database = (await import("@tauri-apps/plugin-sql")).default;
+        const db = await Database.load("sqlite:solfege.db");
+        await db.execute("DELETE FROM teachers WHERE id = ?", [deleteId]);
+        await db.execute("DELETE FROM disponibilita_insegnanti WHERE teacher_id = ?", [deleteId]);
+        toast.success("Insegnante eliminato");
+        fetchTeachers();
+        setDeleteId(null);
+        return;
+      }
+
+      // Web Flow
+      const { error } = await supabase.from("teachers").delete().eq("id", deleteId);
+      if (error) toast.error("Errore durante l'eliminazione");
+      else { toast.success("Insegnante eliminato"); fetchTeachers(); }
+    } catch (e) {
+      toast.error("Errore durante l'eliminazione");
+    }
     setDeleteId(null);
   }
 

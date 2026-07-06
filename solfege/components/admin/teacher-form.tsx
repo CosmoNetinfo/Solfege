@@ -91,6 +91,68 @@ export function TeacherFormDialog({
         ? data.specializzazioni.split(",").map((s) => s.trim()).filter(Boolean)
         : [];
 
+      const { isDesktop } = await import("@/lib/is-desktop");
+      let teacherId = teacher?.id;
+
+      if (isDesktop()) {
+        const Database = (await import("@tauri-apps/plugin-sql")).default;
+        const db = await Database.load("sqlite:solfege.db");
+
+        // Per SQLite salviamo le specializzazioni come stringa JSON o testo semplice
+        const localPayload = {
+          nome: data.first_name,
+          cognome: data.last_name,
+          email: data.email || null,
+          telefono: data.phone || null,
+          codice_fiscale: data.fiscal_code || null,
+          strumento_principale: specs.join(", ") || null, // specializzazioni salvate qui
+          tariffa_oraria_individuale: data.rate_individual ? parseFloat(data.rate_individual) : 0,
+          tariffa_oraria_collettivo: data.rate_group ? parseFloat(data.rate_group) : 0,
+          iban: data.iban || null,
+          note: data.note_contratto || null,
+        };
+
+        if (isEdit) {
+          const fields = Object.keys(localPayload).map(k => `${k} = ?`).join(', ');
+          await db.execute(
+            `UPDATE teachers SET ${fields} WHERE id = ?`,
+            [...Object.values(localPayload), teacher.id]
+          );
+        } else {
+          teacherId = crypto.randomUUID();
+          await db.execute(
+            `INSERT INTO teachers (id, school_id, nome, cognome, email, telefono, 
+             codice_fiscale, strumento_principale, tariffa_oraria_individuale, 
+             tariffa_oraria_collettivo, iban, note) 
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+            [
+              teacherId, schoolId, localPayload.nome, localPayload.cognome, localPayload.email,
+              localPayload.telefono, localPayload.codice_fiscale, localPayload.strumento_principale,
+              localPayload.tariffa_oraria_individuale, localPayload.tariffa_oraria_collettivo,
+              localPayload.iban, localPayload.note
+            ]
+          );
+        }
+
+        // Salva disponibilità insegnanti su SQLite
+        await db.execute("DELETE FROM disponibilita_insegnanti WHERE teacher_id = ?", [teacherId]);
+        for (const slot of slots) {
+          await db.execute(
+            `INSERT INTO disponibilita_insegnanti (id, school_id, teacher_id, giorno, ora_inizio, ora_fine)
+             VALUES (lower(hex(randomblob(16))), ?, ?, ?, ?, ?)`,
+            [schoolId, teacherId, slot.giorno, slot.ora_inizio, slot.ora_fine]
+          );
+        }
+
+        toast.success(isEdit ? "Insegnante aggiornato" : "Insegnante creato con successo");
+        reset();
+        setSlots([]);
+        onOpenChange(false);
+        onSuccess();
+        return;
+      }
+
+      // Web Flow (Supabase)
       const payload = {
         school_id: schoolId,
         first_name: data.first_name,
@@ -106,12 +168,9 @@ export function TeacherFormDialog({
         data_assunzione: data.data_assunzione || null,
       };
 
-      let teacherId: string;
-
       if (isEdit) {
         const { error } = await supabase.from("teachers").update(payload).eq("id", teacher.id);
         if (error) throw error;
-        teacherId = teacher.id;
       } else {
         const result = await createTeacherWithAccess(payload, schoolId, "");
         if (!result.success || !result.teacher) throw new Error(result.error || "Errore creazione insegnante");

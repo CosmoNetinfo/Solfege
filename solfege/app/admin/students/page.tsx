@@ -56,6 +56,19 @@ export default function StudentsPage() {
   // Fetch school_id e studenti
   useEffect(() => {
     async function load() {
+      const { isDesktop } = await import("@/lib/is-desktop");
+      if (isDesktop()) {
+        const Database = (await import("@tauri-apps/plugin-sql")).default;
+        const db = await Database.load("sqlite:solfege.db");
+        const schools = await db.select<any[]>("SELECT id FROM schools LIMIT 1");
+        if (schools && schools.length > 0) {
+          setSchoolId(schools[0].id);
+          await fetchStudents(schools[0].id);
+        }
+        return;
+      }
+
+      // Web Flow
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
@@ -77,6 +90,26 @@ export default function StudentsPage() {
     const id = sid || schoolId;
     if (!id) return;
 
+    try {
+      const { isDesktop } = await import("@/lib/is-desktop");
+      if (isDesktop()) {
+        const Database = (await import("@tauri-apps/plugin-sql")).default;
+        const db = await Database.load("sqlite:solfege.db");
+        // Mappiamo le colonne SQLite alle colonne attese dal frontend
+        const data = await db.select<any[]>(
+          `SELECT id, nome as first_name, cognome as last_name, email, telefono as phone, 
+                  data_nascita as dob, is_minorenne as active, genitore_nome as parent_name, 
+                  created_at as enrolled_at
+           FROM students ORDER BY cognome, nome`
+        );
+        setStudents(data);
+        setLoading(false);
+        return;
+      }
+    } catch (e) {
+      console.error("Errore recupero studenti SQLite:", e);
+    }
+
     const { data, error } = await supabase
       .from("students")
       .select("*")
@@ -94,12 +127,29 @@ export default function StudentsPage() {
 
   async function handleDelete() {
     if (!deleteId) return;
-    const { error } = await supabase.from("students").delete().eq("id", deleteId);
-    if (error) {
+    try {
+      const { isDesktop } = await import("@/lib/is-desktop");
+      if (isDesktop()) {
+        const Database = (await import("@tauri-apps/plugin-sql")).default;
+        const db = await Database.load("sqlite:solfege.db");
+        await db.execute("DELETE FROM students WHERE id = ?", [deleteId]);
+        await db.execute("DELETE FROM disponibilita_allievi WHERE student_id = ?", [deleteId]);
+        toast.success("Allievo eliminato");
+        fetchStudents();
+        setDeleteId(null);
+        return;
+      }
+
+      // Web Flow
+      const { error } = await supabase.from("students").delete().eq("id", deleteId);
+      if (error) {
+        toast.error("Errore durante l'eliminazione");
+      } else {
+        toast.success("Allievo eliminato");
+        fetchStudents();
+      }
+    } catch (e) {
       toast.error("Errore durante l'eliminazione");
-    } else {
-      toast.success("Allievo eliminato");
-      fetchStudents();
     }
     setDeleteId(null);
   }

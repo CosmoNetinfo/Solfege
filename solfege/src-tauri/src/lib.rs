@@ -39,6 +39,7 @@ pub fn run() {
             commands::errors::report_error,
             commands::config::get_config,
             commands::config::set_config,
+            commands::config::get_db_path,
         ])
         .run(tauri::generate_context!())
         .expect("Errore avvio applicazione Solfège");

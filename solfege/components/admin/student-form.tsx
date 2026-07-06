@@ -78,6 +78,26 @@ export function StudentFormDialog({ open, onOpenChange, schoolId, student, onSuc
   }, [open, student, reset, schoolId, supabase]);
 
   async function fetchAvailability(studentId: string) {
+    try {
+      const { isDesktop } = await import("@/lib/is-desktop");
+      if (isDesktop()) {
+        const Database = (await import("@tauri-apps/plugin-sql")).default;
+        const db = await Database.load("sqlite:solfege.db");
+        const data = await db.select<any[]>(
+          "SELECT giorno, ora_inizio, ora_fine FROM disponibilita_allievi WHERE student_id = ?",
+          [studentId]
+        );
+        setSlots(data.map(s => ({
+          giorno: s.giorno,
+          ora_inizio: s.ora_inizio.substring(0, 5),
+          ora_fine: s.ora_fine.substring(0, 5)
+        })));
+        return;
+      }
+    } catch (e) {
+      console.error("Error fetching local student availability:", e);
+    }
+
     const { data, error } = await (supabase.from("disponibilita_allievi" as any))
       .select("*")
       .eq("student_id", studentId);
@@ -94,21 +114,21 @@ export function StudentFormDialog({ open, onOpenChange, schoolId, student, onSuc
   function getStudentDefaultValues(s: any) {
     if (!s) return {};
     return {
-      first_name: s.first_name || "",
-      last_name: s.last_name || "",
-      dob: s.dob || "",
+      first_name: s.first_name || s.nome || "",
+      last_name: s.last_name || s.cognome || "",
+      dob: s.dob || s.data_nascita || "",
       email: s.email || "",
-      phone: s.phone || "",
-      address: s.address || "",
-      city: s.city || "",
+      phone: s.phone || s.telefono || "",
+      address: s.address || s.indirizzo || "",
+      city: s.city || s.citta || "",
       cap: s.cap || "",
-      fiscal_code: s.fiscal_code || "",
-      parent_name: s.parent_name || "",
-      parent_surname: s.parent_surname || "",
-      parent_phone: s.parent_phone || "",
-      parent_email: s.parent_email || "",
+      fiscal_code: s.fiscal_code || s.codice_fiscale || "",
+      parent_name: s.parent_name || s.genitore_nome || "",
+      parent_surname: s.parent_surname || s.genitore_cognome || "",
+      parent_phone: s.parent_phone || s.genitore_telefono || "",
+      parent_email: s.parent_email || s.genitore_email || "",
       note_mediche: s.note_mediche || "",
-      notes: s.notes || "",
+      notes: s.notes || s.note || "",
     };
   }
 
@@ -122,14 +142,77 @@ export function StudentFormDialog({ open, onOpenChange, schoolId, student, onSuc
   async function onSubmit(data: StudentFormValues) {
     setIsLoading(true);
     try {
+      const { isDesktop } = await import("@/lib/is-desktop");
+      let studentId = student?.id;
+
+      if (isDesktop()) {
+        const Database = (await import("@tauri-apps/plugin-sql")).default;
+        const db = await Database.load("sqlite:solfege.db");
+
+        const localPayload = {
+          nome: data.first_name,
+          cognome: data.last_name,
+          data_nascita: data.dob || null,
+          codice_fiscale: data.fiscal_code || null,
+          email: data.email || null,
+          telefono: data.phone || null,
+          indirizzo: data.address || null,
+          citta: data.city || null,
+          cap: data.cap || null,
+          is_minorenne: isMinor ? 1 : 0,
+          genitore_nome: data.parent_name || null,
+          genitore_cognome: data.parent_surname || null,
+          genitore_email: data.parent_email || null,
+          genitore_telefono: data.parent_phone || null,
+          note: data.notes || null,
+        };
+
+        if (isEdit) {
+          const fields = Object.keys(localPayload).map(k => `${k} = ?`).join(', ');
+          await db.execute(
+            `UPDATE students SET ${fields} WHERE id = ?`,
+            [...Object.values(localPayload), student.id]
+          );
+        } else {
+          studentId = crypto.randomUUID();
+          await db.execute(
+            `INSERT INTO students (id, nome, cognome, data_nascita, codice_fiscale, email, 
+             telefono, indirizzo, citta, cap, is_minorenne, genitore_nome, genitore_cognome, 
+             genitore_email, genitore_telefono, note) 
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+            [
+              studentId, localPayload.nome, localPayload.cognome, localPayload.data_nascita,
+              localPayload.codice_fiscale, localPayload.email, localPayload.telefono,
+              localPayload.indirizzo, localPayload.citta, localPayload.cap, localPayload.is_minorenne,
+              localPayload.genitore_nome, localPayload.genitore_cognome, localPayload.genitore_email,
+              localPayload.genitore_telefono, localPayload.note
+            ]
+          );
+        }
+
+        // Salva disponibilità su SQLite
+        await db.execute("DELETE FROM disponibilita_allievi WHERE student_id = ?", [studentId]);
+        for (const slot of slots) {
+          await db.execute(
+            "INSERT INTO disponibilita_allievi (id, school_id, student_id, giorno, ora_inizio, ora_fine) VALUES (lower(hex(randomblob(16))), ?, ?, ?, ?, ?)",
+            [schoolId, studentId, slot.giorno, slot.ora_inizio, slot.ora_fine]
+          );
+        }
+
+        toast.success(isEdit ? "Allievo aggiornato con successo" : "Allievo creato con successo");
+        reset();
+        onOpenChange(false);
+        onSuccess();
+        return;
+      }
+
+      // Web Flow (Supabase)
       const payload = {
         ...data,
         school_id: schoolId,
         dob: data.dob || null,
         email: data.email || null,
       };
-
-      let studentId = student?.id;
 
       if (isEdit) {
         const { error } = await supabase

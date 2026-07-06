@@ -4,9 +4,12 @@ use tauri_plugin_sql::{Migration, MigrationKind};
 use rusqlite::Connection;
 use std::path::PathBuf;
 
-pub fn get_db_path(app: &AppHandle) -> Result<PathBuf, String> {
-    let mut path = app.path().app_data_dir().map_err(|e| e.to_string())?;
-    std::fs::create_dir_all(&path).map_err(|e| e.to_string())?;
+pub fn get_db_path(_app: &AppHandle) -> Result<PathBuf, String> {
+    let mut path = std::env::current_exe()
+        .map_err(|e| e.to_string())?
+        .parent()
+        .ok_or("Impossibile trovare la directory dell'eseguibile")?
+        .to_path_buf();
     path.push("solfege.db");
     Ok(path)
 }

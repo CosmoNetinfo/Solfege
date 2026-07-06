@@ -27,3 +27,9 @@ pub async fn set_config(app: AppHandle, key: String, value: String) -> Result<()
     .map_err(|e| e.to_string())?;
     Ok(())
 }
+
+#[tauri::command]
+pub async fn get_db_path(app: AppHandle) -> Result<String, String> {
+    let path = database::get_db_path(&app)?;
+    Ok(path.to_string_lossy().to_string())
+}

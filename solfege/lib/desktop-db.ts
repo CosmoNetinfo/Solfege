@@ -6,7 +6,15 @@ let db: Database | null = null
 
 async function getDb(): Promise<Database> {
   if (!db) {
-    db = await Database.load('sqlite:solfege.db')
+    try {
+      const { invoke } = await import('@tauri-apps/api/core');
+      const absolutePath = await invoke<string>('get_db_path');
+      db = await Database.load(`sqlite:${absolutePath}`);
+      console.log("[DB] Caricato SQLite locale con successo da percorso assoluto:", absolutePath);
+    } catch (e) {
+      console.error("[DB] Errore caricamento percorso assoluto database, fallback a solfege.db:", e);
+      db = await Database.load('sqlite:solfege.db');
+    }
   }
   return db
 }
