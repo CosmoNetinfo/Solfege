@@ -4,12 +4,13 @@ import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { Loader2 } from "lucide-react";
+import { Loader2, Plus, Trash } from "lucide-react";
 import { toast } from "sonner";
 import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle,
 } from "@/components/ui/dialog";
@@ -58,6 +59,11 @@ export function CourseFormDialog({ open, onOpenChange, schoolId, course, instrum
   const [selectedColor, setSelectedColor] = useState(course?.colore_calendario || "#E8621A");
   const [instrumentId, setInstrumentId] = useState(course?.instrument_id || "");
   const [roomId, setRoomId] = useState(course?.room_id || "");
+  
+  // Stati per la programmazione multipla
+  const [multiDay, setMultiDay] = useState(false);
+  const [schedules, setSchedules] = useState<{ day_of_week: string; start_time: string }[]>([]);
+
   const supabase = createClient();
   const isEdit = !!course;
 
@@ -71,6 +77,7 @@ export function CourseFormDialog({ open, onOpenChange, schoolId, course, instrum
       colore_calendario: course.colore_calendario, anno_scolastico: course.anno_scolastico || "2024-2025",
     } : { type: "individuale", price_model: "mensile", duration_min: "60", max_students: "1", anno_scolastico: "2024-2025" },
   });
+
   useEffect(() => {
     if (open) {
       if (course) {
@@ -89,6 +96,26 @@ export function CourseFormDialog({ open, onOpenChange, schoolId, course, instrum
         setSelectedColor(course.colore_calendario || "#E8621A");
         setInstrumentId(course.instrument_id || "");
         setRoomId(course.room_id || "");
+
+        // Prova a caricare la programmazione multipla dalla descrizione
+        const descText = course.descrizione || course.description || "";
+        try {
+          if (descText.startsWith("{")) {
+            const parsed = JSON.parse(descText);
+            if (parsed && Array.isArray(parsed.multiScheduling)) {
+              setSchedules(parsed.multiScheduling);
+              setMultiDay(true);
+              return;
+            }
+          }
+        } catch (e) {}
+
+        // Fallback singolo orario
+        setSchedules([{ 
+          day_of_week: course.day_of_week !== null ? String(course.day_of_week) : "", 
+          start_time: course.start_time || "" 
+        }]);
+        setMultiDay(false);
       } else {
         reset({
           type: "individuale",
@@ -105,13 +132,39 @@ export function CourseFormDialog({ open, onOpenChange, schoolId, course, instrum
         setSelectedColor("#E8621A");
         setInstrumentId("");
         setRoomId("");
+        setSchedules([{ day_of_week: "", start_time: "" }]);
+        setMultiDay(false);
       }
     }
   }, [course, open, reset]);
+
+  const addScheduleRow = () => {
+    setSchedules([...schedules, { day_of_week: "", start_time: "" }]);
+  };
+
+  const removeScheduleRow = (index: number) => {
+    setSchedules(schedules.filter((_, i) => i !== index));
+  };
+
+  const handleScheduleChange = (index: number, key: 'day_of_week' | 'start_time', value: string) => {
+    const next = [...schedules];
+    next[index][key] = value;
+    setSchedules(next);
+  };
+
   async function onSubmit(data: CourseFormValues) {
     setIsLoading(true);
     try {
       const { isDesktop } = await import("@/lib/is-desktop");
+
+      // Calcola primo orario per allineamento colonne classiche
+      const mainDay = multiDay && schedules.length > 0 ? schedules[0].day_of_week : data.day_of_week;
+      const mainTime = multiDay && schedules.length > 0 ? schedules[0].start_time : data.start_time;
+
+      // Genera stringa programmazione JSON da mettere in descrizione
+      const descPayload = multiDay && schedules.length > 0 
+        ? JSON.stringify({ multiScheduling: schedules.filter(s => s.day_of_week && s.start_time) })
+        : null;
 
       const localPayload = {
         school_id: schoolId,
@@ -120,11 +173,10 @@ export function CourseFormDialog({ open, onOpenChange, schoolId, course, instrum
         livello: (data.level || "principiante") as "principiante" | "intermedio" | "avanzato" | "professionale",
         instrument_id: instrumentId || null,
         room_id: roomId || null,
-        giorno_settimana: data.day_of_week ? parseInt(data.day_of_week) : null,
-        ora_inizio: data.start_time || null,
-        // calcola ora_fine in base a ora_inizio e durata_min
-        ora_fine: data.start_time && data.duration_min ? (() => {
-          const [h, m] = data.start_time.split(':').map(Number);
+        giorno_settimana: mainDay ? parseInt(mainDay) : null,
+        ora_inizio: mainTime || null,
+        ora_fine: mainTime && data.duration_min ? (() => {
+          const [h, m] = mainTime.split(':').map(Number);
           const totalMin = h * 60 + m + parseInt(data.duration_min);
           const endH = Math.floor(totalMin / 60) % 24;
           const endM = totalMin % 60;
@@ -135,7 +187,7 @@ export function CourseFormDialog({ open, onOpenChange, schoolId, course, instrum
         prezzo: data.price ? parseFloat(data.price) : 0,
         colore_calendario: selectedColor,
         anno_accademico: data.anno_scolastico || "2024-2025",
-        descrizione: null
+        descrizione: descPayload
       };
 
       if (isDesktop()) {
@@ -153,14 +205,14 @@ export function CourseFormDialog({ open, onOpenChange, schoolId, course, instrum
           await db.execute(
             `INSERT INTO courses (id, school_id, nome, tipo, livello, instrument_id, 
              room_id, giorno_settimana, ora_inizio, ora_fine, durata_minuti, max_allievi, 
-             prezzo, colore_calendario, anno_accademico) 
-             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+             prezzo, colore_calendario, anno_accademico, descrizione) 
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
             [
               newCourseId, schoolId, localPayload.nome, localPayload.tipo, localPayload.livello,
               localPayload.instrument_id, localPayload.room_id, localPayload.giorno_settimana,
               localPayload.ora_inizio, localPayload.ora_fine, localPayload.durata_minuti,
               localPayload.max_allievi, localPayload.prezzo, localPayload.colore_calendario,
-              localPayload.anno_accademico
+              localPayload.anno_accademico, localPayload.descrizione
             ]
           );
         }
@@ -180,14 +232,15 @@ export function CourseFormDialog({ open, onOpenChange, schoolId, course, instrum
         level: (data.level || "principiante") as "principiante" | "intermedio" | "avanzato" | "professionale",
         instrument_id: instrumentId || null,
         room_id: roomId || null,
-        day_of_week: data.day_of_week ? parseInt(data.day_of_week) : null,
-        start_time: data.start_time || null,
+        day_of_week: mainDay ? parseInt(mainDay) : null,
+        start_time: mainTime || null,
         duration_min: data.duration_min ? parseInt(data.duration_min) : 60,
         max_students: data.max_students ? parseInt(data.max_students) : 1,
         price_model: data.price_model as "mensile" | "pacchetto" | "annuale",
         price: data.price ? parseFloat(data.price) : 0,
         colore_calendario: selectedColor,
         anno_scolastico: data.anno_scolastico || "2024-2025",
+        description: descPayload
       };
 
       if (isEdit) {
@@ -256,24 +309,65 @@ export function CourseFormDialog({ open, onOpenChange, schoolId, course, instrum
           </div>
 
           <div className="space-y-4">
-            <h4 className="text-xs font-bold uppercase text-muted-foreground tracking-widest">Programmazione</h4>
-            <div className="grid grid-cols-3 gap-4">
-              <div className="space-y-2">
-                <Label>Giorno</Label>
-                <Select defaultValue={String(course?.day_of_week ?? "")} onValueChange={(v) => setValue("day_of_week", v)}>
-                  <SelectTrigger><SelectValue placeholder="Seleziona..." /></SelectTrigger>
-                  <SelectContent>{DAYS.map((d) => <SelectItem key={d.value} value={d.value}>{d.label}</SelectItem>)}</SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2">
-                <Label>Ora Inizio</Label>
-                <Input type="time" {...register("start_time")} />
-              </div>
-              <div className="space-y-2">
-                <Label>Durata (min)</Label>
-                <Input type="number" {...register("duration_min")} />
+            <div className="flex items-center justify-between">
+              <h4 className="text-xs font-bold uppercase text-muted-foreground tracking-widest">Programmazione Oraria</h4>
+              <div className="flex items-center gap-2">
+                <Checkbox id="multi-day" checked={multiDay} onCheckedChange={(c) => {
+                  setMultiDay(!!c);
+                  if (!!c && schedules.length === 0) {
+                    setSchedules([{ day_of_week: "", start_time: "" }]);
+                  }
+                }} />
+                <Label htmlFor="multi-day" className="cursor-pointer text-xs">Ripeti più giorni alla settimana</Label>
               </div>
             </div>
+
+            {multiDay ? (
+              <div className="space-y-3">
+                {schedules.map((row, idx) => (
+                  <div key={idx} className="flex gap-4 items-end bg-stone-50 p-3 rounded-lg border border-stone-200">
+                    <div className="flex-1 space-y-2">
+                      <Label>Giorno {idx + 1}</Label>
+                      <Select value={row.day_of_week} onValueChange={(v) => handleScheduleChange(idx, 'day_of_week', v)}>
+                        <SelectTrigger><SelectValue placeholder="Scegli giorno..." /></SelectTrigger>
+                        <SelectContent>{DAYS.map((d) => <SelectItem key={d.value} value={d.value}>{d.label}</SelectItem>)}</SelectContent>
+                      </Select>
+                    </div>
+                    <div className="flex-1 space-y-2">
+                      <Label>Ora Inizio</Label>
+                      <Input type="time" value={row.start_time} onChange={(e) => handleScheduleChange(idx, 'start_time', e.target.value)} />
+                    </div>
+                    {schedules.length > 1 && (
+                      <Button type="button" variant="ghost" className="text-red-500 hover:text-red-600 hover:bg-red-50 h-10 px-3" onClick={() => removeScheduleRow(idx)}>
+                        <Trash className="w-4 h-4" />
+                      </Button>
+                    )}
+                  </div>
+                ))}
+                <Button type="button" variant="outline" size="sm" className="border-stone-200 mt-1" onClick={addScheduleRow}>
+                  <Plus className="w-3.5 h-3.5 mr-1" /> Aggiungi Giorno/Orario
+                </Button>
+              </div>
+            ) : (
+              <div className="grid grid-cols-3 gap-4">
+                <div className="space-y-2">
+                  <Label>Giorno</Label>
+                  <Select defaultValue={String(course?.day_of_week ?? "")} onValueChange={(v) => setValue("day_of_week", v)}>
+                    <SelectTrigger><SelectValue placeholder="Seleziona..." /></SelectTrigger>
+                    <SelectContent>{DAYS.map((d) => <SelectItem key={d.value} value={d.value}>{d.label}</SelectItem>)}</SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label>Ora Inizio</Label>
+                  <Input type="time" {...register("start_time")} />
+                </div>
+                <div className="space-y-2">
+                  <Label>Durata (min)</Label>
+                  <Input type="number" {...register("duration_min")} />
+                </div>
+              </div>
+            )}
+
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label>Max Studenti</Label>

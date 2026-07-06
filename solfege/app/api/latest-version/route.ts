@@ -1,39 +1,36 @@
 import { NextResponse } from 'next/server'
-import { createAdminClient } from '@/lib/supabase/admin'
 
 export const dynamic = 'force-dynamic';
 
 export async function GET() {
   try {
-    const adminDb = createAdminClient()
+    // 1. Interroga le release pubbliche di GitHub
+    const githubRes = await fetch('https://api.github.com/repos/CosmoNetinfo/Solfege/releases/latest', {
+      headers: {
+        'User-Agent': 'Solfege-Updater-V2'
+      },
+      next: { revalidate: 60 } // cache di 1 minuto
+    });
 
-    const { data: releaseRes, error } = await adminDb
-      .from('app_releases' as any)
-      .select('version, release_notes, windows_url, mac_url, linux_url, published_at')
-      .eq('is_current', true)
-      .maybeSingle()
-
-    const release = releaseRes as any
-
-    if (error) {
-      return NextResponse.json({ error: error.message }, { status: 500 })
+    if (!githubRes.ok) {
+      return NextResponse.json({ error: `GitHub API error: ${githubRes.statusText}` }, { status: 500 });
     }
 
-    if (!release) {
-      return NextResponse.json({ version: '0.0.0' })
+    const release = await githubRes.json();
+    if (!release || !release.tag_name) {
+      return NextResponse.json({ version: '0.0.0' });
     }
 
-    const version = release.version;
-    const tag = `v${version}`;
+    // Il tag_name è nel formato "v1.3.2" -> estraiamo la versione "1.3.2"
+    const version = release.tag_name.replace(/^v/, '');
+    const tag = release.tag_name;
 
     // Costruisce i link degli update compressi .zip/tar.gz che Tauri richiede per l'updater
-    // Tauri per aggiornare Windows richiede il file .nsis.zip
+    // Tauri per Windows richiede il file .nsis.zip
     const winZipUrl = `https://github.com/CosmoNetinfo/Solfege/releases/download/${tag}/Solfege_${version}_x64-setup.nsis.zip`;
     const macTarUrl = `https://github.com/CosmoNetinfo/Solfege/releases/download/${tag}/Solfege_${version}_x64.app.tar.gz`;
-    const linuxTarUrl = `https://github.com/CosmoNetinfo/Solfege/releases/download/${tag}/Solfege_aarch64.app.tar.gz`; // fallback
 
-    // Per recuperare le firme digitali (.sig), l'endpoint fa una fetch al file .sig generato su GitHub Releases
-    // In questo modo evitiamo di dover inserire a mano le firme nel DB Supabase.
+    // Recupera la firma digitale (.sig) da GitHub Releases
     let winSignature = '';
     try {
       const sigRes = await fetch(`${winZipUrl}.sig`);
@@ -57,7 +54,7 @@ export async function GET() {
     // Risposta nel formato ufficiale richiesto da Tauri v2 Updater
     const tauriResponse: any = {
       version: version,
-      notes: release.release_notes,
+      notes: release.body || 'Nuovo aggiornamento disponibile',
       pub_date: release.published_at || new Date().toISOString(),
       platforms: {}
     };
@@ -80,8 +77,7 @@ export async function GET() {
       };
     }
 
-    // Se non ci sono piattaforme firmate disponibili per questa versione,
-    // Tauri v2 si aspetta uno status 204 No Content per indicare che non ci sono aggiornamenti.
+    // Se non ci sono piattaforme firmate disponibili, ritorna 204 No Content
     if (Object.keys(tauriResponse.platforms).length === 0) {
       return new NextResponse(null, { status: 204 });
     }
