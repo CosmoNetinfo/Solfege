@@ -13,6 +13,24 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
+
+const getEventStyles = (hexColor: string) => {
+  const color = hexColor || "#E8621A";
+  let cleanHex = color.replace("#", "");
+  if (cleanHex.length === 3) {
+    cleanHex = cleanHex.split("").map(c => c + c).join("");
+  }
+  const r = parseInt(cleanHex.substring(0, 2), 16) || 232;
+  const g = parseInt(cleanHex.substring(2, 4), 16) || 98;
+  const b = parseInt(cleanHex.substring(4, 6), 16) || 26;
+
+  return {
+    backgroundColor: `rgba(${r}, ${g}, ${b}, 0.12)`,
+    borderLeft: `4px solid rgba(${r}, ${g}, ${b}, 1)`,
+    color: `rgba(${Math.max(0, r - 60)}, ${Math.max(0, g - 60)}, ${Math.max(0, b - 60)}, 1)`
+  };
+};
+
 export default function StatoAulePage() {
   const [courses, setCourses] = useState<any[]>([]);
   const supabase = createClient();
@@ -537,7 +555,7 @@ export default function StatoAulePage() {
                         <div className="grid grid-cols-14 h-12 relative bg-stone-50/40 rounded-xl overflow-hidden border border-stone-100">
                           {/* Segmenti orari vuoti */}
                           {hoursRange.map(h => (
-                            <div key={h} className="border-l border-stone-100/70 h-full" />
+                            <div key={h} className="border-l border-stone-200 h-full" />
                           ))}
 
                           {/* Posizionamento degli eventi */}
@@ -557,20 +575,21 @@ export default function StatoAulePage() {
 
                             const leftPercent = (offsetMinutes / totalTimelineMinutes) * 100;
                             const widthPercent = (durationMinutes / totalTimelineMinutes) * 100;
+                            const styles = getEventStyles(event.colore);
 
                             return (
                               <div
                                 key={event.id}
-                                className="absolute top-1 bottom-1 rounded-lg px-2.5 py-1 text-[10px] font-bold text-white flex flex-col justify-center overflow-hidden shadow-sm leading-tight transition-all hover:scale-[1.01]"
+                                className="absolute top-1 bottom-1 rounded-lg px-2.5 py-1 text-[10px] font-bold flex flex-col justify-center overflow-hidden shadow-sm leading-tight transition-all hover:scale-[1.01]"
                                 style={{
                                   left: `${leftPercent}%`,
                                   width: `${widthPercent}%`,
-                                  backgroundColor: event.colore || "#E8621A"
+                                  ...styles
                                 }}
                                 title={`${event.titolo} (${event.ora_inizio} - ${event.ora_fine}) - ${event.nome_gruppo}`}
                               >
                                 <span className="truncate">{event.titolo}</span>
-                                <span className="text-[8px] opacity-90 truncate">{event.ora_inizio} - {event.ora_fine}</span>
+                                <span className="text-[8px] opacity-80 truncate">{event.ora_inizio} - {event.ora_fine}</span>
                               </div>
                             );
                           })}
@@ -600,9 +619,9 @@ export default function StatoAulePage() {
 
                 {/* Righe Orarie */}
                 {hoursRange.map(hour => (
-                  <div key={hour} className="grid grid-cols-[100px_repeat(7,1fr)] border-b border-stone-100 min-h-[70px] py-1 hover:bg-stone-50/20 transition-colors">
+                  <div key={hour} className="grid grid-cols-[100px_repeat(7,1fr)] border-b border-stone-200 min-h-[70px] py-1 hover:bg-stone-50/20 transition-colors">
                     {/* Colonna Ora */}
-                    <div className="flex items-center justify-center text-xs font-bold text-stone-400 border-r border-stone-100">
+                    <div className="flex items-center justify-center text-xs font-bold text-stone-400 border-r border-stone-200">
                       {String(hour).padStart(2, "0")}:00
                     </div>
 
@@ -626,18 +645,19 @@ export default function StatoAulePage() {
                       });
 
                       return (
-                        <div key={day.toISOString()} className="border-r border-stone-100 px-1.5 py-1 space-y-1">
+                        <div key={day.toISOString()} className="border-r border-stone-200 px-1.5 py-1 space-y-1">
                           {eventsInSlot.map((event: any) => {
                             const roomName = rooms.find(r => r.id === event.room_id)?.name || "Aula";
+                            const styles = getEventStyles(event.colore);
                             return (
                               <div
                                 key={event.id}
-                                className="p-1 rounded-lg text-[9px] font-bold text-white leading-tight shadow-sm"
-                                style={{ backgroundColor: event.colore || "#E8621A" }}
+                                className="p-1 rounded-lg text-[9px] font-bold leading-tight shadow-sm"
+                                style={styles}
                                 title={`${event.titolo} (${event.ora_inizio}-${event.ora_fine}) in ${roomName}`}
                               >
                                 <div className="truncate">{event.titolo}</div>
-                                <div className="text-[7.5px] opacity-90 truncate">{event.ora_inizio}-{event.ora_fine} {selectedRoomId === "all" && `(${roomName})`}</div>
+                                <div className="text-[7.5px] opacity-80 truncate">{event.ora_inizio}-{event.ora_fine} {selectedRoomId === "all" && `(${roomName})`}</div>
                               </div>
                             );
                           })}
@@ -710,16 +730,19 @@ export default function StatoAulePage() {
 
                             {/* Mini anteprima degli eventi del giorno */}
                             <div className="space-y-1 mt-2 flex-1 overflow-y-auto max-h-[50px] scrollbar-thin">
-                              {eventsToday.slice(0, 3).map((event: any) => (
-                                <div 
-                                  key={event.id}
-                                  className="text-[8px] font-bold text-white px-1 py-0.5 rounded truncate"
-                                  style={{ backgroundColor: event.colore || "#E8621A" }}
-                                  title={`${event.titolo} (${event.ora_inizio}-${event.ora_fine})`}
-                                >
-                                  {event.ora_inizio} {event.titolo}
-                                </div>
-                              ))}
+                              {eventsToday.slice(0, 3).map((event: any) => {
+                                const styles = getEventStyles(event.colore);
+                                return (
+                                  <div 
+                                    key={event.id}
+                                    className="text-[8px] font-bold px-1 py-0.5 rounded truncate"
+                                    style={styles}
+                                    title={`${event.titolo} (${event.ora_inizio}-${event.ora_fine})`}
+                                  >
+                                    {event.ora_inizio} {event.titolo}
+                                  </div>
+                                );
+                              })}
                               {eventsToday.length > 3 && (
                                 <p className="text-[7.5px] text-stone-400 font-semibold text-center mt-0.5">
                                   +{eventsToday.length - 3} altri

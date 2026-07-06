@@ -1,6 +1,6 @@
 {
   "productName": "Solfège",
-  "version": "1.4.9",
+  "version": "1.5.1",
   "identifier": "info.cosmonet.solfege",
   "build": {
     "beforeDevCommand": "npm run dev",
@@ -44,6 +44,7 @@
       "preloadConnections": ["sqlite:solfege.db"]
     },
     "updater": {
+      "active": true,
       "endpoints": [
         "https://solfege-five.vercel.app/api/latest-version"
       ],
