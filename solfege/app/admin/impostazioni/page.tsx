@@ -88,7 +88,7 @@ export default function ImpostazioniPage() {
       </div>
 
       <Tabs defaultValue='scuola' className="w-full">
-        <TabsList className="mb-8 bg-transparent border-b w-full justify-start rounded-none h-auto p-0 space-x-6 overflow-x-auto">
+        <TabsList className="mb-8 bg-transparent border-b w-full justify-start rounded-none h-auto p-0 space-x-6">
           <TabsTrigger value="scuola" className="rounded-none border-b-2 border-transparent data-[state=active]:border-[#E8621A] data-[state=active]:text-[#E8621A] data-[state=active]:bg-transparent px-0 py-3">Scuola</TabsTrigger>
           <TabsTrigger value="anno" className="rounded-none border-b-2 border-transparent data-[state=active]:border-[#E8621A] data-[state=active]:text-[#E8621A] data-[state=active]:bg-transparent px-0 py-3">Anno Accademico</TabsTrigger>
           <TabsTrigger value="strumenti" className="rounded-none border-b-2 border-transparent data-[state=active]:border-[#E8621A] data-[state=active]:text-[#E8621A] data-[state=active]:bg-transparent px-0 py-3">Strumenti</TabsTrigger>
