@@ -103,14 +103,16 @@ export default function TeachersPage() {
         
         // Fetch disponibilità per tutti gli insegnanti
         const dispData = await db.select<any[]>(
-          "SELECT teacher_id, giorno, ora_inizio, ora_fine FROM disponibilita_insegnanti WHERE teacher_id IN (" + 
+          "SELECT teacher_id, giorno_settimana as giorno, ora_inizio, ora_fine FROM disponibilita_insegnanti WHERE teacher_id IN (" + 
           teacherIds.map(() => '?').join(',') + ")",
           teacherIds
         );
 
-        // Fetch conteggio allievi attivi per insegnante (via enrollments)
+        // Fetch conteggio allievi attivi per insegnante (via enrollments join courses)
         const enrollData = await db.select<any[]>(
-          "SELECT teacher_id, student_id FROM enrollments WHERE status = 'active' AND teacher_id IN (" + 
+          "SELECT c.teacher_id, e.student_id FROM enrollments e " +
+          "JOIN courses c ON e.course_id = c.id " +
+          "WHERE (e.stato = 'attivo' OR e.stato = 'active') AND c.teacher_id IN (" + 
           teacherIds.map(() => '?').join(',') + ")",
           teacherIds
         );

@@ -131,9 +131,10 @@ export default function StudentsPage() {
       const { isDesktop } = await import("@/lib/is-desktop");
       if (isDesktop()) {
         const Database = (await import("@tauri-apps/plugin-sql")).default;
-        const db = await Database.load("sqlite:solfege.db");
         await db.execute("DELETE FROM students WHERE id = ?", [deleteId]);
-        await db.execute("DELETE FROM disponibilita_allievi WHERE student_id = ?", [deleteId]);
+        try {
+          await db.execute("DELETE FROM disponibilita_allievi WHERE student_id = ?", [deleteId]);
+        } catch (e) {}
         toast.success("Allievo eliminato");
         fetchStudents();
         setDeleteId(null);

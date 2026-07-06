@@ -190,13 +190,17 @@ export function StudentFormDialog({ open, onOpenChange, schoolId, student, onSuc
           );
         }
 
-        // Salva disponibilità su SQLite
-        await db.execute("DELETE FROM disponibilita_allievi WHERE student_id = ?", [studentId]);
-        for (const slot of slots) {
-          await db.execute(
-            "INSERT INTO disponibilita_allievi (id, school_id, student_id, giorno, ora_inizio, ora_fine) VALUES (lower(hex(randomblob(16))), ?, ?, ?, ?, ?)",
-            [schoolId, studentId, slot.giorno, slot.ora_inizio, slot.ora_fine]
-          );
+        // Salva disponibilità su SQLite (avvolto in try-catch in caso di tabella mancante)
+        try {
+          await db.execute("DELETE FROM disponibilita_allievi WHERE student_id = ?", [studentId]);
+          for (const slot of slots) {
+            await db.execute(
+              "INSERT INTO disponibilita_allievi (id, school_id, student_id, giorno, ora_inizio, ora_fine) VALUES (lower(hex(randomblob(16))), ?, ?, ?, ?, ?)",
+              [schoolId, studentId, slot.giorno, slot.ora_inizio, slot.ora_fine]
+            );
+          }
+        } catch (err) {
+          console.error("Errore salvataggio disponibilità allievi SQLite:", err);
         }
 
         toast.success(isEdit ? "Allievo aggiornato con successo" : "Allievo creato con successo");

@@ -93,6 +93,76 @@ export function StudentSheet({ studentId, open, onOpenChange, onEdit }: StudentS
     if (!studentId) return;
     setLoading(true);
     try {
+      const { isDesktop } = await import("@/lib/is-desktop");
+      if (isDesktop()) {
+        const Database = (await import("@tauri-apps/plugin-sql")).default;
+        const db = await Database.load("sqlite:solfege.db");
+
+        const studentsData = await db.select<any[]>(
+          `SELECT id, nome as first_name, cognome as last_name, email, telefono as phone, 
+                  data_nascita as dob, is_minorenne as active, genitore_nome as parent_name, 
+                  genitore_cognome as parent_surname, genitore_email as parent_email, 
+                  genitore_telefono as parent_phone, genitore_codice_fiscale as parent_cf,
+                  codice_fiscale, indirizzo, citta, cap, note, created_at
+           FROM students WHERE id = ?`,
+          [studentId]
+        );
+        const studentObj = studentsData[0] || null;
+
+        const enrolls = await db.select<any[]>(
+          `SELECT e.*, c.nome as course_name, c.tipo as course_type, c.livello as course_level
+           FROM enrollments e
+           JOIN courses c ON e.course_id = c.id
+           WHERE e.student_id = ?`,
+          [studentId]
+        );
+        const enrollMapped = enrolls.map(e => ({
+          ...e,
+          courses: { name: e.course_name, type: e.course_type, level: e.course_level }
+        }));
+
+        const pays = await db.select<any[]>(
+          `SELECT p.*, c.nome as course_name
+           FROM payments p
+           LEFT JOIN courses c ON p.course_id = c.id
+           WHERE p.student_id = ?`,
+          [studentId]
+        );
+        const paysMapped = pays.map(p => ({
+          ...p,
+          enrollments: { courses: { name: p.course_name } }
+        }));
+
+        const attends = await db.select<any[]>(
+          `SELECT a.*, l.data, l.ora_inizio, l.ora_fine, c.nome as course_name
+           FROM attendance a
+           JOIN lessons l ON a.lesson_id = l.id
+           JOIN courses c ON l.course_id = c.id
+           WHERE a.student_id = ?`,
+          [studentId]
+        );
+        const attendsMapped = attends.map(a => ({
+          ...a,
+          lessons: { data_ora_inizio: `${a.data}T${a.ora_inizio}:00`, courses: { name: a.course_name } }
+        }));
+
+        let availMapped: any[] = [];
+        try {
+          availMapped = await db.select<any[]>(
+            `SELECT * FROM disponibilita_allievi WHERE student_id = ? ORDER BY giorno`,
+            [studentId]
+          );
+        } catch (e) {}
+
+        setStudent(studentObj);
+        setEnrollments(enrollMapped);
+        setPayments(paysMapped);
+        setAttendance(attendsMapped);
+        setAvailability(availMapped);
+        setLoading(false);
+        return;
+      }
+
       const [
         { data: studentData },
         { data: enrollData },
