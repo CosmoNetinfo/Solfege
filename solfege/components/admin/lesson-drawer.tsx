@@ -46,6 +46,82 @@ export function LessonDrawer({ lessonId, isOpen, onClose, onRefresh }: LessonDra
   async function loadLessonDetails() {
     if (!lessonId) return;
     setLoading(true);
+
+    try {
+      const { isDesktop } = await import("@/lib/is-desktop");
+      if (isDesktop()) {
+        const Database = (await import("@tauri-apps/plugin-sql")).default;
+        const db = await Database.load("sqlite:solfege.db");
+
+        // 1. Carica Lezione Locale con JOIN
+        const lessonsData = await db.select<any[]>(
+          `SELECT l.id, l.data, l.ora_inizio, l.ora_fine, l.stato as status, 
+                  l.argomenti as topic, l.compiti as homework, l.note as internal_notes,
+                  l.course_id, l.teacher_id, l.room_id,
+                  c.nome as course_name, c.colore_calendario,
+                  t.nome as teacher_first_name, t.cognome as teacher_last_name,
+                  r.nome as room_name
+           FROM lessons l
+           LEFT JOIN courses c ON l.course_id = c.id
+           LEFT JOIN teachers t ON l.teacher_id = t.id
+           LEFT JOIN rooms r ON l.room_id = r.id
+           WHERE l.id = ?`,
+          [lessonId]
+        );
+
+        const localLesson = lessonsData[0];
+        if (!localLesson) {
+          toast.error("Lezione non trovata");
+          onClose();
+          return;
+        }
+
+        // Adatta il formato della data per fittare Date(data_ora_inizio)
+        const startISO = `${localLesson.data}T${localLesson.ora_inizio}:00`;
+        const endISO = `${localLesson.data}T${localLesson.ora_fine}:00`;
+
+        setLesson({
+          ...localLesson,
+          data_ora_inizio: startISO,
+          data_ora_fine: endISO,
+          courses: {
+            name: localLesson.course_name,
+            colore_calendario: localLesson.colore_calendario
+          },
+          teachers: {
+            first_name: localLesson.teacher_first_name,
+            last_name: localLesson.teacher_last_name
+          },
+          rooms: {
+            name: localLesson.room_name
+          }
+        });
+
+        // 2. Carica Presenze Locali
+        const attendData = await db.select<any[]>(
+          `SELECT a.id, a.student_id, a.stato as status, a.note,
+                  s.nome as student_first_name, s.cognome as student_last_name
+           FROM attendances a
+           LEFT JOIN students s ON a.student_id = s.id
+           WHERE a.lesson_id = ?`,
+          [lessonId]
+        );
+
+        setAttendance(attendData.map(a => ({
+          ...a,
+          students: {
+            first_name: a.student_first_name,
+            last_name: a.student_last_name
+          }
+        })));
+
+        setLoading(false);
+        return;
+      }
+    } catch (e) {
+      console.error("Errore caricamento dettagli lezione SQLite:", e);
+    }
+
     const { data, error } = await supabase
       .from("lessons")
       .select(`
@@ -80,6 +156,29 @@ export function LessonDrawer({ lessonId, isOpen, onClose, onRefresh }: LessonDra
   async function updateStatus(newStatus: string) {
     if (!lessonId) return;
     setUpdating(true);
+
+    try {
+      const { isDesktop } = await import("@/lib/is-desktop");
+      if (isDesktop()) {
+        const Database = (await import("@tauri-apps/plugin-sql")).default;
+        const db = await Database.load("sqlite:solfege.db");
+
+        // Aggiorna in SQLite locale
+        await db.execute(
+          "UPDATE lessons SET stato = ? WHERE id = ?",
+          [newStatus === 'completata' ? 'completata' : newStatus, lessonId]
+        );
+
+        toast.success("Stato aggiornato");
+        setLesson({ ...lesson, status: newStatus });
+        onRefresh();
+        setUpdating(false);
+        return;
+      }
+    } catch (e) {
+      console.error("Errore aggiornamento stato SQLite:", e);
+    }
+
     const { error } = await supabase
       .from("lessons")
       .update({ status: newStatus as StatoLezione })
@@ -104,6 +203,26 @@ export function LessonDrawer({ lessonId, isOpen, onClose, onRefresh }: LessonDra
     };
     const nextStatus = nextStatusMap[currentStatus] || 'presente';
 
+    try {
+      const { isDesktop } = await import("@/lib/is-desktop");
+      if (isDesktop()) {
+        const Database = (await import("@tauri-apps/plugin-sql")).default;
+        const db = await Database.load("sqlite:solfege.db");
+
+        await db.execute(
+          "UPDATE attendances SET stato = ? WHERE lesson_id = ? AND student_id = ?",
+          [nextStatus, lessonId, studentId]
+        );
+
+        setAttendance(attendance.map(a => 
+          a.student_id === studentId ? { ...a, status: nextStatus } : a
+        ));
+        return;
+      }
+    } catch (e) {
+      console.error("Errore aggiornamento presenze SQLite:", e);
+    }
+
     const { error } = await supabase
       .from("attendance")
       .update({ status: nextStatus as StatoPresenza })
@@ -118,6 +237,32 @@ export function LessonDrawer({ lessonId, isOpen, onClose, onRefresh }: LessonDra
       ));
     }
   }
+
+  const handleDeleteLesson = async () => {
+    if (!lessonId || !confirm("Sei sicuro di voler eliminare questa lezione?")) return;
+    try {
+      const { isDesktop } = await import("@/lib/is-desktop");
+      if (isDesktop()) {
+        const Database = (await import("@tauri-apps/plugin-sql")).default;
+        const db = await Database.load("sqlite:solfege.db");
+        await db.execute("DELETE FROM lessons WHERE id = ?", [lessonId]);
+        await db.execute("DELETE FROM attendances WHERE lesson_id = ?", [lessonId]);
+        toast.success("Lezione eliminata");
+        onRefresh();
+        onClose();
+        return;
+      }
+
+      // Web Flow
+      const { error } = await supabase.from("lessons").delete().eq("id", lessonId);
+      if (error) throw error;
+      toast.success("Lezione eliminata");
+      onRefresh();
+      onClose();
+    } catch (e) {
+      toast.error("Errore durante l'eliminazione");
+    }
+  };
 
   if (!lesson && loading) return null;
 
@@ -248,7 +393,7 @@ export function LessonDrawer({ lessonId, isOpen, onClose, onRefresh }: LessonDra
               <Button variant="outline" className="w-full text-stone-600">
                 <RotateCcw className="mr-2 h-4 w-4" /> Pianifica Recupero
               </Button>
-              <Button variant="ghost" className="w-full text-red-500 hover:text-red-600 hover:bg-red-50">
+              <Button onClick={handleDeleteLesson} variant="ghost" className="w-full text-red-500 hover:text-red-600 hover:bg-red-50">
                 <Trash2 className="mr-2 h-4 w-4" /> Elimina Lezione
               </Button>
             </div>

@@ -44,12 +44,61 @@ export function EnrollmentFormDialog({ open, onOpenChange, schoolId, course, onS
   }, [open, schoolId]);
 
   async function loadData() {
-    // Carica studenti attivi
+    try {
+      const { isDesktop } = await import("@/lib/is-desktop");
+      if (isDesktop()) {
+        const Database = (await import("@tauri-apps/plugin-sql")).default;
+        const db = await Database.load("sqlite:solfege.db");
+
+        // Carica studenti attivi locali
+        const studentData = await db.select<any[]>(
+          "SELECT id, nome as first_name, cognome as last_name FROM students ORDER BY cognome, nome"
+        );
+        setStudents(studentData);
+
+        // Carica docenti attivi locali
+        const teacherData = await db.select<any[]>(
+          "SELECT id, nome as first_name, cognome as last_name FROM teachers ORDER BY cognome, nome"
+        );
+
+        if (course?.day_of_week !== null && course?.day_of_week !== undefined && course?.start_time) {
+          const giorno = DAY_MAP[course.day_of_week];
+          const teacherIds = (teacherData || []).map((t: any) => t.id);
+
+          if (teacherIds.length === 0) {
+            setTeachers([]);
+            return;
+          }
+
+          const dispData = await db.select<any[]>(
+            "SELECT teacher_id, giorno, ora_inizio, ora_fine FROM disponibilita_insegnanti WHERE giorno = ? AND teacher_id IN (" + 
+            teacherIds.map(() => '?').join(',') + ")",
+            [giorno, ...teacherIds]
+          );
+
+          const courseStartTime = course.start_time;
+          const availableTeacherIds = new Set(
+            (dispData || [])
+              .filter((d: any) => d.ora_inizio <= courseStartTime && d.ora_fine > courseStartTime)
+              .map((d: any) => d.teacher_id)
+          );
+
+          setTeachers((teacherData || []).filter((t: any) => availableTeacherIds.has(t.id)));
+        } else {
+          setTeachers(teacherData || []);
+        }
+        return;
+      }
+    } catch (e) {
+      console.error("Errore caricamento dati iscrizione SQLite:", e);
+    }
+
+    // Carica studenti attivi (Supabase)
     const { data: studentData } = await supabase
       .from("students").select("id, first_name, last_name").eq("school_id", schoolId).eq("active", true)
       .order("last_name");
 
-    // Carica insegnanti con disponibilità filtrata per giorno/ora del corso
+    // Carica insegnanti con disponibilità filtrata per giorno/ora del corso (Supabase)
     const { data: teacherData } = await supabase
       .from("teachers").select("id, first_name, last_name").eq("school_id", schoolId).eq("active", true)
       .order("last_name");

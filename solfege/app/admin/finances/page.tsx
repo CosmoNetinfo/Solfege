@@ -87,6 +87,94 @@ export default function FinancesPage() {
 
   async function loadData() {
     setLoading(true);
+    try {
+      const { isDesktop } = await import("@/lib/is-desktop");
+      if (isDesktop()) {
+        const Database = (await import("@tauri-apps/plugin-sql")).default;
+        const db = await Database.load("sqlite:solfege.db");
+
+        // 1. Carica info Scuola locale
+        const schools = await db.select<any[]>("SELECT * FROM schools LIMIT 1");
+        if (schools && schools.length > 0) {
+          const s = schools[0];
+          setSchool({
+            id: s.id,
+            name: s.nome,
+            address: s.indirizzo,
+            phone: s.telefono,
+            email: s.email,
+            website: s.sito_web
+          });
+        }
+
+        // 2. Carica pagamenti locali
+        let query = `
+          SELECT p.id, p.student_id, p.amount, p.data_pagamento as paid_date, 
+                 p.data_scadenza as due_date, p.metodo as method, p.stato as status, 
+                 p.numero_ricevuta, p.description,
+                 s.nome as student_first_name, s.cognome as student_last_name, 
+                 s.telefono as student_phone, s.genitore_telefono as parent_phone
+          FROM payments p
+          LEFT JOIN students s ON p.student_id = s.id
+        `;
+        
+        const params: any[] = [];
+        if (statusTab !== "tutti") {
+          query += " WHERE p.stato = ?";
+          params.push(statusTab);
+        }
+        
+        query += " ORDER BY p.data_scadenza DESC";
+
+        const localPayments = await db.select<any[]>(query, params);
+        
+        // Mappiamo i dati locali per allinearsi con la struttura attesa dal frontend (p.students.first_name, ecc.)
+        const mappedPayments = localPayments.map(p => ({
+          ...p,
+          students: {
+            first_name: p.student_first_name,
+            last_name: p.student_last_name,
+            phone: p.student_phone,
+            parent_phone: p.parent_phone
+          }
+        }));
+
+        setPayments(mappedPayments);
+
+        // 3. Calcola Riepilogo Finanziario locale
+        const now = new Date();
+        const firstDayOfMonthStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-01`;
+
+        // Incassato questo mese
+        const paidThisMonthRes = await db.select<any[]>(
+          "SELECT SUM(amount) as total FROM payments WHERE stato = 'pagato' AND data_pagamento >= ?",
+          [firstDayOfMonthStr]
+        );
+
+        // In attesa
+        const pendingRes = await db.select<any[]>(
+          "SELECT SUM(amount) as total FROM payments WHERE stato = 'in_attesa'"
+        );
+
+        // In ritardo / scaduti
+        const overdueRes = await db.select<any[]>(
+          "SELECT SUM(amount) as total FROM payments WHERE stato = 'in_ritardo' OR (stato = 'in_attesa' AND data_scadenza < date('now'))"
+        );
+
+        setSummary({
+          collectedMonth: Number(paidThisMonthRes[0]?.total || 0),
+          pendingTotal: Number(pendingRes[0]?.total || 0),
+          overdueTotal: Number(overdueRes[0]?.total || 0),
+        });
+
+        setLoading(false);
+        return;
+      }
+    } catch (e) {
+      console.error("Errore caricamento finanze SQLite:", e);
+    }
+
+    // Web Flow (Supabase)
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return;
     
@@ -119,8 +207,35 @@ export default function FinancesPage() {
     if (!selectedPayment) return;
     
     try {
-      // Generiamo un numero ricevuta fittizio ma progressivo (per ora anno-numero)
       const year = new Date().getFullYear();
+      const { isDesktop } = await import("@/lib/is-desktop");
+
+      if (isDesktop()) {
+        const Database = (await import("@tauri-apps/plugin-sql")).default;
+        const db = await Database.load("sqlite:solfege.db");
+
+        // Conta le ricevute dell'anno per calcolare il progressivo locale
+        const countRes = await db.select<any[]>(
+          "SELECT count(*) as count FROM payments WHERE stato = 'pagato' AND data_pagamento >= ?",
+          [`${year}-01-01`]
+        );
+        const count = countRes[0]?.count || 0;
+        const receiptNumber = `${year}-${String(count + 1).padStart(3, "0")}`;
+
+        await db.execute(
+          `UPDATE payments 
+           SET stato = 'pagato', data_pagamento = ?, metodo = ?, numero_ricevuta = ?
+           WHERE id = ?`,
+          [paidDate, paymentMethod, receiptNumber, selectedPayment.id]
+        );
+
+        toast.success("Pagamento registrato con successo");
+        setIsPayModalOpen(false);
+        loadData();
+        return;
+      }
+
+      // Web Flow
       const { count } = await supabase
         .from("payments")
         .select("*", { count: "exact", head: true })

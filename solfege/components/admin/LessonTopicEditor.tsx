@@ -31,6 +31,23 @@ export function LessonTopicEditor({
   const handleSave = async () => {
     setIsSaving(true);
     try {
+      const { isDesktop } = await import("@/lib/is-desktop");
+      if (isDesktop()) {
+        const Database = (await import("@tauri-apps/plugin-sql")).default;
+        const db = await Database.load("sqlite:solfege.db");
+
+        await db.execute(
+          "UPDATE lessons SET argomenti = ?, compiti = ?, note = ? WHERE id = ?",
+          [topic, homework, internalNotes, lessonId]
+        );
+
+        toast.success("Registro lezione aggiornato");
+        if (onSave) onSave();
+        setIsSaving(false);
+        return;
+      }
+
+      // Web Flow
       const { error } = await supabase
         .from("lessons")
         .update({

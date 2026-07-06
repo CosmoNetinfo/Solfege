@@ -35,6 +35,19 @@ export default function CoursesPage() {
 
   useEffect(() => {
     async function load() {
+      const { isDesktop } = await import("@/lib/is-desktop");
+      if (isDesktop()) {
+        const Database = (await import("@tauri-apps/plugin-sql")).default;
+        const db = await Database.load("sqlite:solfege.db");
+        const schools = await db.select<any[]>("SELECT id FROM schools LIMIT 1");
+        if (schools && schools.length > 0) {
+          setSchoolId(schools[0].id);
+          await fetchAll(schools[0].id);
+        }
+        return;
+      }
+
+      // Web Flow
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
       const { data: profile } = await supabase.from("profiles").select("school_id").eq("id", user.id).single();
@@ -49,6 +62,63 @@ export default function CoursesPage() {
     setLoading(true);
     const id = sid || schoolId;
     if (!id) return;
+
+    try {
+      const { isDesktop } = await import("@/lib/is-desktop");
+      if (isDesktop()) {
+        const Database = (await import("@tauri-apps/plugin-sql")).default;
+        const db = await Database.load("sqlite:solfege.db");
+
+        // Fetch courses con join su strumenti e aule (usando alias per mantenere compatibilità)
+        const coursesData = await db.select<any[]>(
+          `SELECT c.id, c.nome as name, c.tipo as type, c.livello as level, 
+                  c.giorno_settimana as day_of_week, c.ora_inizio as start_time, 
+                  c.durata_minuti as duration_min, c.max_allievi as max_students, 
+                  c.prezzo as price, c.colore_calendario, c.anno_accademico as anno_scolastico,
+                  c.instrument_id, c.room_id,
+                  i.nome as instrument_name, r.nome as room_name
+           FROM courses c
+           LEFT JOIN instruments i ON c.instrument_id = i.id
+           LEFT JOIN rooms r ON c.room_id = r.id
+           WHERE c.school_id = ? ORDER BY c.nome ASC`,
+          [id]
+        );
+
+        // Fetch conteggio iscritti (enrollments)
+        const enrollData = await db.select<any[]>(
+          "SELECT course_id FROM enrollments WHERE status = 'active'"
+        );
+
+        const enrollCounts: Record<string, number> = {};
+        (enrollData || []).forEach((e: any) => { enrollCounts[e.course_id] = (enrollCounts[e.course_id] || 0) + 1; });
+
+        const mappedCourses = coursesData.map((c: any) => ({
+          ...c,
+          instruments: c.instrument_id ? { name: c.instrument_name } : null,
+          rooms: c.room_id ? { name: c.room_name } : null,
+          enrolled_count: enrollCounts[c.id] || 0,
+          price_model: "mensile" // Valore di fallback
+        }));
+
+        // Fetch strumenti
+        const instrumentsData = await db.select<any[]>(
+          "SELECT id, nome as name FROM instruments ORDER BY nome ASC"
+        );
+
+        // Fetch aule
+        const roomsData = await db.select<any[]>(
+          "SELECT id, nome as name FROM rooms ORDER BY nome ASC"
+        );
+
+        setCourses(mappedCourses);
+        setInstruments(instrumentsData);
+        setRooms(roomsData);
+        setLoading(false);
+        return;
+      }
+    } catch (e) {
+      console.error("Errore caricamento corsi SQLite:", e);
+    }
 
     const [coursesRes, instrRes, roomsRes] = await Promise.all([
       supabase.from("courses").select("*, instruments(name), rooms(name)").eq("school_id", id).order("name"),
@@ -74,9 +144,26 @@ export default function CoursesPage() {
 
   async function handleDelete() {
     if (!deleteId) return;
-    const { error } = await supabase.from("courses").delete().eq("id", deleteId);
-    if (error) toast.error("Errore durante l'eliminazione");
-    else { toast.success("Corso eliminato"); fetchAll(); }
+    try {
+      const { isDesktop } = await import("@/lib/is-desktop");
+      if (isDesktop()) {
+        const Database = (await import("@tauri-apps/plugin-sql")).default;
+        const db = await Database.load("sqlite:solfege.db");
+        await db.execute("DELETE FROM courses WHERE id = ?", [deleteId]);
+        await db.execute("DELETE FROM enrollments WHERE course_id = ?", [deleteId]);
+        toast.success("Corso eliminato");
+        fetchAll();
+        setDeleteId(null);
+        return;
+      }
+
+      // Web Flow
+      const { error } = await supabase.from("courses").delete().eq("id", deleteId);
+      if (error) toast.error("Errore durante l'eliminazione");
+      else { toast.success("Corso eliminato"); fetchAll(); }
+    } catch (e) {
+      toast.error("Errore durante l'eliminazione");
+    }
     setDeleteId(null);
   }
 

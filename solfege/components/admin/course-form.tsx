@@ -111,6 +111,68 @@ export function CourseFormDialog({ open, onOpenChange, schoolId, course, instrum
   async function onSubmit(data: CourseFormValues) {
     setIsLoading(true);
     try {
+      const { isDesktop } = await import("@/lib/is-desktop");
+
+      const localPayload = {
+        school_id: schoolId,
+        nome: data.name,
+        tipo: data.type as "individuale" | "collettivo" | "online",
+        livello: (data.level || "principiante") as "principiante" | "intermedio" | "avanzato" | "professionale",
+        instrument_id: instrumentId || null,
+        room_id: roomId || null,
+        giorno_settimana: data.day_of_week ? parseInt(data.day_of_week) : null,
+        ora_inizio: data.start_time || null,
+        // calcola ora_fine in base a ora_inizio e durata_min
+        ora_fine: data.start_time && data.duration_min ? (() => {
+          const [h, m] = data.start_time.split(':').map(Number);
+          const totalMin = h * 60 + m + parseInt(data.duration_min);
+          const endH = Math.floor(totalMin / 60) % 24;
+          const endM = totalMin % 60;
+          return `${endH < 10 ? '0' : ''}${endH}:${endM < 10 ? '0' : ''}${endM}`;
+        })() : null,
+        durata_minuti: data.duration_min ? parseInt(data.duration_min) : 60,
+        max_allievi: data.max_students ? parseInt(data.max_students) : 1,
+        prezzo: data.price ? parseFloat(data.price) : 0,
+        colore_calendario: selectedColor,
+        anno_accademico: data.anno_scolastico || "2024-2025",
+        descrizione: null
+      };
+
+      if (isDesktop()) {
+        const Database = (await import("@tauri-apps/plugin-sql")).default;
+        const db = await Database.load("sqlite:solfege.db");
+
+        if (isEdit) {
+          const fields = Object.keys(localPayload).map(k => `${k} = ?`).join(', ');
+          await db.execute(
+            `UPDATE courses SET ${fields} WHERE id = ?`,
+            [...Object.values(localPayload), course.id]
+          );
+        } else {
+          const newCourseId = crypto.randomUUID();
+          await db.execute(
+            `INSERT INTO courses (id, school_id, nome, tipo, livello, instrument_id, 
+             room_id, giorno_settimana, ora_inizio, ora_fine, durata_minuti, max_allievi, 
+             prezzo, colore_calendario, anno_accademico) 
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+            [
+              newCourseId, schoolId, localPayload.nome, localPayload.tipo, localPayload.livello,
+              localPayload.instrument_id, localPayload.room_id, localPayload.giorno_settimana,
+              localPayload.ora_inizio, localPayload.ora_fine, localPayload.durata_minuti,
+              localPayload.max_allievi, localPayload.prezzo, localPayload.colore_calendario,
+              localPayload.anno_accademico
+            ]
+          );
+        }
+
+        toast.success(isEdit ? "Corso aggiornato" : "Corso creato con successo");
+        reset();
+        onOpenChange(false);
+        onSuccess();
+        return;
+      }
+
+      // Web Flow
       const payload = {
         school_id: schoolId,
         name: data.name,
