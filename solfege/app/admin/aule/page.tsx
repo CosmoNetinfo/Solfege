@@ -177,7 +177,10 @@ export default function StatoAulePage() {
             .lte("data_ora_inizio", `${endDateStr}T23:59:59`),
           supabase.from("courses").select("*").eq("school_id", sid)
         ]);
-
+        if (rRes.error) console.error("Errore caricamento aule Supabase:", rRes.error);
+        if (bRes.error) console.error("Errore caricamento prenotazioni Supabase:", bRes.error);
+        if (lRes.error) console.error("Errore caricamento lezioni Supabase:", lRes.error);
+        if (cRes.error) console.error("Errore caricamento corsi Supabase:", cRes.error);
         setRooms((rRes.data || []).map((r: any) => ({
           ...r,
           name: r.nome,
