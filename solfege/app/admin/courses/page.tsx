@@ -35,25 +35,62 @@ export default function CoursesPage() {
 
   useEffect(() => {
     async function load() {
-      const { isDesktop } = await import("@/lib/is-desktop");
-      if (isDesktop()) {
-        const Database = (await import("@tauri-apps/plugin-sql")).default;
-        const db = await Database.load("sqlite:solfege.db");
-        const schools = await db.select<any[]>("SELECT id FROM schools LIMIT 1");
-        if (schools && schools.length > 0) {
-          setSchoolId(schools[0].id);
-          await fetchAll(schools[0].id);
-        }
-        return;
-      }
+      console.log("[COURSES] Avvio caricamento pagina corsi...");
+      try {
+        const { isDesktop } = await import("@/lib/is-desktop");
+        if (isDesktop()) {
+          console.log("[COURSES] Rilevato ambiente Desktop nativo. Caricamento SQLite...");
+          const Database = (await import("@tauri-apps/plugin-sql")).default;
+          const db = await Database.load("sqlite:solfege.db");
+          
+          // Auto-seeding degli strumenti locali se vuoti
+          try {
+            const checkInstr = await db.select<any[]>("SELECT COUNT(*) as count FROM instruments");
+            if (checkInstr && checkInstr.length > 0 && checkInstr[0].count === 0) {
+              console.log("[COURSES] Tabella strumenti locale vuota. Avvio seeding strumenti...");
+              const DEFAULT_INSTRUMENTS = [
+                "Arpa", "Basso Elettrico", "Batteria", "Canto", "Chitarra", "Chitarra Elettrica",
+                "Clarinetto", "Clavicembalo", "Composizione", "Contrabbasso", "Corno", "Fagotto",
+                "Fisarmonica", "Flauto", "Mandolino", "Musica d'insieme", "Oboe", "Organo",
+                "Percussioni", "Pianoforte", "Sassofono", "Tromba", "Trombone", "Viola", "Violino", "Violoncello"
+              ];
+              for (const name of DEFAULT_INSTRUMENTS) {
+                await db.execute("INSERT INTO instruments (nome, categoria) VALUES (?, 'Classico')", [name]);
+              }
+              console.log("[COURSES] Seeding strumenti completato!");
+            }
+          } catch (err) {
+            console.error("[COURSES] Errore durante il seeding degli strumenti:", err);
+          }
 
-      // Web Flow
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
-      const { data: profile } = await supabase.from("profiles").select("school_id").eq("id", user.id).single();
-      if (!profile?.school_id) return;
-      setSchoolId(profile.school_id);
-      await fetchAll(profile.school_id);
+          const schools = await db.select<any[]>("SELECT id FROM schools LIMIT 1");
+          console.log("[COURSES] Scuole trovate nel DB locale:", schools);
+          if (schools && schools.length > 0) {
+            setSchoolId(schools[0].id);
+            await fetchAll(schools[0].id);
+          } else {
+            console.warn("[COURSES] Nessuna scuola trovata nel DB locale SQLite!");
+          }
+          return;
+        }
+
+        // Web Flow
+        console.log("[COURSES] Rilevato ambiente Web Flow. Caricamento Supabase...");
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) {
+          console.warn("[COURSES] Nessun utente autenticato su Supabase!");
+          return;
+        }
+        const { data: profile } = await supabase.from("profiles").select("school_id").eq("id", user.id).single();
+        if (!profile?.school_id) {
+          console.warn("[COURSES] Nessuna scuola associata al profilo utente!");
+          return;
+        }
+        setSchoolId(profile.school_id);
+        await fetchAll(profile.school_id);
+      } catch (err) {
+        console.error("[COURSES] Errore critico nel load() dei corsi:", err);
+      }
     }
     load();
   }, []);
@@ -61,7 +98,11 @@ export default function CoursesPage() {
   async function fetchAll(sid?: string) {
     setLoading(true);
     const id = sid || schoolId;
-    if (!id) return;
+    console.log("[COURSES] Avvio fetchAll con schoolId:", id);
+    if (!id) {
+      console.warn("[COURSES] fetchAll annullato: schoolId non valido");
+      return;
+    }
 
     try {
       const { isDesktop } = await import("@/lib/is-desktop");
@@ -82,6 +123,7 @@ export default function CoursesPage() {
            LEFT JOIN rooms r ON c.room_id = r.id
            ORDER BY c.nome ASC`
         );
+        console.log("[COURSES] Corsi caricati offline:", coursesData);
 
         // Fetch conteggio iscritti (enrollments)
         const enrollData = await db.select<any[]>(
@@ -105,8 +147,21 @@ export default function CoursesPage() {
           instrumentsData = await db.select<any[]>(
             "SELECT id, nome as name FROM instruments ORDER BY nome ASC"
           );
+          if (instrumentsData.length === 0) {
+            const DEFAULT_INSTRUMENTS = [
+              "Arpa", "Basso Elettrico", "Batteria", "Canto", "Chitarra", "Chitarra Elettrica",
+              "Clarinetto", "Clavicembalo", "Composizione", "Contrabbasso", "Corno", "Fagotto",
+              "Fisarmonica", "Flauto", "Mandolino", "Musica d'insieme", "Oboe", "Organo",
+              "Percussioni", "Pianoforte", "Sassofono", "Tromba", "Trombone", "Viola", "Violino", "Violoncello"
+            ];
+            instrumentsData = DEFAULT_INSTRUMENTS.map((name, index) => ({
+              id: `global-${index}`,
+              name: name
+            }));
+          }
+          console.log("[COURSES] Strumenti caricati offline:", instrumentsData);
         } catch (err) {
-          console.error("Errore caricamento strumenti SQLite:", err);
+          console.error("[COURSES] Errore caricamento strumenti SQLite:", err);
         }
 
         // Fetch aule
@@ -115,8 +170,9 @@ export default function CoursesPage() {
           roomsData = await db.select<any[]>(
             "SELECT id, nome as name FROM rooms ORDER BY nome ASC"
           );
+          console.log("[COURSES] Aule caricate offline:", roomsData);
         } catch (err) {
-          console.error("Errore caricamento aule SQLite:", err);
+          console.error("[COURSES] Errore caricamento aule SQLite:", err);
         }
 
         setCourses(mappedCourses);
@@ -126,7 +182,7 @@ export default function CoursesPage() {
         return;
       }
     } catch (e) {
-      console.error("Errore caricamento corsi SQLite:", e);
+      console.error("[COURSES] Errore nel try di fetchAll SQLite:", e);
     }
 
     const [coursesRes, instrRes, roomsRes] = await Promise.all([
