@@ -169,7 +169,7 @@ export default function StatoAulePage() {
         if (!schoolId) throw new Error("Scuola non impostata");
         const sid = schoolId as string;
         const [rRes, bRes, lRes, cRes] = await Promise.all([
-          supabase.from("rooms").select("*").eq("school_id", sid).order("nome"),
+          supabase.from("rooms").select("*").eq("school_id", sid).order("name"),
           supabase.from("room_bookings").select("*").eq("school_id", sid).gte("data", startDateStr).lte("data", endDateStr),
           supabase.from("lessons").select("id, data_ora_inizio, data_ora_fine, room_id, courses(name, colore_calendario), teachers(first_name, last_name)")
             .eq("school_id", sid)
@@ -183,8 +183,8 @@ export default function StatoAulePage() {
         if (cRes.error) console.error("Errore caricamento corsi Supabase:", cRes.error);
         setRooms((rRes.data || []).map((r: any) => ({
           ...r,
-          name: r.nome,
-          capacity: r.capacita
+          name: r.name,
+          capacity: r.capacity
         })));
         setBookings((bRes.data || []).map(b => ({
           id: b.id,
