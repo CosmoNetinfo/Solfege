@@ -136,9 +136,9 @@ export function CourseFormDialog({ open, onOpenChange, schoolId, course, instrum
               if (user) {
                 const { data: profile } = await supabase.from("profiles").select("school_id").eq("id", user.id).single();
                 if (profile?.school_id) {
-                  const { data: school } = await supabase.from("schools").select("anno_scolastico_corrente").eq("id", profile.school_id).maybeSingle();
-                  if (school?.anno_scolastico_corrente) {
-                    defaultYear = school.anno_scolastico_corrente;
+                  const { data: school } = await supabase.from("schools").select("*").eq("id", profile.school_id).maybeSingle() as any;
+                  if (school && (school.anno_scolastico_corrente || school.anno_accademico_corrente)) {
+                    defaultYear = school.anno_scolastico_corrente || school.anno_accademico_corrente;
                   }
                 }
               }
