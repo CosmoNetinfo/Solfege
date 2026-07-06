@@ -21,42 +21,76 @@ import { it } from "date-fns/locale";
 
 import { isDesktop } from "@/lib/is-desktop";
 
+import { createClient } from "@/lib/supabase/client";
+
 export default function BachecaAdminPage() {
+  const supabase = createClient();
   const [notices, setNotices] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
   const [important, setImportant] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [schoolId, setSchoolId] = useState<string | null>(null);
 
-  // 1. Carica avvisi da SQLite locale
-  const fetchNotices = async () => {
-    if (!isDesktop()) {
-      setLoading(false);
-      return;
+  // Carica schoolId all'avvio
+  useEffect(() => {
+    async function loadSchoolId() {
+      try {
+        const { isDesktop } = await import("@/lib/is-desktop");
+        if (isDesktop()) {
+          const Database = (await import("@tauri-apps/plugin-sql")).default;
+          const db = await Database.load("sqlite:solfege.db");
+          const res = await db.select<any[]>("SELECT id FROM schools LIMIT 1");
+          if (res && res.length > 0) {
+            setSchoolId(res[0].id);
+          }
+        } else {
+          const { data: { user } } = await supabase.auth.getUser();
+          if (user) {
+            const { data: profile } = await supabase.from("profiles").select("school_id").eq("id", user.id).maybeSingle();
+            if (profile?.school_id) {
+              setSchoolId(profile.school_id);
+            }
+          }
+        }
+      } catch (err) {
+        console.error("Errore recupero schoolId bacheca:", err);
+      }
     }
+    loadSchoolId();
+  }, []);
+
+  // 1. Carica avvisi da Supabase online
+  const fetchNotices = async () => {
+    if (!schoolId) return;
     setLoading(true);
     try {
-      const db = await Database.load("sqlite:solfege.db");
-      const data = await db.select<any[]>(
-        "SELECT * FROM school_notices ORDER BY created_at DESC"
-      );
+      const { data, error } = await supabase
+        .from("school_notices")
+        .select("*")
+        .eq("school_id", schoolId)
+        .order("created_at", { ascending: false });
+      if (error) throw error;
       setNotices(data || []);
     } catch (err: any) {
       console.error("Errore caricamento avvisi:", err);
-      toast.error("Impossibile caricare gli avvisi: " + err.message);
+      toast.error("Impossibile caricare gli avvisi online");
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchNotices();
-  }, []);
+    if (schoolId) {
+      fetchNotices();
+    }
+  }, [schoolId]);
 
-  // 2. Crea avviso in SQLite locale
+  // 2. Crea avviso in Supabase online
   const handleCreateNotice = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!schoolId) return;
     if (!title.trim() || !content.trim()) {
       toast.error("Titolo e contenuto sono obbligatori.");
       return;
@@ -64,14 +98,15 @@ export default function BachecaAdminPage() {
 
     setSubmitting(true);
     try {
-      const db = await Database.load("sqlite:solfege.db");
-      const id = crypto.randomUUID();
-      const isImportantVal = important ? 1 : 0;
-
-      await db.execute(
-        "INSERT INTO school_notices (id, titolo, contenuto, importante) VALUES (?, ?, ?, ?)",
-        [id, title, content, isImportantVal]
-      );
+      const { error } = await supabase
+        .from("school_notices")
+        .insert({
+          school_id: schoolId,
+          titolo: title.trim(),
+          contenuto: content.trim(),
+          importante: important ? 1 : 0
+        });
+      if (error) throw error;
 
       toast.success("Avviso pubblicato in bacheca!");
       setTitle("");
@@ -80,26 +115,30 @@ export default function BachecaAdminPage() {
       fetchNotices();
     } catch (err: any) {
       console.error("Errore creazione avviso:", err);
-      toast.error("Impossibile creare l'avviso: " + err.message);
+      toast.error("Impossibile creare l'avviso");
     } finally {
       setSubmitting(false);
     }
   };
 
-  // 3. Elimina avviso da SQLite locale
+  // 3. Elimina avviso da Supabase online
   const handleDeleteNotice = async (id: string) => {
     if (!confirm("Sei sicuro di voler eliminare questo avviso dalla bacheca?")) {
       return;
     }
 
     try {
-      const db = await Database.load("sqlite:solfege.db");
-      await db.execute("DELETE FROM school_notices WHERE id = ?", [id]);
+      const { error } = await supabase
+        .from("school_notices")
+        .delete()
+        .eq("id", id);
+      if (error) throw error;
+
       toast.success("Avviso eliminato.");
       setNotices((prev) => prev.filter((n) => n.id !== id));
     } catch (err: any) {
       console.error("Errore eliminazione avviso:", err);
-      toast.error("Impossibile eliminare l'avviso: " + err.message);
+      toast.error("Impossibile eliminare l'avviso");
     }
   };
 

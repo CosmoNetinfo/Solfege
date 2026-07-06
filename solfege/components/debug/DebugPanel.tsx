@@ -29,6 +29,10 @@ export function DebugPanel() {
   const [profile, setProfile] = useState<any>(null);
   const [perfData, setPerfData] = useState<any>({ mem: 0, loadTime: 0 });
 
+  const [isDesktopMode, setIsDesktopMode] = useState(false);
+  const [dbStatus, setDbStatus] = useState<string>("Supabase Online");
+  const [dbStats, setDbStats] = useState<any>({ schools: 0, rooms: 0, instruments: 0, courses: 0, users: 0 });
+
   const supabase = createClient();
 
   useEffect(() => {
@@ -49,15 +53,68 @@ export function DebugPanel() {
   }, [isOpen]);
 
   async function loadSession() {
-    const { data: { user } } = await supabase.auth.getUser();
-    setUser(user);
-    if (user) {
-      const { data: profile } = await supabase
-        .from("profiles")
-        .select("*, schools(name)")
-        .eq("id", user.id)
-        .single();
-      setProfile(profile);
+    try {
+      const { isDesktop } = await import("@/lib/is-desktop");
+      setIsDesktopMode(isDesktop());
+
+      if (isDesktop()) {
+        setDbStatus("SQLite Locale Offline");
+        const Database = (await import("@tauri-apps/plugin-sql")).default;
+        const db = await Database.load("sqlite:solfege.db");
+
+        // Leggi statistiche tabelle locali
+        try {
+          const [sch, rms, ins, crs, usr] = await Promise.all([
+            db.select<any[]>("SELECT COUNT(*) as count FROM schools"),
+            db.select<any[]>("SELECT COUNT(*) as count FROM rooms"),
+            db.select<any[]>("SELECT COUNT(*) as count FROM instruments"),
+            db.select<any[]>("SELECT COUNT(*) as count FROM courses"),
+            db.select<any[]>("SELECT COUNT(*) as count FROM users")
+          ]);
+          setDbStats({
+            schools: sch[0]?.count || 0,
+            rooms: rms[0]?.count || 0,
+            instruments: ins[0]?.count || 0,
+            courses: crs[0]?.count || 0,
+            users: usr[0]?.count || 0
+          });
+        } catch (e) {
+          console.error("Errore lettura statistiche SQLite debug:", e);
+        }
+
+        // Leggi sessione attiva locale
+        try {
+          const activeSession = await db.select<any[]>("SELECT * FROM sessions LIMIT 1");
+          if (activeSession && activeSession.length > 0) {
+            setUser({ id: activeSession[0].user_id, email: activeSession[0].username, last_sign_in_at: activeSession[0].logged_in_at });
+            const schoolData = await db.select<any[]>("SELECT id, nome FROM schools LIMIT 1");
+            setProfile({
+              role: activeSession[0].role,
+              school_id: schoolData[0]?.id || "-",
+              schools: { name: schoolData[0]?.nome || "-" }
+            });
+          } else {
+            setUser(null);
+            setProfile(null);
+          }
+        } catch (e) {
+          console.error("Errore lettura sessione SQLite debug:", e);
+        }
+      } else {
+        setDbStatus("Supabase Online");
+        const { data: { user } } = await supabase.auth.getUser();
+        setUser(user);
+        if (user) {
+          const { data: profile } = await supabase
+            .from("profiles")
+            .select("*, schools(name)")
+            .eq("id", user.id)
+            .single();
+          setProfile(profile);
+        }
+      }
+    } catch (err) {
+      console.error("Errore inizializzazione debug session:", err);
     }
   }
 
@@ -217,12 +274,22 @@ export function DebugPanel() {
                       <StatCard label="Avg MS" value={`${Math.round(queryStats.avgTime)}ms`} color="green" />
                     </div>
                     
-                    <Section title="Connessione">
-                      <div className="flex items-center gap-2 text-green">
+                    <Section title="Connessione Attiva">
+                      <div className={cn("flex items-center gap-2 font-bold", isDesktopMode ? "text-amber" : "text-green")}>
                         <CheckCircle2 className="h-4 w-4" />
-                        <span>Supabase Online</span>
+                        <span>{dbStatus}</span>
                       </div>
                     </Section>
+
+                    {isDesktopMode && (
+                      <Section title="Statistiche SQLite Locale">
+                        <Row label="Scuole registrate" value={String(dbStats.schools)} />
+                        <Row label="Aule totali" value={String(dbStats.rooms)} />
+                        <Row label="Strumenti totali" value={String(dbStats.instruments)} />
+                        <Row label="Corsi inseriti" value={String(dbStats.courses)} />
+                        <Row label="Utenti locali" value={String(dbStats.users)} />
+                      </Section>
+                    )}
 
                     {lastQuery && (
                       <Section title="Ultima Query Exec">

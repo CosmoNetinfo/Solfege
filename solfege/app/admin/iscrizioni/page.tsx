@@ -33,18 +33,28 @@ export default function IscrizioniWebPage() {
   const [processingId, setProcessingId] = useState<string | null>(null);
   const supabase = createClient();
 
-  // 1. Carica lo school_id dal DB locale
+  // 1. Carica lo school_id (da DB locale se desktop, da Supabase se web)
   useEffect(() => {
     async function loadSchoolId() {
-      if (!isDesktop()) return;
       try {
-        const db = await Database.load("sqlite:solfege.db");
-        const schools = await db.select<{ id: string }[]>("SELECT id FROM schools LIMIT 1");
-        if (schools && schools.length > 0) {
-          setSchoolId(schools[0].id);
+        const { isDesktop } = await import("@/lib/is-desktop");
+        if (isDesktop()) {
+          const db = await Database.load("sqlite:solfege.db");
+          const schools = await db.select<{ id: string }[]>("SELECT id FROM schools LIMIT 1");
+          if (schools && schools.length > 0) {
+            setSchoolId(schools[0].id);
+          }
+        } else {
+          const { data: { user } } = await supabase.auth.getUser();
+          if (user) {
+            const { data: profile } = await supabase.from("profiles").select("school_id").eq("id", user.id).maybeSingle();
+            if (profile?.school_id) {
+              setSchoolId(profile.school_id);
+            }
+          }
         }
       } catch (err) {
-        console.error("Errore caricamento school_id locale:", err);
+        console.error("Errore caricamento school_id locale o web:", err);
       }
     }
     loadSchoolId();
