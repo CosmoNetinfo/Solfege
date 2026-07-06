@@ -137,7 +137,7 @@ export default function StatoAulePage() {
 
         // 3. Carica lezioni nell'intervallo
         const lessonsData = await db.select<any[]>(
-          `SELECT l.id, l.data, l.ora_inizio, l.ora_fine, l.stato, l.room_id, 
+          `SELECT l.id, l.data, l.ora_inizio, l.ora_fine, l.stato, c.room_id, 
                   c.nome as course_name, c.colore_calendario,
                   t.nome as teacher_first_name, t.cognome as teacher_last_name
            FROM lessons l

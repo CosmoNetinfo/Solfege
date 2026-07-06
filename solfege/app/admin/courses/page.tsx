@@ -85,7 +85,7 @@ export default function CoursesPage() {
 
         // Fetch conteggio iscritti (enrollments)
         const enrollData = await db.select<any[]>(
-          "SELECT course_id FROM enrollments WHERE status = 'active'"
+          "SELECT course_id FROM enrollments WHERE stato = 'attivo' OR stato = 'active'"
         );
 
         const enrollCounts: Record<string, number> = {};
