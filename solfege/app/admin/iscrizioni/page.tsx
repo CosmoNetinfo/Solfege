@@ -60,22 +60,25 @@ export default function IscrizioniWebPage() {
     loadSchoolId();
   }, []);
 
-  // 2. Recupera le iscrizioni pendenti da Supabase tramite API Route sicura
+  // 2. Recupera le iscrizioni pendenti direttamente da Supabase
   const fetchRegistrations = async () => {
     if (!schoolId) return;
     setLoading(true);
     try {
-      // Chiama l'API su Vercel che ha i permessi admin per aggirare le regole RLS
-      const targetUrl = `https://solfege-five.vercel.app/api/online-registrations?school_id=${schoolId}`;
-      const res = await fetch(targetUrl);
-      if (!res.ok) {
-        throw new Error(`Errore server HTTP ${res.status}`);
+      const { data, error } = await supabase
+        .from("online_registrations" as any)
+        .select("*")
+        .eq("school_id", schoolId)
+        .eq("status", "pending")
+        .order("created_at", { ascending: false });
+
+      if (error) {
+        throw new Error(error.message);
       }
-      const data = await res.json();
       setRegistrations(data || []);
     } catch (err: any) {
       console.error("Errore caricamento iscrizioni online:", err);
-      toast.error("Impossibile caricare le iscrizioni dal cloud: " + err.message);
+      toast.error("Impossibile caricare le iscrizioni: " + err.message);
     } finally {
       setLoading(false);
     }
@@ -109,17 +112,14 @@ export default function IscrizioniWebPage() {
       });
 
       if (!localId) throw new Error("Errore durante l'inserimento dell'allievo nel database locale");
+      // Aggiorna lo stato direttamente su Supabase
+      const { error } = await supabase
+        .from("online_registrations" as any)
+        .update({ status: 'approved' })
+        .eq('id', reg.id);
 
-      // Aggiorna lo stato su Supabase tramite la nostra API backend sicura
-      const targetUrl = 'https://solfege-five.vercel.app/api/online-registrations';
-      const res = await fetch(targetUrl, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ registration_id: reg.id, status: 'approved' })
-      });
-
-      if (!res.ok) {
-        throw new Error(`Errore server HTTP ${res.status}`);
+      if (error) {
+        throw new Error(error.message);
       }
 
       toast.success(`Studente ${reg.nome} ${reg.cognome} approvato e importato con successo!`);
@@ -133,22 +133,21 @@ export default function IscrizioniWebPage() {
     }
   };
 
-  // 4. Rifiuta la richiesta (segna rejected su Supabase tramite API)
+  // 4. Rifiuta la richiesta (segna rejected su Supabase)
   const handleReject = async (reg: any) => {
     if (!confirm(`Sei sicuro di voler rifiutare la richiesta di iscrizione di ${reg.nome} ${reg.cognome}?`)) {
       return;
     }
     setProcessingId(reg.id);
     try {
-      const targetUrl = 'https://solfege-five.vercel.app/api/online-registrations';
-      const res = await fetch(targetUrl, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ registration_id: reg.id, status: 'rejected' })
-      });
+      // Aggiorna lo stato direttamente su Supabase
+      const { error } = await supabase
+        .from("online_registrations" as any)
+        .update({ status: 'rejected' })
+        .eq('id', reg.id);
 
-      if (!res.ok) {
-        throw new Error(`Errore server HTTP ${res.status}`);
+      if (error) {
+        throw new Error(error.message);
       }
 
       toast.success(`Richiesta di ${reg.nome} ${reg.cognome} rifiutata.`);
