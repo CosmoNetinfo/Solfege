@@ -32,7 +32,7 @@ const navItems = [
   { name: "Dashboard", href: "/admin/dashboard", icon: LayoutDashboard },
   { name: "Calendario", href: "/admin/calendar", icon: Calendar },
   { name: "Stato Aule", href: "/admin/aule", icon: DoorOpen },
-  { name: "Sale & Prove", href: "/admin/sale", icon: Calendar },
+  { name: "Sale prove", href: "/admin/sale", icon: Calendar },
   { name: "Studenti", href: "/admin/students", icon: Users },
   { name: "Iscrizioni Web", href: "/admin/iscrizioni", icon: Globe },
   { name: "Bacheca", href: "/admin/bacheca", icon: Bell },

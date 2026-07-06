@@ -112,7 +112,7 @@ export default function SalePage() {
     <div className="p-8 max-w-[1600px] mx-auto flex flex-col h-screen">
       <div className="flex items-center justify-between mb-8">
         <div>
-          <h1 className="text-3xl font-serif text-[#E8621A] mb-2">Sale & Prove</h1>
+          <h1 className="text-3xl font-serif text-[#E8621A] mb-2">Sale prove</h1>
           <p className="text-muted-foreground">Gestisci le prenotazioni e l'occupazione delle aule.</p>
         </div>
         <Button onClick={() => handleOpenNewBooking()} className="bg-[#E8621A] hover:bg-[#E8621A]/90 text-white gap-2">

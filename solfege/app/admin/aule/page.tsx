@@ -215,7 +215,7 @@ export default function StatoAulePage() {
           <p className="text-muted-foreground text-sm">Controlla quali aule sono libere o occupate all'orario desiderato.</p>
         </div>
         <Button onClick={() => window.location.href = '/admin/sale'} className="bg-[#E8621A] hover:bg-[#C94E0E] text-white">
-          Vai a Sale & Prove <ArrowRight className="ml-2 w-4 h-4" />
+          Vai a Sale prove <ArrowRight className="ml-2 w-4 h-4" />
         </Button>
       </div>
 
