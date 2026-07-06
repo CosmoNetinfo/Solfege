@@ -64,9 +64,9 @@ export default function StatoAulePage() {
 
       // 1. Aule
       const roomsData = await db.select<any[]>(
-        "SELECT id, nome as name, capacita as capacity, insonorizzata FROM rooms ORDER BY nome ASC"
+        "SELECT id, nome as name, capacita as capacity FROM rooms ORDER BY nome ASC"
       );
-      setRooms(roomsData);
+      setRooms(roomsData.map(r => ({ ...r, insonorizzata: false })));
 
       // Data di oggi formato YYYY-MM-DD
       const todayStr = format(new Date(), "yyyy-MM-dd");
