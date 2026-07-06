@@ -36,9 +36,10 @@ export async function enrollStudent(supabase: SupabaseClient, data: EnrollmentDa
     // 3. Generate Lessons (next 12 weeks)
     let multiSchedules: { day_of_week: string; start_time: string }[] | null = null;
     try {
-      const descText = course.descrizione || "";
-      if (descText.startsWith("{")) {
-        const parsed = JSON.parse(descText);
+      const rawAnno = course.anno_accademico || "";
+      if (rawAnno.includes("|")) {
+        const parts = rawAnno.split("|");
+        const parsed = JSON.parse(parts[1]);
         if (parsed && Array.isArray(parsed.multiScheduling)) {
           multiSchedules = parsed.multiScheduling;
         }
@@ -173,9 +174,10 @@ export async function enrollStudent(supabase: SupabaseClient, data: EnrollmentDa
   // 3. Generate Lessons (next 12 weeks)
   let onlineSchedules: { day_of_week: string; start_time: string }[] | null = null;
   try {
-    const descText = course.descrizione || "";
-    if (descText.startsWith("{")) {
-      const parsed = JSON.parse(descText);
+    const rawAnno = course.anno_scolastico || "";
+    if (rawAnno.includes("|")) {
+      const parts = rawAnno.split("|");
+      const parsed = JSON.parse(parts[1]);
       if (parsed && Array.isArray(parsed.multiScheduling)) {
         onlineSchedules = parsed.multiScheduling;
       }

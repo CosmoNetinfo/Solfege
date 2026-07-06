@@ -81,6 +81,27 @@ export function CourseFormDialog({ open, onOpenChange, schoolId, course, instrum
   useEffect(() => {
     if (open) {
       if (course) {
+        // Estrai anno scolastico e programmazione multipla se presente (es: "2024-2025|{...}")
+        const rawAnno = course.anno_accademico || course.anno_scolastico || "2024-2025";
+        let cleanAnno = rawAnno;
+        let multiSchedulesList = [{ 
+          day_of_week: course.day_of_week !== null ? String(course.day_of_week) : "", 
+          start_time: course.start_time || "" 
+        }];
+        let isMulti = false;
+
+        if (rawAnno.includes("|")) {
+          const parts = rawAnno.split("|");
+          cleanAnno = parts[0];
+          try {
+            const parsed = JSON.parse(parts[1]);
+            if (parsed && Array.isArray(parsed.multiScheduling)) {
+              multiSchedulesList = parsed.multiScheduling;
+              isMulti = true;
+            }
+          } catch (e) {}
+        }
+
         reset({
           name: course.name,
           type: course.type,
@@ -91,31 +112,13 @@ export function CourseFormDialog({ open, onOpenChange, schoolId, course, instrum
           max_students: String(course.max_students || "1"),
           price_model: course.price_model,
           price: String(course.price || ""),
-          anno_scolastico: course.anno_scolastico || "2024-2025",
+          anno_scolastico: cleanAnno,
         });
         setSelectedColor(course.colore_calendario || "#E8621A");
         setInstrumentId(course.instrument_id || "");
         setRoomId(course.room_id || "");
-
-        // Prova a caricare la programmazione multipla dalla descrizione
-        const descText = course.descrizione || course.description || "";
-        try {
-          if (descText.startsWith("{")) {
-            const parsed = JSON.parse(descText);
-            if (parsed && Array.isArray(parsed.multiScheduling)) {
-              setSchedules(parsed.multiScheduling);
-              setMultiDay(true);
-              return;
-            }
-          }
-        } catch (e) {}
-
-        // Fallback singolo orario
-        setSchedules([{ 
-          day_of_week: course.day_of_week !== null ? String(course.day_of_week) : "", 
-          start_time: course.start_time || "" 
-        }]);
-        setMultiDay(false);
+        setSchedules(multiSchedulesList);
+        setMultiDay(isMulti);
       } else {
         reset({
           type: "individuale",
@@ -161,10 +164,13 @@ export function CourseFormDialog({ open, onOpenChange, schoolId, course, instrum
       const mainDay = multiDay && schedules.length > 0 ? schedules[0].day_of_week : data.day_of_week;
       const mainTime = multiDay && schedules.length > 0 ? schedules[0].start_time : data.start_time;
 
-      // Genera stringa programmazione JSON da mettere in descrizione
+      // Genera stringa programmazione JSON
       const descPayload = multiDay && schedules.length > 0 
         ? JSON.stringify({ multiScheduling: schedules.filter(s => s.day_of_week && s.start_time) })
         : null;
+
+      const baseAnno = data.anno_scolastico || "2024-2025";
+      const finalAnno = descPayload ? `${baseAnno}|${descPayload}` : baseAnno;
 
       const localPayload = {
         school_id: schoolId,
@@ -186,8 +192,7 @@ export function CourseFormDialog({ open, onOpenChange, schoolId, course, instrum
         max_allievi: data.max_students ? parseInt(data.max_students) : 1,
         prezzo: data.price ? parseFloat(data.price) : 0,
         colore_calendario: selectedColor,
-        anno_accademico: data.anno_scolastico || "2024-2025",
-        descrizione: descPayload
+        anno_accademico: finalAnno
       };
 
       if (isDesktop()) {
@@ -205,14 +210,14 @@ export function CourseFormDialog({ open, onOpenChange, schoolId, course, instrum
           await db.execute(
             `INSERT INTO courses (id, school_id, nome, tipo, livello, instrument_id, 
              room_id, giorno_settimana, ora_inizio, ora_fine, durata_minuti, max_allievi, 
-             prezzo, colore_calendario, anno_accademico, descrizione) 
-             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+             prezzo, colore_calendario, anno_accademico) 
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
             [
               newCourseId, schoolId, localPayload.nome, localPayload.tipo, localPayload.livello,
               localPayload.instrument_id, localPayload.room_id, localPayload.giorno_settimana,
               localPayload.ora_inizio, localPayload.ora_fine, localPayload.durata_minuti,
               localPayload.max_allievi, localPayload.prezzo, localPayload.colore_calendario,
-              localPayload.anno_accademico, localPayload.descrizione
+              localPayload.anno_accademico
             ]
           );
         }
@@ -239,8 +244,7 @@ export function CourseFormDialog({ open, onOpenChange, schoolId, course, instrum
         price_model: data.price_model as "mensile" | "pacchetto" | "annuale",
         price: data.price ? parseFloat(data.price) : 0,
         colore_calendario: selectedColor,
-        anno_scolastico: data.anno_scolastico || "2024-2025",
-        descrizione: descPayload
+        anno_scolastico: finalAnno
       };
 
       if (isEdit) {
