@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Trash2, Plus } from 'lucide-react';
+import { Trash2, Plus, Pencil, X } from 'lucide-react';
 import { toast } from 'sonner';
 import { createClient } from '@/lib/supabase/client';
 import { getRooms, addRoom, deleteRoom } from '@/lib/supabase/queries';
@@ -38,6 +38,8 @@ export function RoomsTab({ schoolId }: { schoolId: string }) {
     loadRooms();
   }, [schoolId]);
 
+  const [editingRoomId, setEditingRoomId] = useState<string | null>(null);
+
   const loadRooms = async () => {
     try {
       const { isDesktop } = await import("@/lib/is-desktop");
@@ -66,40 +68,97 @@ export function RoomsTab({ schoolId }: { schoolId: string }) {
     }
   };
 
+  const startEdit = (room: any) => {
+    setEditingRoomId(room.id);
+    form.setValue('name', room.name);
+    form.setValue('capacity', room.capacity);
+    form.setValue('insonorizzata', room.insonorizzata);
+  };
+
+  const cancelEdit = () => {
+    setEditingRoomId(null);
+    form.reset({
+      name: '',
+      capacity: 1,
+      insonorizzata: false
+    });
+  };
+
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     try {
       const { isDesktop } = await import("@/lib/is-desktop");
       if (isDesktop()) {
         const Database = (await import("@tauri-apps/plugin-sql")).default;
         const db = await Database.load("sqlite:solfege.db");
-        const newRoomId = crypto.randomUUID();
 
-        await db.execute(
-          `INSERT INTO rooms (id, nome, capacita)
-           VALUES (?, ?, ?)`,
-          [newRoomId, values.name, values.capacity]
-        );
+        if (editingRoomId) {
+          // UPDATE offline
+          await db.execute(
+            `UPDATE rooms SET nome = ?, capacita = ? WHERE id = ?`,
+            [values.name, values.capacity, editingRoomId]
+          );
 
-        const newRoom = {
-          id: newRoomId,
-          name: values.name,
-          capacity: values.capacity,
-          insonorizzata: false
-        };
+          setRooms(rooms.map(r => r.id === editingRoomId ? {
+            ...r,
+            name: values.name,
+            capacity: values.capacity
+          } : r).sort((a, b) => a.name.localeCompare(b.name)));
 
-        setRooms([...rooms, newRoom].sort((a, b) => a.name.localeCompare(b.name)));
-        form.reset();
-        toast.success('Aula aggiunta');
+          toast.success('Aula aggiornata');
+          cancelEdit();
+        } else {
+          // INSERT offline
+          const newRoomId = crypto.randomUUID();
+          await db.execute(
+            `INSERT INTO rooms (id, nome, capacita)
+             VALUES (?, ?, ?)`,
+            [newRoomId, values.name, values.capacity]
+          );
+
+          const newRoom = {
+            id: newRoomId,
+            name: values.name,
+            capacity: values.capacity,
+            insonorizzata: false
+          };
+
+          setRooms([...rooms, newRoom].sort((a, b) => a.name.localeCompare(b.name)));
+          form.reset();
+          toast.success('Aula aggiunta');
+        }
         return;
       }
 
       // Web Flow
-      const newRoom = await addRoom(supabase, schoolId, values.name, values.capacity, values.insonorizzata);
-      setRooms([...rooms, newRoom].sort((a, b) => a.name.localeCompare(b.name)));
-      form.reset();
-      toast.success('Aula aggiunta');
+      if (editingRoomId) {
+        const { error } = await supabase
+          .from("rooms")
+          .update({
+            name: values.name,
+            capacity: values.capacity,
+            insonorizzata: values.insonorizzata
+          })
+          .eq("id", editingRoomId);
+
+        if (error) throw error;
+
+        setRooms(rooms.map(r => r.id === editingRoomId ? {
+          ...r,
+          name: values.name,
+          capacity: values.capacity,
+          insonorizzata: values.insonorizzata
+        } : r).sort((a, b) => a.name.localeCompare(b.name)));
+
+        toast.success('Aula aggiornata');
+        cancelEdit();
+      } else {
+        const newRoom = await addRoom(supabase, schoolId, values.name, values.capacity, values.insonorizzata);
+        setRooms([...rooms, newRoom].sort((a, b) => a.name.localeCompare(b.name)));
+        form.reset();
+        toast.success('Aula aggiunta');
+      }
     } catch (e) {
-      toast.error('Errore durante l\'aggiunta');
+      toast.error('Errore durante il salvataggio');
     }
   };
 
@@ -119,6 +178,7 @@ export function RoomsTab({ schoolId }: { schoolId: string }) {
         await db.execute("DELETE FROM rooms WHERE id = ?", [id]);
         setRooms(rooms.filter(r => r.id !== id));
         toast.success('Aula eliminata');
+        if (editingRoomId === id) cancelEdit();
         return;
       }
 
@@ -126,6 +186,7 @@ export function RoomsTab({ schoolId }: { schoolId: string }) {
       await deleteRoom(supabase, id);
       setRooms(rooms.filter(r => r.id !== id));
       toast.success('Aula eliminata');
+      if (editingRoomId === id) cancelEdit();
     } catch (e: any) {
       if (e.message === "in_use") {
         toast.error('Impossibile eliminare: aula in uso');
@@ -188,10 +249,27 @@ export function RoomsTab({ schoolId }: { schoolId: string }) {
               </FormItem>
             )}
           />
-          <Button type="submit" className="bg-[#E8621A] text-white hover:bg-[#E8621A]/90">
-            <Plus className="w-4 h-4 mr-2" />
-            Aggiungi
-          </Button>
+          <div className="flex gap-2">
+            {editingRoomId && (
+              <Button type="button" onClick={cancelEdit} variant="outline" className="border-stone-200 text-stone-500">
+                <X className="w-4 h-4 mr-2" />
+                Annulla
+              </Button>
+            )}
+            <Button type="submit" className="bg-[#E8621A] text-white hover:bg-[#E8621A]/90 shrink-0">
+              {editingRoomId ? (
+                <>
+                  <Pencil className="w-4 h-4 mr-2" />
+                  Salva
+                </>
+              ) : (
+                <>
+                  <Plus className="w-4 h-4 mr-2" />
+                  Aggiungi
+                </>
+              )}
+            </Button>
+          </div>
         </form>
       </Form>
 
@@ -202,7 +280,7 @@ export function RoomsTab({ schoolId }: { schoolId: string }) {
               <th className="px-4 py-3 font-medium">Nome Aula</th>
               <th className="px-4 py-3 font-medium text-center">Capienza</th>
               <th className="px-4 py-3 font-medium text-center">Insonorizzata</th>
-              <th className="px-4 py-3 w-20 text-right">Azioni</th>
+              <th className="px-4 py-3 w-28 text-right">Azioni</th>
             </tr>
           </thead>
           <tbody className="divide-y">
@@ -222,7 +300,10 @@ export function RoomsTab({ schoolId }: { schoolId: string }) {
                       <span className="inline-flex items-center justify-center px-2 py-1 text-xs font-medium rounded-full bg-stone-100 text-stone-700">No</span>
                     )}
                   </td>
-                  <td className="px-4 py-3 text-right">
+                  <td className="px-4 py-3 text-right space-x-1">
+                    <Button variant="ghost" size="icon" onClick={() => startEdit(room)} className="h-8 w-8 text-stone-500 hover:text-stone-700 hover:bg-stone-100">
+                      <Pencil className="w-4 h-4" />
+                    </Button>
                     <Button variant="ghost" size="icon" onClick={() => handleDelete(room.id)} className="h-8 w-8 text-red-500 hover:text-red-600 hover:bg-red-100">
                       <Trash2 className="w-4 h-4" />
                     </Button>
