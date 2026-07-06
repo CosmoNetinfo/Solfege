@@ -442,7 +442,7 @@ export default function StatoAulePage() {
                           ))}
 
                           {/* Posizionamento degli eventi */}
-                          {room.allEventsToday.map(event => {
+                          {room.allEventsToday.map((event: any) => {
                             const [startH, startM] = event.ora_inizio.split(":").map(Number);
                             const [endH, endM] = event.ora_fine.split(":").map(Number);
                             
@@ -528,7 +528,7 @@ export default function StatoAulePage() {
 
                       return (
                         <div key={day.toISOString()} className="border-r border-stone-100 px-1.5 py-1 space-y-1">
-                          {eventsInSlot.map(event => {
+                          {eventsInSlot.map((event: any) => {
                             const roomName = rooms.find(r => r.id === event.room_id)?.name || "Aula";
                             return (
                               <div
@@ -611,7 +611,7 @@ export default function StatoAulePage() {
 
                             {/* Mini anteprima degli eventi del giorno */}
                             <div className="space-y-1 mt-2 flex-1 overflow-y-auto max-h-[50px] scrollbar-thin">
-                              {eventsToday.slice(0, 3).map(event => (
+                              {eventsToday.slice(0, 3).map((event: any) => (
                                 <div 
                                   key={event.id}
                                   className="text-[8px] font-bold text-white px-1 py-0.5 rounded truncate"
