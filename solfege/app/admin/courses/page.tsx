@@ -100,14 +100,24 @@ export default function CoursesPage() {
         }));
 
         // Fetch strumenti
-        const instrumentsData = await db.select<any[]>(
-          "SELECT id, nome as name FROM instruments ORDER BY nome ASC"
-        );
+        let instrumentsData: any[] = [];
+        try {
+          instrumentsData = await db.select<any[]>(
+            "SELECT id, nome as name FROM instruments ORDER BY nome ASC"
+          );
+        } catch (err) {
+          console.error("Errore caricamento strumenti SQLite:", err);
+        }
 
         // Fetch aule
-        const roomsData = await db.select<any[]>(
-          "SELECT id, nome as name FROM rooms ORDER BY nome ASC"
-        );
+        let roomsData: any[] = [];
+        try {
+          roomsData = await db.select<any[]>(
+            "SELECT id, nome as name FROM rooms ORDER BY nome ASC"
+          );
+        } catch (err) {
+          console.error("Errore caricamento aule SQLite:", err);
+        }
 
         setCourses(mappedCourses);
         setInstruments(instrumentsData);
