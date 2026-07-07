@@ -201,7 +201,6 @@ export function CourseFormDialog({ open, onOpenChange, schoolId, course, instrum
       const finalAnno = descPayload ? `${baseAnno}|${descPayload}` : baseAnno;
 
       const localPayload = {
-        school_id: schoolId,
         nome: data.name,
         tipo: data.type as "individuale" | "collettivo" | "online",
         livello: (data.level || "principiante") as "principiante" | "intermedio" | "avanzato" | "professionale",
@@ -236,12 +235,12 @@ export function CourseFormDialog({ open, onOpenChange, schoolId, course, instrum
         } else {
           const newCourseId = crypto.randomUUID();
           await db.execute(
-            `INSERT INTO courses (id, school_id, nome, tipo, livello, instrument_id, 
+            `INSERT INTO courses (id, nome, tipo, livello, instrument_id, 
              room_id, giorno_settimana, ora_inizio, ora_fine, durata_minuti, max_allievi, 
              prezzo, colore_calendario, anno_accademico) 
-             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
             [
-              newCourseId, schoolId, localPayload.nome, localPayload.tipo, localPayload.livello,
+              newCourseId, localPayload.nome, localPayload.tipo, localPayload.livello,
               localPayload.instrument_id, localPayload.room_id, localPayload.giorno_settimana,
               localPayload.ora_inizio, localPayload.ora_fine, localPayload.durata_minuti,
               localPayload.max_allievi, localPayload.prezzo, localPayload.colore_calendario,
