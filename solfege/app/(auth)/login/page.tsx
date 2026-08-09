@@ -113,7 +113,7 @@ function LoginFormContent() {
       if (profile?.role === "superadmin") {
         log("Redirecting to /superadmin...");
         router.push("/superadmin");
-      } else if (profile?.role === "teacher") {
+      } else if (profile?.role === "insegnante") {
         log("Redirecting to /teacher/home...");
         router.push("/teacher/home");
       } else {
