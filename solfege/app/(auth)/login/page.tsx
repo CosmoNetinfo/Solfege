@@ -98,24 +98,22 @@ function LoginFormContent() {
         return;
       }
 
-      log(`Login OK — user: ${authData.user?.id}`);
-      let role = authData.user?.user_metadata?.role;
-      log(`Role from metadata: ${role}`);
-      
-      if (!role && authData.user) {
-        log("Role missing in metadata, fetching from profiles...");
-        const { data: profile } = await supabase
-          .from('profiles')
-          .select('role')
-          .eq('id', authData.user.id)
-          .single();
-        role = profile?.role;
-        log(`Role from profile: ${role}`);
+      log("Login completato. Recupero profilo...");
+      const { data: profile, error: profError } = await supabase
+        .from("profiles")
+        .select("role")
+        .eq("id", authData.user.id)
+        .maybeSingle();
+
+      if (profError) {
+        log(`ERRORE profilo: ${profError.message}`);
       }
-      
-      router.refresh();
-      
-      if (role === 'insegnante') {
+
+      log(`Ruolo trovato: ${profile?.role}`);
+      if (profile?.role === "superadmin") {
+        log("Redirecting to /superadmin...");
+        router.push("/superadmin");
+      } else if (profile?.role === "teacher") {
         log("Redirecting to /teacher/home...");
         router.push("/teacher/home");
       } else {
@@ -125,6 +123,32 @@ function LoginFormContent() {
     } catch (err: any) {
       log(`ECCEZIONE: ${err.message}`);
       toast.error("Si è verificato un errore inaspettato.");
+    } finally {
+      setIsLoading(false);
+    }
+  }
+
+  async function handleDemoLogin() {
+    setIsLoading(true);
+    setDebugLog([]);
+    try {
+      log("Chiamata signInWithPassword per account Demo...");
+      const { data: authData, error } = await supabase.auth.signInWithPassword({
+        email: "demo@solfege.it",
+        password: "demo123456",
+      });
+
+      if (error) {
+        log(`ERRORE demo: ${error.message}`);
+        toast.error("Impossibile accedere alla demo. Verifica che l'utente demo@solfege.it sia attivo.");
+        return;
+      }
+
+      log("Login completato. Reindirizzamento a dashboard...");
+      router.push("/admin/dashboard");
+    } catch (err: any) {
+      log(`ECCEZIONE: ${err.message}`);
+      toast.error("Si è verificato un errore durante l'accesso demo.");
     } finally {
       setIsLoading(false);
     }
@@ -176,14 +200,31 @@ function LoginFormContent() {
           </div>
         </div>
 
-        <Button
-          type="submit"
-          className="w-full bg-orange hover:bg-orange-dark text-white h-11"
-          disabled={isLoading}
-        >
-          {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : "Accedi"}
-        </Button>
+        <div className="space-y-3">
+          <Button
+            type="submit"
+            className="w-full bg-orange hover:bg-orange-dark text-white h-11 font-serif text-sm tracking-wide"
+            disabled={isLoading}
+          >
+            {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : "Accedi"}
+          </Button>
 
+          <div className="relative flex items-center justify-center my-4">
+            <div className="absolute inset-0 flex items-center">
+              <span className="w-full border-t border-border" />
+            </div>
+            <span className="relative bg-surface px-3 text-[10px] uppercase text-muted-foreground font-bold">Oppure</span>
+          </div>
+
+          <Button
+            type="button"
+            onClick={handleDemoLogin}
+            className="w-full bg-stone-900 hover:bg-stone-850 text-white border border-[#2D2A27] h-11 font-serif text-sm tracking-wide"
+            disabled={isLoading}
+          >
+            {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : "Prova la Demo Online (Sola Lettura)"}
+          </Button>
+        </div>
       </form>
 
       {/* Debug log visibile dopo il login */}
@@ -222,7 +263,7 @@ function LoginFormContent() {
 
       <div className="text-center text-sm space-y-2">
         <div className="text-muted-foreground">
-          Non hai una scuola? <Link href="/register" className="text-orange hover:underline font-medium">Crea una nuova scuola &rarr;</Link>
+          Non hai una scuola? <a href="https://wa.me/393517064080" target="_blank" rel="noopener noreferrer" className="text-orange hover:underline font-medium">Prova gratis 15 giorni &rarr;</a>
         </div>
         <div className="text-xs text-muted-foreground/60 pt-4">
           <Link href="/privacy" className="hover:underline">Privacy Policy</Link>
