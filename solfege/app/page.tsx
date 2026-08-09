@@ -30,6 +30,17 @@ export default function LandingPage() {
   const router = useRouter()
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
 
+  const handleGoogleLogin = async () => {
+    const { createClient } = await import('@/lib/supabase/client');
+    const supabase = createClient();
+    await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: {
+        redirectTo: `${window.location.origin}/api/auth/callback?next=/admin/dashboard`
+      }
+    });
+  };
+
   // Guard: se l'app gira in ambiente desktop Tauri, reindirizza sempre a /login-desktop
   useEffect(() => {
     if (isDesktop()) {
@@ -62,9 +73,9 @@ export default function LandingPage() {
           <a href="https://wa.me/393517064080" target="_blank" rel="noopener noreferrer" className="btn-primary bg-[#E8621A] hover:bg-[#C94E0E] text-white">
             Acquista ora — €249 una tantum
           </a>
-          <a href="https://wa.me/393517064080" target="_blank" rel="noopener noreferrer" className="btn-outline">
+          <button onClick={handleGoogleLogin} className="btn-outline">
             Prova gratis 15 giorni
-          </a>
+          </button>
         </div>
         <p className="hero-note">Licenza a vita · Aggiornamenti inclusi · Supporto WhatsApp diretto</p>
       </section>
