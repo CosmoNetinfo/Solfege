@@ -130,26 +130,15 @@ function LoginFormContent() {
 
   async function handleDemoLogin() {
     setIsLoading(true);
-    setDebugLog([]);
     try {
-      log("Chiamata signInWithPassword per account Demo...");
-      const { data: authData, error } = await supabase.auth.signInWithPassword({
-        email: "demo@solfege.it",
-        password: "demo123456",
+      await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: `${window.location.origin}/api/auth/callback?next=/admin/dashboard`
+        }
       });
-
-      if (error) {
-        log(`ERRORE demo: ${error.message}`);
-        toast.error("Impossibile accedere alla demo. Verifica che l'utente demo@solfege.it sia attivo.");
-        return;
-      }
-
-      log("Login completato. Reindirizzamento a dashboard...");
-      router.push("/admin/dashboard");
     } catch (err: any) {
-      log(`ECCEZIONE: ${err.message}`);
-      toast.error("Si è verificato un errore durante l'accesso demo.");
-    } finally {
+      toast.error("Si è verificato un errore durante l'accesso con Google.");
       setIsLoading(false);
     }
   }
