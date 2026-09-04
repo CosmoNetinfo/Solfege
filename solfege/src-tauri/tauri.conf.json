@@ -1,6 +1,6 @@
 {
   "productName": "Solfège",
-  "version": "1.6.4",
+  "version": "1.7.0",
   "identifier": "info.cosmonet.solfege",
   "build": {
     "beforeDevCommand": "npm run dev",
@@ -41,7 +41,9 @@
   },
   "plugins": {
     "sql": {
-      "preloadConnections": ["sqlite:solfege.db"]
+      "preloadConnections": [
+        "sqlite:solfege.db"
+      ]
     },
     "updater": {
       "active": true,
