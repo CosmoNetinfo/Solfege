@@ -72,6 +72,19 @@ export default function LoginDesktopPage() {
           console.error('[AUTH] Fallimento client Supabase:', supabaseCatch)
         }
 
+        // Sync automatica iscrizioni online
+        try {
+          const { syncOnlineRegistrations } = await import('@/lib/services/registration-sync')
+          const result = await syncOnlineRegistrations()
+          if (result.nuovi > 0 || result.aggiornati > 0) {
+            import('sonner').then(({ toast }) => {
+              toast.success(`Sync: ${result.nuovi} nuovi, ${result.aggiornati} aggiornati`)
+            })
+          }
+        } catch (err) {
+          console.error('[SYNC] Errore sync registrazioni:', err)
+        }
+
         router.push('/admin/dashboard')
       } else {
         setError('Credenziali non valide.')

@@ -16,9 +16,18 @@ CREATE TABLE IF NOT EXISTS online_registrations (
   genitore_codice_fiscale TEXT,
   corso_interesse TEXT,
   note TEXT,
-  status TEXT NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'approved', 'rejected')),
+  luogo_nascita TEXT,
+  sesso TEXT,
+  indirizzo TEXT,
+  citta TEXT,
+  cap TEXT,
+  livello_esperienza TEXT,
+  preferenza_giorni TEXT,
+  preferenza_orario TEXT,
+  status TEXT NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'approved', 'rejected', 'synced')),
   created_at TIMESTAMPTZ DEFAULT now(),
-  updated_at TIMESTAMPTZ DEFAULT now()
+  updated_at TIMESTAMPTZ DEFAULT now(),
+  synced_at TIMESTAMPTZ
 );
 
 -- Enable RLS
@@ -77,5 +86,3 @@ CREATE POLICY school_admin_manage_notices ON school_notices
       WHERE id = auth.uid() AND (role = 'admin' OR role = 'segreteria') AND school_id = school_notices.school_id
     )
   );
-
-
