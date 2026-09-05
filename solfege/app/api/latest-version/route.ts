@@ -5,20 +5,42 @@ export const dynamic = 'force-dynamic';
 export async function GET() {
   try {
     // 1. Interroga le release pubbliche di GitHub
+    const headers: Record<string, string> = {
+      'User-Agent': 'Solfege-Updater-V2'
+    };
+
+    // Supporto per repository privati: se GITHUB_TOKEN è configurato, usalo
+    const githubToken = process.env.GITHUB_TOKEN;
+    if (githubToken) {
+      headers['Authorization'] = `Bearer ${githubToken}`;
+    }
+
     const githubRes = await fetch('https://api.github.com/repos/CosmoNetinfo/Solfege/releases/latest', {
-      headers: {
-        'User-Agent': 'Solfege-Updater-V2'
-      },
+      headers,
       next: { revalidate: 60 } // cache di 1 minuto
     });
 
+    // Gestione errori GitHub in modo graceful
+    if (githubRes.status === 404) {
+      // Nessuna release pubblicata trovata (repo privato senza token, o nessuna release pubblicata)
+      console.warn("GitHub API 404: nessuna release trovata. Il repo potrebbe essere privato o non avere release pubblicate.");
+      return new NextResponse(null, { status: 204 });
+    }
+
+    if (githubRes.status === 403) {
+      // Rate limit o accesso negato
+      console.warn("GitHub API 403: accesso negato o rate limit raggiunto.");
+      return new NextResponse(null, { status: 204 });
+    }
+
     if (!githubRes.ok) {
+      console.error(`GitHub API error: ${githubRes.status} ${githubRes.statusText}`);
       return NextResponse.json({ error: `GitHub API error: ${githubRes.statusText}` }, { status: 500 });
     }
 
     const release = await githubRes.json();
     if (!release || !release.tag_name) {
-      return NextResponse.json({ version: '0.0.0' });
+      return new NextResponse(null, { status: 204 });
     }
 
     // Il tag_name è nel formato "v1.3.2" -> estraiamo la versione "1.3.2"
@@ -33,7 +55,9 @@ export async function GET() {
     // Recupera la firma digitale (.sig) da GitHub Releases
     let winSignature = '';
     try {
-      const sigRes = await fetch(`${winZipUrl}.sig`);
+      const sigRes = await fetch(`${winZipUrl}.sig`, {
+        headers: githubToken ? { 'Authorization': `Bearer ${githubToken}` } : {}
+      });
       if (sigRes.ok) {
         winSignature = (await sigRes.text()).trim();
       }
@@ -43,7 +67,9 @@ export async function GET() {
 
     let macSignature = '';
     try {
-      const sigRes = await fetch(`${macTarUrl}.sig`);
+      const sigRes = await fetch(`${macTarUrl}.sig`, {
+        headers: githubToken ? { 'Authorization': `Bearer ${githubToken}` } : {}
+      });
       if (sigRes.ok) {
         macSignature = (await sigRes.text()).trim();
       }
@@ -85,6 +111,7 @@ export async function GET() {
     return NextResponse.json(tauriResponse);
 
   } catch (err: any) {
+    console.error("Errore nell'endpoint latest-version:", err);
     return NextResponse.json({ error: err.message }, { status: 500 })
   }
 }

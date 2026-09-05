@@ -56,7 +56,7 @@ export function Sidebar() {
   });
   const [syncing, setSyncing] = useState(false);
   const [lastSync, setLastSync] = useState<string | null>(null);
-  const [appVersion, setAppVersion] = useState("1.1.4");
+  const [appVersion, setAppVersion] = useState(process.env.NEXT_PUBLIC_APP_VERSION || "1.7.0");
   const pathname = usePathname();
   const supabase = createClient();
 
