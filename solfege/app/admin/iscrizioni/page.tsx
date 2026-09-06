@@ -143,11 +143,12 @@ export default function IscrizioniPage() {
     <div className="flex-1 space-y-6 p-8 pt-6">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold font-display text-stone-900">
-            Iscrizioni Online
+          <h1 className="text-3xl font-bold font-display text-stone-900 flex items-center gap-3">
+            <Globe className="w-8 h-8 text-[#E8621A]" />
+            Iscrizioni Online Pendenti
           </h1>
-          <p className="text-stone-500 mt-1">
-            Monitoraggio delle registrazioni dal modulo pubblico.
+          <p className="text-stone-500 mt-1 max-w-2xl">
+            Gestisci le richieste di iscrizione inviate autonomamente dagli allievi tramite il link pubblico.
           </p>
         </div>
         <div className="flex gap-2">
@@ -155,13 +156,14 @@ export default function IscrizioniPage() {
             variant="outline" 
             onClick={loadData} 
             disabled={loading || syncing}
+            className="rounded-xl border-stone-200 text-stone-700 hover:bg-stone-50"
           >
             <RefreshCw className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
             Aggiorna
           </Button>
           {isDesktop() && (
             <Button 
-              className="bg-primary hover:bg-primary/90 text-white"
+              className="bg-[#E8621A] hover:bg-[#C94E0E] text-white rounded-xl"
               onClick={handleManualSync}
               disabled={loading || syncing}
             >
@@ -176,24 +178,28 @@ export default function IscrizioniPage() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className={`grid gap-6 ${isDesktop() ? 'grid-cols-1 lg:grid-cols-2' : 'grid-cols-1'}`}>
         {/* Pending Registrations */}
-        <div className="space-y-4">
-          <h2 className="text-xl font-semibold text-stone-800 flex items-center gap-2">
-            <AlertCircle className="w-5 h-5 text-orange-500" />
-            Nuove in attesa
-          </h2>
+        <div className={`space-y-4 ${(!isDesktop() && pending.length === 0) ? 'col-span-1' : ''}`}>
+          {pending.length > 0 && (
+            <h2 className="text-xl font-semibold text-stone-800 flex items-center gap-2">
+              <AlertCircle className="w-5 h-5 text-[#E8621A]" />
+              Nuove in attesa
+            </h2>
+          )}
           
           {loading ? (
             <div className="flex justify-center p-8">
-              <Loader2 className="w-8 h-8 animate-spin text-primary" />
+              <Loader2 className="w-8 h-8 animate-spin text-[#E8621A]" />
             </div>
           ) : pending.length === 0 ? (
-            <Card className="border-dashed bg-stone-50 shadow-none">
-              <CardContent className="flex flex-col items-center justify-center p-8 text-center">
-                <Check className="w-12 h-12 text-stone-300 mb-3" />
-                <p className="text-stone-500 font-medium">Nessuna iscrizione in attesa.</p>
-                <p className="text-sm text-stone-400 mt-1">Tutte le nuove richieste sono state sincronizzate.</p>
+            <Card className="border-dashed border-2 border-stone-200 bg-transparent shadow-none lg:col-span-2">
+              <CardContent className="flex flex-col items-center justify-center p-12 text-center">
+                <div className="bg-stone-100 p-4 rounded-full mb-4">
+                  <Globe className="w-8 h-8 text-stone-400" />
+                </div>
+                <p className="text-stone-800 font-semibold text-lg mb-2">Nessuna nuova iscrizione online</p>
+                <p className="text-sm text-stone-500 max-w-md">Le nuove richieste di iscrizione ricevute tramite il tuo link pubblico appariranno qui per essere approvate.</p>
               </CardContent>
             </Card>
           ) : (
