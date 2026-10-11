@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 import { CalendarFilters } from "@/components/admin/calendar-filters";
 import { LessonDrawer } from "@/components/admin/lesson-drawer";
+import { CreateLessonDialog } from "@/components/admin/CreateLessonDialog";
 import { toast } from "sonner";
 import { getItalianHolidays, HolidayItem } from "@/lib/holidays";
 
@@ -53,6 +54,7 @@ export default function CalendarPage() {
   // Selection states
   const [selectedLessonId, setSelectedLessonId] = useState<string | null>(null);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const [isCreateOpen, setIsCreateOpen] = useState(false);
 
   useEffect(() => {
     loadInitialData();
@@ -447,7 +449,10 @@ export default function CalendarPage() {
             <h2 className="font-serif text-3xl font-bold tracking-tight text-stone-900">Calendario</h2>
             <p className="text-stone-500 text-sm mt-0.5">Gestisci le lezioni e le presenze della tua scuola</p>
           </div>
-          <Button className="bg-[#E8621A] hover:bg-[#C94E0E] text-white shadow-md shadow-orange/10 h-10 px-5 rounded-xl font-bold uppercase tracking-wider text-xs">
+          <Button 
+            onClick={() => setIsCreateOpen(true)}
+            className="bg-[#E8621A] hover:bg-[#C94E0E] text-white shadow-md shadow-orange/10 h-10 px-5 rounded-xl font-bold uppercase tracking-wider text-xs cursor-pointer"
+          >
             <Plus className="mr-2 h-4 w-4" /> Nuova Lezione
           </Button>
         </div>
@@ -514,6 +519,12 @@ export default function CalendarPage() {
         isOpen={isDrawerOpen}
         onClose={() => setIsDrawerOpen(false)}
         onRefresh={() => loadEvents()}
+      />
+
+      <CreateLessonDialog
+        open={isCreateOpen}
+        onOpenChange={setIsCreateOpen}
+        onSuccess={() => loadEvents()}
       />
     </div>
   );
