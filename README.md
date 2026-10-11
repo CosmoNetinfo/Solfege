@@ -1,5 +1,7 @@
 # Solfège — Gestionale per Scuole di Musica
 
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+
 **Solfège** è un'applicazione gestionale premium per l'amministrazione di scuole di musica. Disponibile come **app desktop nativa** (Windows/Mac) con database locale, e come **demo web** per provare l'interfaccia prima dell'acquisto.
 
 🔗 **Demo web:** [solfege-five.vercel.app](https://solfege-five.vercel.app)
@@ -132,3 +134,9 @@ Contatti: [wa.me/393517064080](https://wa.me/393517064080) · admindany@gmail.co
 ---
 
 Sviluppato da **Daniele Spalletti** — [CosmoNet.info](https://www.cosmonet.info)
+
+---
+
+## 📄 Licenza
+
+Questo progetto è distribuito sotto licenza **MIT**. Consulta il file [LICENSE](./LICENSE) per i dettagli.
