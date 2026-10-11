@@ -4,113 +4,144 @@ export const dynamic = 'force-dynamic';
 
 export async function GET() {
   try {
-    // 1. Interroga le release pubbliche di GitHub
     const headers: Record<string, string> = {
       'User-Agent': 'Solfege-Updater-V2'
     };
 
-    // Supporto per repository privati: se GITHUB_TOKEN è configurato, usalo
     const githubToken = process.env.GITHUB_TOKEN;
     if (githubToken) {
       headers['Authorization'] = `Bearer ${githubToken}`;
     }
 
-    const githubRes = await fetch('https://api.github.com/repos/CosmoNetinfo/Solfege/releases/latest', {
-      headers,
-      next: { revalidate: 60 } // cache di 1 minuto
-    });
+    // 1. Recupera la release più recente per ottenere il tag
+    const releaseRes = await fetch(
+      'https://api.github.com/repos/CosmoNetinfo/Solfege/releases/latest',
+      { headers, next: { revalidate: 60 } }
+    );
 
-    // Gestione errori GitHub in modo graceful
-    if (githubRes.status === 404) {
-      // Nessuna release pubblicata trovata (repo privato senza token, o nessuna release pubblicata)
-      console.warn("GitHub API 404: nessuna release trovata. Il repo potrebbe essere privato o non avere release pubblicate.");
+    if (releaseRes.status === 404 || releaseRes.status === 403) {
       return new NextResponse(null, { status: 204 });
     }
 
-    if (githubRes.status === 403) {
-      // Rate limit o accesso negato
-      console.warn("GitHub API 403: accesso negato o rate limit raggiunto.");
+    if (!releaseRes.ok) {
+      return NextResponse.json(
+        { error: `GitHub API error: ${releaseRes.statusText}` },
+        { status: 500 }
+      );
+    }
+
+    const release = await releaseRes.json();
+    if (!release?.tag_name) {
       return new NextResponse(null, { status: 204 });
     }
 
-    if (!githubRes.ok) {
-      console.error(`GitHub API error: ${githubRes.status} ${githubRes.statusText}`);
-      return NextResponse.json({ error: `GitHub API error: ${githubRes.statusText}` }, { status: 500 });
-    }
-
-    const release = await githubRes.json();
-    if (!release || !release.tag_name) {
-      return new NextResponse(null, { status: 204 });
-    }
-
-    // Il tag_name è nel formato "v1.3.2" -> estraiamo la versione "1.3.2"
-    const version = release.tag_name.replace(/^v/, '');
     const tag = release.tag_name;
 
-    // Costruisce i link degli update compressi .zip/tar.gz che Tauri richiede per l'updater
-    // NOTA: GitHub Actions genera i file senza accento "Solfege" (non "Solfège")
-    const winZipUrl = `https://github.com/CosmoNetinfo/Solfege/releases/download/${tag}/Solfege_${version}_x64-setup.nsis.zip`;
-    const macX64TarUrl = `https://github.com/CosmoNetinfo/Solfege/releases/download/${tag}/Solfege_x64.app.tar.gz`;
-    const macAarch64TarUrl = `https://github.com/CosmoNetinfo/Solfege/releases/download/${tag}/Solfege_aarch64.app.tar.gz`;
+    // 2. Cerca il file latest.json tra gli asset della release
+    //    tauri-action lo carica automaticamente quando createUpdaterArtifacts è true
+    const latestJsonAsset = release.assets?.find(
+      (a: any) => a.name === 'latest.json'
+    );
 
-    // Recupera le firme digitali (.sig) da GitHub Releases
-    const fetchSig = async (url: string): Promise<string> => {
+    if (latestJsonAsset) {
+      // Proxy il latest.json generato da tauri-action (formato già corretto per Tauri v2)
+      const assetRes = await fetch(latestJsonAsset.browser_download_url, {
+        headers: githubToken
+          ? { 'Authorization': `Bearer ${githubToken}`, 'User-Agent': 'Solfege-Updater-V2' }
+          : { 'User-Agent': 'Solfege-Updater-V2' }
+      });
+
+      if (assetRes.ok) {
+        const manifest = await assetRes.json();
+        // Sostituisce le note con quelle del corpo della release se disponibili
+        if (release.body) {
+          manifest.notes = release.body;
+        }
+        return NextResponse.json(manifest);
+      }
+    }
+
+    // 3. Fallback: costruisci il manifesto manualmente dai file .sig negli asset
+    const winExeSig = release.assets?.find(
+      (a: any) => a.name === `Solfege_${tag.replace('v', '')}_x64-setup.exe.sig`
+    );
+    const macX64Sig = release.assets?.find(
+      (a: any) => a.name === 'Solfege_x64.app.tar.gz.sig'
+    );
+    const macAarch64Sig = release.assets?.find(
+      (a: any) => a.name === 'Solfege_aarch64.app.tar.gz.sig'
+    );
+
+    const fetchSigContent = async (url: string): Promise<string> => {
       try {
-        const sigRes = await fetch(`${url}.sig`, {
-          headers: githubToken ? { 'Authorization': `Bearer ${githubToken}` } : {}
+        const r = await fetch(url, {
+          headers: githubToken
+            ? { 'Authorization': `Bearer ${githubToken}`, 'User-Agent': 'Solfege-Updater-V2' }
+            : { 'User-Agent': 'Solfege-Updater-V2' }
         });
-        if (sigRes.ok) return (await sigRes.text()).trim();
+        if (r.ok) return (await r.text()).trim();
       } catch (e) {
-        console.warn(`Impossibile recuperare firma per ${url}:`, e);
+        console.warn('fetchSigContent error:', e);
       }
       return '';
     };
 
-    const [winSignature, macX64Signature, macAarch64Signature] = await Promise.all([
-      fetchSig(winZipUrl),
-      fetchSig(macX64TarUrl),
-      fetchSig(macAarch64TarUrl),
-    ]);
-
-    // Risposta nel formato ufficiale richiesto da Tauri v2 Updater
-    const tauriResponse: any = {
-      version: version,
+    const version = tag.replace(/^v/, '');
+    const manifest: any = {
+      version,
       notes: release.body || 'Nuovo aggiornamento disponibile',
       pub_date: release.published_at || new Date().toISOString(),
       platforms: {}
     };
 
-    if (winSignature) {
-      tauriResponse.platforms['windows-x86_64'] = {
-        signature: winSignature,
-        url: winZipUrl
-      };
+    if (winExeSig) {
+      const sig = await fetchSigContent(winExeSig.browser_download_url);
+      const exeAsset = release.assets?.find(
+        (a: any) => a.name === `Solfege_${version}_x64-setup.exe`
+      );
+      if (sig && exeAsset) {
+        manifest.platforms['windows-x86_64'] = {
+          signature: sig,
+          url: exeAsset.browser_download_url
+        };
+      }
     }
 
-    if (macX64Signature) {
-      tauriResponse.platforms['darwin-x86_64'] = {
-        signature: macX64Signature,
-        url: macX64TarUrl
-      };
+    if (macX64Sig) {
+      const sig = await fetchSigContent(macX64Sig.browser_download_url);
+      const tarAsset = release.assets?.find(
+        (a: any) => a.name === 'Solfege_x64.app.tar.gz'
+      );
+      if (sig && tarAsset) {
+        manifest.platforms['darwin-x86_64'] = {
+          signature: sig,
+          url: tarAsset.browser_download_url
+        };
+      }
     }
 
-    if (macAarch64Signature) {
-      tauriResponse.platforms['darwin-aarch64'] = {
-        signature: macAarch64Signature,
-        url: macAarch64TarUrl
-      };
+    if (macAarch64Sig) {
+      const sig = await fetchSigContent(macAarch64Sig.browser_download_url);
+      const tarAsset = release.assets?.find(
+        (a: any) => a.name === 'Solfege_aarch64.app.tar.gz'
+      );
+      if (sig && tarAsset) {
+        manifest.platforms['darwin-aarch64'] = {
+          signature: sig,
+          url: tarAsset.browser_download_url
+        };
+      }
     }
 
-    // Se non ci sono piattaforme firmate disponibili, ritorna 204 No Content
-    if (Object.keys(tauriResponse.platforms).length === 0) {
-      console.warn(`Nessun file .sig trovato per la release ${tag}. Verifica che TAURI_SIGNING_PRIVATE_KEY sia configurato nei GitHub Secrets.`);
+    if (Object.keys(manifest.platforms).length === 0) {
+      console.warn(`Nessun file .sig trovato per ${tag}.`);
       return new NextResponse(null, { status: 204 });
     }
 
-    return NextResponse.json(tauriResponse);
+    return NextResponse.json(manifest);
 
   } catch (err: any) {
     console.error("Errore nell'endpoint latest-version:", err);
-    return NextResponse.json({ error: err.message }, { status: 500 })
+    return NextResponse.json({ error: err.message }, { status: 500 });
   }
 }
