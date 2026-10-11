@@ -96,12 +96,10 @@ Ci sono tre modalità supportate nel codice:
 
 ### 3.3 Gestione Password
 * **Visualizzazione**: Nessuna password è visibile in chiaro (sono hashate con bcrypt/argon2).
-* **Reset Password**:
-  * ⚠️ Nel frontend di login **manca il pulsante "Password dimenticata"**.
-  * Se un cliente dimentica la password o se devi impostargliela tu, devi accedere alla Dashboard di Supabase:
-    1. Vai su **Authentication** -> **Users**.
-    2. Cerca l'utente per email.
-    3. Clicca sui tre puntini `...` -> **"Send Password Recovery"** (oppure aggiorna la password direttamente dalla dashboard).
+* **Reset Password (Implementato)**:
+  * Su `/login` è presente il pulsante **"Password dimenticata?"** accanto al campo password.
+  * Cliccandolo, si apre un popup modale che richiede l'indirizzo email dell'account.
+  * L'utente riceve un'email con un link protetto che lo porta a **`/reset-password`**, dove può impostare e confermare la nuova password in totale autonomia.
 
 ---
 
@@ -179,8 +177,8 @@ Nel corso dell'analisi sono emerse alcune anomalie tecniche da tenere a mente:
 1. **`machine_id` hardcodato nel Setup Desktop**:
    * In [`solfege/app/setup/page.tsx#L98`](file:///d:/Solfege/solfege/app/setup/page.tsx#L98) è presente `const machineId = 'desktop-local'`.
    * Poiché la stringa inviata è identica per ogni PC, l'endpoint di attivazione interpreta ogni installazione come la medesima macchina già nota, aggiornando solo `last_seen_at`. Di fatto, **il conteggio degli slot dispositivi non incrementa oltre 1/3** a meno che non venga generato un identificativo hardware univoco.
-2. **Mancanza di recupero password nel form di login**:
-   * Su `/login` non c'è il link *"Password dimenticata?"*. Se l'utente smarrisce la password, non ha modo di reimpostarla in autonomia.
+2. **Recupero password (Risolto)**:
+   * Aggiunto pulsante "Password dimenticata?" su `/login` con modale per l'invio dell'email e pagina `/reset-password` per l'impostazione autonoma della nuova credenziale.
 3. **Pulsante "Prova la Demo Online"**:
    * Su `/login` il pulsante reindirizza a Google OAuth e poi a `/setup-trial`, creando una scuola vuota anziché mostrare una demo pre-popolata.
 4. **Servizio email Resend disattivato**:

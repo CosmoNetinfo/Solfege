@@ -6,13 +6,19 @@ import { useState, useEffect, Suspense } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { Mail, Lock, Loader2, Eye, EyeOff } from "lucide-react";
+import { Mail, Lock, Loader2, Eye, EyeOff, Check } from "lucide-react";
 import { toast } from "sonner";
 import { createClient } from "@/lib/supabase/client";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 const loginSchema = z.object({
   email: z.string().email("Inserisci un'email valida"),
@@ -68,6 +74,41 @@ function LoginFormContent() {
   const errorParam = searchParams.get('error');
   const codeParam = searchParams.get('code');
   const typeParam = searchParams.get('type');
+
+  // Stato Recupero Password
+  const [forgotOpen, setForgotOpen] = useState(false);
+  const [forgotEmail, setForgotEmail] = useState("");
+  const [forgotLoading, setForgotLoading] = useState(false);
+  const [forgotSent, setForgotSent] = useState(false);
+  const [forgotError, setForgotError] = useState("");
+
+  async function handleForgotPassword(e: React.FormEvent) {
+    e.preventDefault();
+    if (!forgotEmail || !forgotEmail.includes('@')) {
+      setForgotError("Inserisci un'email valida.");
+      return;
+    }
+
+    setForgotLoading(true);
+    setForgotError("");
+    try {
+      const redirectUrl = `${window.location.origin}/reset-password`;
+      const { error } = await supabase.auth.resetPasswordForEmail(forgotEmail.trim(), {
+        redirectTo: redirectUrl,
+      });
+
+      if (error) {
+        setForgotError(error.message);
+      } else {
+        setForgotSent(true);
+        toast.success("Link di recupero inviato!");
+      }
+    } catch (err: any) {
+      setForgotError(err.message || "Errore durante l'invio dell'email.");
+    } finally {
+      setForgotLoading(false);
+    }
+  }
 
   const {
     register,
@@ -168,7 +209,22 @@ function LoginFormContent() {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="password">Password</Label>
+            <div className="flex items-center justify-between">
+              <Label htmlFor="password">Password</Label>
+              <button
+                type="button"
+                onClick={() => {
+                  const emailInput = (document.getElementById("email") as HTMLInputElement)?.value;
+                  if (emailInput) setForgotEmail(emailInput);
+                  setForgotError("");
+                  setForgotSent(false);
+                  setForgotOpen(true);
+                }}
+                className="text-xs text-orange hover:underline font-medium"
+              >
+                Password dimenticata?
+              </button>
+            </div>
             <div className="relative">
               <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
               <Input
@@ -268,6 +324,78 @@ function LoginFormContent() {
           <Link href="/privacy" className="hover:underline">Privacy Policy</Link>
         </div>
       </div>
+
+      {/* Modal Dialog Recupero Password */}
+      <Dialog open={forgotOpen} onOpenChange={setForgotOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-xl font-serif">Recupera la tua password</DialogTitle>
+          </DialogHeader>
+
+          {forgotSent ? (
+            <div className="space-y-4 py-4 text-center">
+              <div className="mx-auto w-10 h-10 rounded-full bg-green/10 flex items-center justify-center text-green">
+                <Check className="h-5 w-5" />
+              </div>
+              <p className="text-sm text-foreground font-medium">Link inviato con successo!</p>
+              <p className="text-xs text-muted-foreground leading-relaxed">
+                Se l'indirizzo <strong>{forgotEmail}</strong> corrisponde a un account registrato, riceverai un'email con il link per creare una nuova password.
+              </p>
+              <Button
+                type="button"
+                className="w-full bg-orange hover:bg-orange-dark text-white font-serif text-sm h-10 mt-2"
+                onClick={() => {
+                  setForgotOpen(false);
+                  setForgotSent(false);
+                }}
+              >
+                Ho capito, chiudi
+              </Button>
+            </div>
+          ) : (
+            <form onSubmit={handleForgotPassword} className="space-y-4 py-2">
+              <p className="text-xs text-muted-foreground leading-relaxed">
+                Inserisci l'indirizzo email associato alla tua scuola o al tuo profilo. Ti invieremo un link sicuro per reimpostare la password.
+              </p>
+
+              <div className="space-y-2">
+                <Label htmlFor="forgot-email">Email</Label>
+                <div className="relative">
+                  <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    id="forgot-email"
+                    type="email"
+                    required
+                    placeholder="nome@scuola.it"
+                    className="pl-10 border-border"
+                    value={forgotEmail}
+                    onChange={(e) => setForgotEmail(e.target.value)}
+                    disabled={forgotLoading}
+                  />
+                </div>
+              </div>
+
+              {forgotError && (
+                <p className="text-xs text-red font-medium">{forgotError}</p>
+              )}
+
+              <Button
+                type="submit"
+                disabled={forgotLoading}
+                className="w-full bg-orange hover:bg-orange-dark text-white font-serif text-sm h-11"
+              >
+                {forgotLoading ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Invio link in corso...
+                  </>
+                ) : (
+                  "Invia link di recupero"
+                )}
+              </Button>
+            </form>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

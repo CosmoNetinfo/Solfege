@@ -22,6 +22,10 @@ export async function GET(request: Request) {
         return NextResponse.redirect(`${origin}/accept-invite`)
       }
 
+      if (type === 'recovery' || next === '/reset-password') {
+        return NextResponse.redirect(`${origin}/reset-password`)
+      }
+
       // Controlla se l'utente ha già un profilo con scuola
       try {
         const { data: { user } } = await supabase.auth.getUser()
@@ -57,6 +61,10 @@ export async function GET(request: Request) {
   // Il client JS gestirà il fragment automaticamente
   if (type === 'invite') {
     return NextResponse.redirect(`${origin}/accept-invite`)
+  }
+
+  if (type === 'recovery') {
+    return NextResponse.redirect(`${origin}/reset-password`)
   }
 
   return NextResponse.redirect(`${origin}/login`)
