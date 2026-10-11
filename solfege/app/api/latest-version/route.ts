@@ -48,34 +48,29 @@ export async function GET() {
     const tag = release.tag_name;
 
     // Costruisce i link degli update compressi .zip/tar.gz che Tauri richiede per l'updater
-    // Tauri per Windows richiede il file .nsis.zip
-    const winZipUrl = `https://github.com/CosmoNetinfo/Solfege/releases/download/${tag}/Solfège_${version}_x64-setup.nsis.zip`;
-    const macTarUrl = `https://github.com/CosmoNetinfo/Solfege/releases/download/${tag}/Solfège_${version}_x64.app.tar.gz`;
+    // NOTA: GitHub Actions genera i file senza accento "Solfege" (non "Solfège")
+    const winZipUrl = `https://github.com/CosmoNetinfo/Solfege/releases/download/${tag}/Solfege_${version}_x64-setup.nsis.zip`;
+    const macX64TarUrl = `https://github.com/CosmoNetinfo/Solfege/releases/download/${tag}/Solfege_x64.app.tar.gz`;
+    const macAarch64TarUrl = `https://github.com/CosmoNetinfo/Solfege/releases/download/${tag}/Solfege_aarch64.app.tar.gz`;
 
-    // Recupera la firma digitale (.sig) da GitHub Releases
-    let winSignature = '';
-    try {
-      const sigRes = await fetch(`${winZipUrl}.sig`, {
-        headers: githubToken ? { 'Authorization': `Bearer ${githubToken}` } : {}
-      });
-      if (sigRes.ok) {
-        winSignature = (await sigRes.text()).trim();
+    // Recupera le firme digitali (.sig) da GitHub Releases
+    const fetchSig = async (url: string): Promise<string> => {
+      try {
+        const sigRes = await fetch(`${url}.sig`, {
+          headers: githubToken ? { 'Authorization': `Bearer ${githubToken}` } : {}
+        });
+        if (sigRes.ok) return (await sigRes.text()).trim();
+      } catch (e) {
+        console.warn(`Impossibile recuperare firma per ${url}:`, e);
       }
-    } catch (e) {
-      console.warn("Impossibile recuperare firma Windows da GitHub:", e);
-    }
+      return '';
+    };
 
-    let macSignature = '';
-    try {
-      const sigRes = await fetch(`${macTarUrl}.sig`, {
-        headers: githubToken ? { 'Authorization': `Bearer ${githubToken}` } : {}
-      });
-      if (sigRes.ok) {
-        macSignature = (await sigRes.text()).trim();
-      }
-    } catch (e) {
-      console.warn("Impossibile recuperare firma MacOS da GitHub:", e);
-    }
+    const [winSignature, macX64Signature, macAarch64Signature] = await Promise.all([
+      fetchSig(winZipUrl),
+      fetchSig(macX64TarUrl),
+      fetchSig(macAarch64TarUrl),
+    ]);
 
     // Risposta nel formato ufficiale richiesto da Tauri v2 Updater
     const tauriResponse: any = {
@@ -92,19 +87,23 @@ export async function GET() {
       };
     }
 
-    if (macSignature) {
+    if (macX64Signature) {
       tauriResponse.platforms['darwin-x86_64'] = {
-        signature: macSignature,
-        url: macTarUrl
+        signature: macX64Signature,
+        url: macX64TarUrl
       };
+    }
+
+    if (macAarch64Signature) {
       tauriResponse.platforms['darwin-aarch64'] = {
-        signature: macSignature,
-        url: macTarUrl
+        signature: macAarch64Signature,
+        url: macAarch64TarUrl
       };
     }
 
     // Se non ci sono piattaforme firmate disponibili, ritorna 204 No Content
     if (Object.keys(tauriResponse.platforms).length === 0) {
+      console.warn(`Nessun file .sig trovato per la release ${tag}. Verifica che TAURI_SIGNING_PRIVATE_KEY sia configurato nei GitHub Secrets.`);
       return new NextResponse(null, { status: 204 });
     }
 
