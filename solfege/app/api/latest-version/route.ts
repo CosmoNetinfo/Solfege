@@ -69,11 +69,12 @@ export async function GET() {
               headers: githubToken ? { 'Authorization': `Bearer ${githubToken}` } : {}
             });
             if (sigRes.ok) {
-              const sig = (await sigRes.text()).trim();
-              manifest.platforms['windows-x86_64'] = {
+              const winPayload = {
                 signature: sig,
                 url: exeAsset.browser_download_url
               };
+              manifest.platforms['windows-x86_64'] = winPayload;
+              manifest.platforms['windows-x86_64-nsis'] = winPayload;
             }
           }
         }
@@ -121,10 +122,12 @@ export async function GET() {
         (a: any) => a.name === `Solfege_${version}_x64-setup.exe`
       );
       if (sig && exeAsset) {
-        manifest.platforms['windows-x86_64'] = {
+        const winPayload = {
           signature: sig,
           url: exeAsset.browser_download_url
         };
+        manifest.platforms['windows-x86_64'] = winPayload;
+        manifest.platforms['windows-x86_64-nsis'] = winPayload;
       }
     }
 
