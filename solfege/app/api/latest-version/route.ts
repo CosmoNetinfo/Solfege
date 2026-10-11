@@ -44,7 +44,6 @@ export async function GET() {
     );
 
     if (latestJsonAsset) {
-      // Proxy il latest.json generato da tauri-action (formato già corretto per Tauri v2)
       const assetRes = await fetch(latestJsonAsset.browser_download_url, {
         headers: githubToken
           ? { 'Authorization': `Bearer ${githubToken}`, 'User-Agent': 'Solfege-Updater-V2' }
@@ -53,10 +52,32 @@ export async function GET() {
 
       if (assetRes.ok) {
         const manifest = await assetRes.json();
-        // Sostituisce le note con quelle del corpo della release se disponibili
-        if (release.body) {
-          manifest.notes = release.body;
+        if (release.body) manifest.notes = release.body;
+
+        // Se manca la piattaforma Windows, la aggiungiamo dal .exe.sig
+        const hasWindows = Object.keys(manifest.platforms || {}).some(k => k.startsWith('windows'));
+        if (!hasWindows) {
+          const version = tag.replace(/^v/, '');
+          const exeSigAsset = release.assets?.find(
+            (a: any) => a.name === `Solfege_${version}_x64-setup.exe.sig`
+          );
+          const exeAsset = release.assets?.find(
+            (a: any) => a.name === `Solfege_${version}_x64-setup.exe`
+          );
+          if (exeSigAsset && exeAsset) {
+            const sigRes = await fetch(exeSigAsset.browser_download_url, {
+              headers: githubToken ? { 'Authorization': `Bearer ${githubToken}` } : {}
+            });
+            if (sigRes.ok) {
+              const sig = (await sigRes.text()).trim();
+              manifest.platforms['windows-x86_64'] = {
+                signature: sig,
+                url: exeAsset.browser_download_url
+              };
+            }
+          }
         }
+
         return NextResponse.json(manifest);
       }
     }
