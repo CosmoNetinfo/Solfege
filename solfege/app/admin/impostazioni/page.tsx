@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { SchoolTab } from '@/components/admin/settings/SchoolTab';
 import { AcademicYearTab } from '@/components/admin/settings/AcademicYearTab';
+import { HolidaysTab } from '@/components/admin/settings/HolidaysTab';
 import { InstrumentsTab } from '@/components/admin/settings/InstrumentsTab';
 import { RoomsTab } from '@/components/admin/settings/RoomsTab';
 import { UsersTab } from '@/components/admin/settings/UsersTab';
@@ -37,6 +38,8 @@ export default function ImpostazioniPage() {
               website: s.sito_web || null,
               slug: s.slug || null,
               current_academic_year: s.anno_accademico_corrente || '2026/2027',
+              academic_year_start: s.academic_year_start || '2026-09-15',
+              academic_year_end: s.academic_year_end || '2027-06-15',
             });
           }
         } else {
@@ -91,6 +94,7 @@ export default function ImpostazioniPage() {
         <TabsList className="mb-8 bg-transparent border-b w-full justify-start rounded-none h-auto p-0 space-x-6">
           <TabsTrigger value="scuola" className="rounded-none border-b-2 border-transparent data-[state=active]:border-[#E8621A] data-[state=active]:text-[#E8621A] data-[state=active]:bg-transparent px-0 py-3">Scuola</TabsTrigger>
           <TabsTrigger value="anno" className="rounded-none border-b-2 border-transparent data-[state=active]:border-[#E8621A] data-[state=active]:text-[#E8621A] data-[state=active]:bg-transparent px-0 py-3">Anno Accademico</TabsTrigger>
+          <TabsTrigger value="festivita" className="rounded-none border-b-2 border-transparent data-[state=active]:border-[#E8621A] data-[state=active]:text-[#E8621A] data-[state=active]:bg-transparent px-0 py-3">Chiusure & Festività</TabsTrigger>
           <TabsTrigger value="strumenti" className="rounded-none border-b-2 border-transparent data-[state=active]:border-[#E8621A] data-[state=active]:text-[#E8621A] data-[state=active]:bg-transparent px-0 py-3">Strumenti</TabsTrigger>
           <TabsTrigger value="aule" className="rounded-none border-b-2 border-transparent data-[state=active]:border-[#E8621A] data-[state=active]:text-[#E8621A] data-[state=active]:bg-transparent px-0 py-3">Aule</TabsTrigger>
           <TabsTrigger value="utenti" className="rounded-none border-b-2 border-transparent data-[state=active]:border-[#E8621A] data-[state=active]:text-[#E8621A] data-[state=active]:bg-transparent px-0 py-3">Utenti</TabsTrigger>
@@ -103,6 +107,7 @@ export default function ImpostazioniPage() {
         <div className="mt-6">
           <TabsContent value="scuola" className="m-0"><SchoolTab school={school} /></TabsContent>
           <TabsContent value="anno" className="m-0"><AcademicYearTab school={school} /></TabsContent>
+          <TabsContent value="festivita" className="m-0"><HolidaysTab school={school} /></TabsContent>
           <TabsContent value="strumenti" className="m-0"><InstrumentsTab schoolId={school.id} /></TabsContent>
           <TabsContent value="aule" className="m-0"><RoomsTab schoolId={school.id} /></TabsContent>
           <TabsContent value="utenti" className="m-0"><UsersTab schoolId={school.id} schoolName={school.name} /></TabsContent>

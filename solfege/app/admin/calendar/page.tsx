@@ -10,6 +10,8 @@ import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 import { CalendarFilters } from "@/components/admin/calendar-filters";
 import { LessonDrawer } from "@/components/admin/lesson-drawer";
+import { toast } from "sonner";
+import { getItalianHolidays, HolidayItem } from "@/lib/holidays";
 
 const locales = { "it": it };
 const localizer = dateFnsLocalizer({ format, parse, startOfWeek, getDay, locales });
@@ -29,6 +31,7 @@ type CalendarEvent = {
     status: string;
     courseName: string;
     isBooking?: boolean;
+    isHoliday?: boolean;
   };
 };
 
@@ -182,7 +185,42 @@ export default function CalendarPage() {
           };
         });
 
-        setEvents([...mapped, ...mappedBookings]);
+        // 3. Carica festività e chiusure da SQLite
+        let closures: HolidayItem[] = [];
+        try {
+          closures = await db.select<HolidayItem[]>("SELECT nome, data_inizio, data_fine, tipo FROM school_holidays");
+        } catch {}
+
+        const currentYr = new Date().getFullYear();
+        const allHolidays = [
+          ...closures,
+          ...getItalianHolidays(currentYr),
+          ...getItalianHolidays(currentYr + 1),
+        ];
+
+        const mappedHolidays: CalendarEvent[] = allHolidays.map((h, i) => {
+          const startDate = new Date(`${h.data_inizio}T08:00:00`);
+          const endDate = new Date(`${h.data_fine || h.data_inizio}T20:00:00`);
+          return {
+            id: `holiday-${i}`,
+            title: `⛔ ${h.nome}`,
+            start: isNaN(startDate.getTime()) ? new Date() : startDate,
+            end: isNaN(endDate.getTime()) ? new Date() : endDate,
+            color: '#DC2626',
+            teacherId: '',
+            courseId: '',
+            roomId: '',
+            resource: {
+              teacher: '',
+              room: 'Chiusura / Festività',
+              status: h.tipo || 'festivita',
+              courseName: h.nome,
+              isHoliday: true,
+            }
+          };
+        });
+
+        setEvents([...mapped, ...mappedBookings, ...mappedHolidays]);
         setLoading(false);
         return;
       }
@@ -252,19 +290,63 @@ export default function CalendarPage() {
       }
     }));
 
-    setEvents([...mapped, ...mappedBookings]);
+    // Carica chiusure Supabase
+    const { data: customClosures } = await supabase
+      .from("school_holidays")
+      .select("nome, data_inizio, data_fine, tipo")
+      .eq("school_id", sId);
+
+    const currentYr = new Date().getFullYear();
+    const allHolidaysWeb = [
+      ...(customClosures || []),
+      ...getItalianHolidays(currentYr),
+      ...getItalianHolidays(currentYr + 1),
+    ];
+
+    const mappedHolidays: CalendarEvent[] = allHolidaysWeb.map((h, i) => {
+      const startDate = new Date(`${h.data_inizio}T08:00:00`);
+      const endDate = new Date(`${h.data_fine || h.data_inizio}T20:00:00`);
+      return {
+        id: `holiday-${i}`,
+        title: `⛔ ${h.nome}`,
+        start: startDate,
+        end: endDate,
+        color: '#DC2626',
+        teacherId: '',
+        courseId: '',
+        roomId: '',
+        resource: {
+          teacher: '',
+          room: 'Chiusura / Festività',
+          status: h.tipo || 'festivita',
+          courseName: h.nome,
+          isHoliday: true,
+        }
+      };
+    });
+
+    setEvents([...mapped, ...mappedBookings, ...mappedHolidays]);
     setLoading(false);
   }
 
   const filteredEvents = useMemo(() => {
     return events.filter(e => 
-      selectedTeachers.includes(e.teacherId) &&
-      selectedCourses.includes(e.courseId) &&
-      selectedRooms.includes(e.roomId)
+      e.resource?.isHoliday || (
+        selectedTeachers.includes(e.teacherId) &&
+        selectedCourses.includes(e.courseId) &&
+        selectedRooms.includes(e.roomId)
+      )
     );
   }, [events, selectedTeachers, selectedCourses, selectedRooms]);
 
   const handleSelectEvent = (event: CalendarEvent) => {
+    if (event.resource?.isHoliday) {
+      toast.info(`Chiusura: ${event.title}`);
+      return;
+    }
+    if (event.resource?.isBooking) {
+      return;
+    }
     setSelectedLessonId(event.id);
     setIsDrawerOpen(true);
   };
@@ -274,6 +356,21 @@ export default function CalendarPage() {
   };
 
   const eventStyleGetter = useCallback((event: CalendarEvent) => {
+    if (event.resource?.isHoliday) {
+      return {
+        style: {
+          backgroundColor: "#FEE2E2",
+          borderLeft: "4px solid #DC2626",
+          borderRadius: "6px",
+          color: "#991B1B",
+          display: "block",
+          padding: "2px 6px",
+          fontSize: "12px",
+          fontWeight: 600,
+        }
+      };
+    }
+
     if (event.resource?.isBooking) {
       return {
         style: {
