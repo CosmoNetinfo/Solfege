@@ -198,6 +198,16 @@ function LoginFormContent() {
             {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : "Accedi"}
           </Button>
 
+          <Link href="/register" className="w-full block">
+            <Button
+              type="button"
+              variant="outline"
+              className="w-full border-border hover:bg-stone-50 text-foreground h-11 font-serif text-sm tracking-wide"
+            >
+              Registrati
+            </Button>
+          </Link>
+
           <div className="relative flex items-center justify-center my-4">
             <div className="absolute inset-0 flex items-center">
               <span className="w-full border-t border-border" />
@@ -252,7 +262,7 @@ function LoginFormContent() {
 
       <div className="text-center text-sm space-y-2">
         <div className="text-muted-foreground">
-          Non hai una scuola? <a href="https://wa.me/393517064080" target="_blank" rel="noopener noreferrer" className="text-orange hover:underline font-medium">Prova gratis 15 giorni &rarr;</a>
+          Non hai ancora un account? <Link href="/register" className="text-orange hover:underline font-medium">Registrati ora &rarr;</Link>
         </div>
         <div className="text-xs text-muted-foreground/60 pt-4">
           <Link href="/privacy" className="hover:underline">Privacy Policy</Link>
