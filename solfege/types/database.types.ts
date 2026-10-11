@@ -314,6 +314,11 @@ export type Database = {
           status: Database["public"]["Enums"]["stato_lezione"] | null
           teacher_id: string | null
           updated_at: string
+          original_date: string | null
+          original_ora_inizio: string | null
+          original_ora_fine: string | null
+          is_spostata: boolean | null
+          spostata_il: string | null
         }
         Insert: {
           course_id: string
@@ -331,6 +336,11 @@ export type Database = {
           status?: Database["public"]["Enums"]["stato_lezione"] | null
           teacher_id?: string | null
           updated_at?: string
+          original_date?: string | null
+          original_ora_inizio?: string | null
+          original_ora_fine?: string | null
+          is_spostata?: boolean | null
+          spostata_il?: string | null
         }
         Update: {
           course_id?: string
@@ -348,6 +358,11 @@ export type Database = {
           status?: Database["public"]["Enums"]["stato_lezione"] | null
           teacher_id?: string | null
           updated_at?: string
+          original_date?: string | null
+          original_ora_inizio?: string | null
+          original_ora_fine?: string | null
+          is_spostata?: boolean | null
+          spostata_il?: string | null
         }
         Relationships: [
           {
@@ -697,6 +712,8 @@ export type Database = {
           updated_at: string
           website: string | null
           current_academic_year: string | null
+          academic_year_start: string | null
+          academic_year_end: string | null
         }
         Insert: {
           address?: string | null
@@ -714,6 +731,8 @@ export type Database = {
           updated_at?: string
           website?: string | null
           current_academic_year?: string | null
+          academic_year_start?: string | null
+          academic_year_end?: string | null
         }
         Update: {
           address?: string | null
@@ -731,6 +750,8 @@ export type Database = {
           updated_at?: string
           website?: string | null
           current_academic_year?: string | null
+          academic_year_start?: string | null
+          academic_year_end?: string | null
         }
         Relationships: []
       }
@@ -996,6 +1017,107 @@ export type Database = {
           },
           {
             foreignKeyName: "tessere_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "students"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      school_holidays: {
+        Row: {
+          id: string
+          school_id: string
+          nome: string
+          data_inizio: string
+          data_fine: string
+          tipo: string
+          created_at: string | null
+        }
+        Insert: {
+          id?: string
+          school_id: string
+          nome: string
+          data_inizio: string
+          data_fine: string
+          tipo: string
+          created_at?: string | null
+        }
+        Update: {
+          id?: string
+          school_id?: string
+          nome?: string
+          data_inizio?: string
+          data_fine?: string
+          tipo?: string
+          created_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "school_holidays_school_id_fkey"
+            columns: ["school_id"]
+            isOneToOne: false
+            referencedRelation: "schools"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      recovery_credits: {
+        Row: {
+          id: string
+          school_id: string
+          student_id: string
+          course_id: string | null
+          lesson_id: string | null
+          recovery_lesson_id: string | null
+          stato: string
+          data_maturazione: string
+          data_scadenza: string | null
+          data_utilizzo: string | null
+          motivo: string | null
+          note: string | null
+          created_at: string | null
+        }
+        Insert: {
+          id?: string
+          school_id: string
+          student_id: string
+          course_id?: string | null
+          lesson_id?: string | null
+          recovery_lesson_id?: string | null
+          stato?: string
+          data_maturazione: string
+          data_scadenza?: string | null
+          data_utilizzo?: string | null
+          motivo?: string | null
+          note?: string | null
+          created_at?: string | null
+        }
+        Update: {
+          id?: string
+          school_id?: string
+          student_id?: string
+          course_id?: string | null
+          lesson_id?: string | null
+          recovery_lesson_id?: string | null
+          stato?: string
+          data_maturazione?: string
+          data_scadenza?: string | null
+          data_utilizzo?: string | null
+          motivo?: string | null
+          note?: string | null
+          created_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "recovery_credits_school_id_fkey"
+            columns: ["school_id"]
+            isOneToOne: false
+            referencedRelation: "schools"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "recovery_credits_student_id_fkey"
             columns: ["student_id"]
             isOneToOne: false
             referencedRelation: "students"

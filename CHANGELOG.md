@@ -1,3 +1,13 @@
+## v1.8.0
+- Calendario didattico con anno accademico configurabile per scuola (default metà settembre - metà giugno)
+- Generazione ricorrente delle lezioni estesa all'intero anno accademico
+- Motore festività nazionali italiane (11 festività) con calcolo dinamico di Pasqua e Lunedì dell'Angelo
+- Gestione chiusure e patrono locale da Impostazioni con avviso lezioni impattate
+- Corsi collettivi ed ensemble con lezioni condivise e registro presenze multi-studente
+- Controllo sovrapposizioni e conflitti in tempo reale su docente, aula e allievi con override amministrativo
+- Flusso guidato "Sposta Lezione" con verifica disponibilità e tracciamento data originale
+- Registro e gestione crediti di recupero automatici su assenze giustificate
+
 ## v1.7.3
 - Fix sistema aggiornamenti automatici: abilitata generazione artefatti updater (file .sig) nella build desktop
 - Fix build Vercel: forzato webpack per risolvere errore Turbopack con next/font/google
