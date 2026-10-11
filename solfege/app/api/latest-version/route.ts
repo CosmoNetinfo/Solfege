@@ -54,9 +54,14 @@ export async function GET() {
         const manifest = await assetRes.json();
         if (release.body) manifest.notes = release.body;
 
-        // Se manca la piattaforma Windows, la aggiungiamo dal .exe.sig
-        const hasWindows = Object.keys(manifest.platforms || {}).some(k => k.startsWith('windows'));
-        if (!hasWindows) {
+        // Assicurati che Windows sia presente sia come windows-x86_64 sia come windows-x86_64-nsis
+        manifest.platforms = manifest.platforms || {};
+        const winExisting = manifest.platforms['windows-x86_64'] || manifest.platforms['windows-x86_64-nsis'];
+
+        if (winExisting) {
+          manifest.platforms['windows-x86_64'] = winExisting;
+          manifest.platforms['windows-x86_64-nsis'] = winExisting;
+        } else {
           const version = tag.replace(/^v/, '');
           const exeSigAsset = release.assets?.find(
             (a: any) => a.name === `Solfege_${version}_x64-setup.exe.sig`
@@ -69,6 +74,7 @@ export async function GET() {
               headers: githubToken ? { 'Authorization': `Bearer ${githubToken}` } : {}
             });
             if (sigRes.ok) {
+              const sig = (await sigRes.text()).trim();
               const winPayload = {
                 signature: sig,
                 url: exeAsset.browser_download_url
