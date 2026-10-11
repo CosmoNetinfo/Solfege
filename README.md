@@ -21,6 +21,8 @@
 ## 🚀 Funzionalità
 
 ### Amministrazione
+- **Autenticazione & Onboarding** — registrazione autonoma della scuola (`/register`), recupero password sicuro via email (`/reset-password`)
+- **Iscrizioni Online** — monitoraggio richieste dal modulo pubblico con vista pendenti e sincronizzazione istantanea
 - **Gestione Allievi** — anagrafica completa, scheda a 5 tab, gestione minorenni con dati genitore
 - **Gestione Insegnanti** — disponibilità settimanale, tariffe orarie, compensi automatici
 - **Corsi e Iscrizioni** — codifica a colori, generazione automatica lezioni

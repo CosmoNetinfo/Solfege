@@ -2,6 +2,27 @@
 
 In questo documento sono raccolti i dettagli degli aggiornamenti, dei bugfix e delle nuove funzionalità introdotte nelle ultime versioni di Solfège.
 
+## 🚀 Versione 1.7.2 - Onboarding Autonomo, Recupero Password e Restyling Iscrizioni
+
+Questa release introduce importanti novità sull'autenticazione, la registrazione autonoma e il restyling dell'area iscrizioni.
+
+### 📢 Nuove Funzionalità (Feature)
+* **Pulsante "Registrati" in Schermata di Accesso**: Aggiunto il pulsante *"Registrati"* e il relativo link in calce nella schermata di login, indirizzando alla procedura guidata di registrazione per nuove scuole (`/register`).
+* **Recupero Password Completo**:
+  - Aggiunto il pulsante *"Password dimenticata?"* direttamente nel form di accesso.
+  - Implementata finestra modale per l'invio sicuro del link di ripristino all'email associata all'account.
+  - Creata la nuova pagina dedicata `/reset-password` per l'impostazione e la conferma della nuova password in totale autonomia.
+* **Restyling "Iscrizioni Online Pendenti"**:
+  - Nuova interfaccia con intestazione personalizzata e iconografia coerente.
+  - Nuovo stato vuoto (*Empty State*) elegante con bordo tratteggiato e dettagli sulle richieste ricevute dal modulo pubblico.
+
+### 🛠️ Correzioni e Ottimizzazioni (Bugfix)
+* **Padding e Spaziatura Interfaccia**: Corretto il padding mancante nella visualizzazione web e desktop dell'area iscrizioni.
+* **Sincronizzazione Dinamica Versione**: La sidebar ora legge la versione dell'applicazione dinamicamente da configurazione anziché utilizzare valori statici.
+* **Gestione Connessione Aggiornamenti**: Gestione migliorata degli errori HTTP 404/403 sull'endpoint di controllo versioni.
+
+---
+
 ## 🚀 Versione 1.1.3 - Risoluzione Loop di Login Desktop
 
 Questa release risolve definitivamente il problema di reindirizzamento (loop) che rispediva l'utente alla pagina di login subito dopo aver effettuato l'accesso sulla versione desktop.
